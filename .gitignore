@@ -1,3 +1,8 @@
+# Directories to ignore
+/data/
+/notes/
+/results/
+
 # History files
 .Rhistory
 .Rapp.history
