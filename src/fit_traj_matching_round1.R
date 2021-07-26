@@ -8,25 +8,25 @@
 # Load libraries:
 library(nloptr)
 
-# # Get cluster environmental variables:
-# jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
-# no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
-# sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
-# search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
+# Get cluster environmental variables:
+jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
+no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
+sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
+search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
+
+yr <- c(2006:2014)[(ceiling(jobid / no_jobs) - 1) %% 9 + 1]; print(yr)
+vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / (no_jobs * 9))]; print(vir1)
+jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
+
+# # Set parameters for local runs (temp):
+# jobid <- 1
+# no_jobs <- 10
 # 
-# yr <- c(2006:2014)[(ceiling(jobid / no_jobs) - 1) %% 9 + 1]; print(yr)
-# vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / (no_jobs * 9))]; print(vir1)
-# jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
-
-# Set parameters for local runs (temp):
-jobid <- 1
-no_jobs <- 10
-
-vir1 <- 'flu_B' # 'flu_A', 'flu_B'
-yr <- 2006
-
-sobol_size <- 500
-search_type <- 'broad'
+# vir1 <- 'flu_B' # 'flu_A', 'flu_B'
+# yr <- 2006
+# 
+# sobol_size <- 500
+# search_type <- 'broad'
 
 # Set parameters for run:
 vir2 <- 'rsv'
