@@ -12,12 +12,6 @@ library(viridis)
 source('src/functions/functions_flu_RSV.R')
 source('src/functions/test_code.R')
 
-# For now, select viruses/year:
-vir1 <- 'flu_A'
-vir2 <- 'flu_B'
-yr <- 2007
-debug_bool <- TRUE
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load and format data
@@ -60,9 +54,9 @@ if(debug_bool) {
 
 # Create model:
 resp_mod <- create_SITRxSITR_mod(dat = dat_pomp,
-                                 Ri1_max = 3.0,
-                                 Ri2_max = 3.0,
-                                 debug_bool = T)
+                                 Ri1_max = Ri_max1,
+                                 Ri2_max = Ri_max2,
+                                 debug_bool = debug_bool)
 
 # Check transformations:
 check_transformations(resp_mod)

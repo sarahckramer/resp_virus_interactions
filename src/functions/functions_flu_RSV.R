@@ -42,7 +42,7 @@ prepare_data <- function(virus1_nm, virus2_nm, epiyear_val, dat) {
   out[['dat_pomp']] <- out[['dat_full']] %>%
     filter(virus %in% c(virus1_nm, virus2_nm)) %>% 
     pivot_wider(names_from = 'virus', values_from = 'n_pos') %>%
-    rename(c('n_P1' = virus1_nm, 'n_P2' = virus2_nm, 'n_T' = 'n_samp')) %>%
+    rename(c('n_P1' = all_of(virus1_nm), 'n_P2' = all_of(virus2_nm), 'n_T' = 'n_samp')) %>%
     arrange(time)
   
   stopifnot(all(out[['dat_pomp']]$n_P1 >= 0))
