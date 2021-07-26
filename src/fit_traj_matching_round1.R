@@ -90,7 +90,7 @@ for (i in seq_along(sub_start)) {
   x0 <- as.numeric(start_values[sub_start[i], ])
   coef(resp_mod, estpars) <- x0
   x0_trans <- coef(resp_mod, estpars, transform = TRUE)
-  print(obj_fun(x0_trans))
+  print(-1 * obj_fun(x0_trans))
   
   # Run trajectory matching using subplex algorithm:
   # http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
