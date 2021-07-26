@@ -53,11 +53,13 @@ prepare_data <- function(virus1_nm, virus2_nm, epiyear_val, dat) {
   return(out)
 }
 
-create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, debug_bool = F) {
+create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 7 / 60, debug_bool = F) {
   #Args: 
   # dat: ARI and virological data (data frame, first time point must be 1) 
   # Ri1_max: upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
   # Ri2_max: upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
+  # delta_min: lower bound of 1 / refractory period duration (denominator is upper bound of duration)
+  # (double, passed as global argument in the C script) 
   # debug_bool: should debugging info be printed? (boolean)
   
   # Read model C code:
@@ -72,10 +74,11 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, debug_bool =
     
     if(nm == 'globs') {
       components_l[[nm]] <- paste(components_l[[nm]], 
-                                  sprintf('static int debug = %d; \nstatic double Ri1_max = %f; \nstatic double Ri2_max = %f;', 
+                                  sprintf('static int debug = %d; \nstatic double Ri1_max = %f; \nstatic double Ri2_max = %f; \nstatic double delta_min = %f;', 
                                           as.integer(debug_bool),
                                           as.numeric(Ri1_max),
-                                          as.numeric(Ri2_max)), 
+                                          as.numeric(Ri2_max),
+                                          as.numeric(delta_min)), 
                                   sep = '\n')
     }
     
@@ -97,7 +100,8 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, debug_bool =
                             'H1', 'H2'),
              paramnames = c('Ri1', 'Ri2', # initial effective reproductive numbers
                             'gamma1', 'gamma2', # 1 / average infectious periods
-                            'delta1', 'delta2', # 1 / average refractory periods
+                            'delta', # 1 / average refractory period (assume same duration for flu and RSV)
+                            # 'delta1', 'delta2', # 1 / average refractory periods
                             'theta_lambda1', 'theta_lambda2', # interaction effects on susceptibility to infection
                             'rho1', 'rho2', # probs. infection leads to ARI consultation
                             'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
@@ -106,7 +110,8 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, debug_bool =
                             'R10', 'R20', 'R120'), # props. recovered at outbreak start
              params = c(Ri1 = 1.5, Ri2 = 2,
                         gamma1 = 7 / 5, gamma2 = 7 / 10, # or 4 for flu?
-                        delta1 = 7 / 5, delta2 = 7 / 5,
+                        delta = 7 / 5,
+                        # delta1 = 7 / 5, delta2 = 7 / 5,
                         theta_lambda1 = 1.0, theta_lambda2 = 1.0,
                         rho1 = 0.5, rho2 = 0.5,
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
