@@ -4,7 +4,7 @@
 // Expit transform for parameters constrained in interval [a,b]
 static double expitCons(double x, double a, double b) {
   double out = (a + b * exp(x)) / (1.0 + exp(x));
-  if(ISNAN(out)) out = (b + a * exp(-x)) / (1.0 + exp(-x)); // If x=+Inf, must return b
+  if(ISNAN(out) | isinf(out)) out = (b + a * exp(-x)) / (1.0 + exp(-x)); // If x=+Inf, must return b
   return out;
 }
 
@@ -147,6 +147,10 @@ if ((X_SS + X_IS + X_RS + X_SI + X_SR + X_RR) != N) {
 if ((X_SS + X_IS + X_RS + X_SI + X_SR + X_RR) != N) {
   Rprintf("SS=%f, IS=%f, RS=%f, SI=%f, SR=%f, RR=%f, sum=%f, N=%f\n", X_SS, X_IS, X_RS, X_SI, X_SR, X_RR, X_SS + X_IS + X_RS + X_SI + X_SR + X_RR, N);
   //X_SS = nearbyint(N - X_IS - X_RS - X_SI - X_SR - X_RR);
+}
+
+if(debug) {
+  Rprintf("%f, %f, %f, %f, %f, %f, %f\n", Ri1, Ri2, I10, I20, R10, R20, R120);
 }
 
 //end_rinit
