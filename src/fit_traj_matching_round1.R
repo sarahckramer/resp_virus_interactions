@@ -5,6 +5,9 @@
 
 # Setup
 
+# Set seed:
+set.seed(749501349)
+
 # Load libraries:
 library(nloptr)
 
@@ -145,3 +148,5 @@ if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
 } else {
   print('Insufficient epidemic activity')
 }
+
+print('Done.')
