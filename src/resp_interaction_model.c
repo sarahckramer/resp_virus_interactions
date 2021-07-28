@@ -146,7 +146,6 @@ if ((X_SS + X_IS + X_RS + X_SI + X_SR + X_RR) != N) {
 
 if ((X_SS + X_IS + X_RS + X_SI + X_SR + X_RR) != N) {
   Rprintf("SS=%f, IS=%f, RS=%f, SI=%f, SR=%f, RR=%f, sum=%f, N=%f\n", X_SS, X_IS, X_RS, X_SI, X_SR, X_RR, X_SS + X_IS + X_RS + X_SI + X_SR + X_RR, N);
-  //X_SS = nearbyint(N - X_IS - X_RS - X_SI - X_SR - X_RR);
 }
 
 if(debug) {
