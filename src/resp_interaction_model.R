@@ -72,7 +72,7 @@ check_correct_N_CONST(resp_mod, unique(dat_pomp$pop))
 
 # Run deterministic simulation:
 sim_determ <- trajectory(object = resp_mod, format = 'data.frame') %>%
-  select(H1:.id) %>%
+  dplyr::select(H1:.id) %>%
   pivot_longer(H1:H2, names_to = 'Vir', values_to = 'Inc')
 p3 <- ggplot(data = sim_determ, aes(x = time, y = Inc, group = Vir, col = Vir)) +
   geom_line() + geom_point() +
