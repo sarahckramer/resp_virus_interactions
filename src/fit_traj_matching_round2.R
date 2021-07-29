@@ -21,11 +21,13 @@ Ri_max1 <- 3.0
 Ri_max2 <- 3.0
 delta_min <- 7 / 60.0
 
-# estpars <- c('Ri1', 'Ri2', 'R10', 'R20', 'R120')
 seasons <- 2006:2014
 
 sobol_size <- 100
 search_type <- 'round1_CIs'
+int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
+
+# CHECK: Fit 'panel' but with no interaction?
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -45,68 +47,48 @@ create_obj_fxn <- function(po, estpars) {
   return(ofun)
 }
 
-# calculate_global_loglik <- function() {
-#   
-#   
-#   
-# }
-# 
-# GlobalLogLikelihood<-function(parms){
-#   ## needs to be just parameters as inputs, already transformed
-#   # Calculates the logliklihood for each unit, and combines to give the global negative loglikelihood
-#   # Inputs:
-#   # parms - named vector of parameters
-#   # Outputs:
-#   # global objective function
-#   
-#   # Name parameters for nloptr input
-#   if(is.null(names(parms))){ names(parms)<-x0_trans_names }
-#   
-#   # split parms into shared and unit parms
-#   unit_in<-as.data.frame(sapply(paste0('^',unit_nms,"_"), grep, x=names(parms)))
-#   if(ncol(unit_in) == 1){
-#     unit_in<-as.data.frame(matrix(data = c(unlist(unit_in)), nrow=1))
-#   }
-#   names(unit_in)<-unit_nms
-#   shared_parms<-parms[-unique(unlist(unit_in))]
-#   
-#   unit_parms<-list()
-#   for(i in 1:length(unit_nms)){
-#     unit<-parms[unit_in[,i]]
-#     if(length(unit)>0){
-#       names(unit)<-str_split(names(unit), "_", simplify=T)[,2] 
-#       unit_parms[[i]]<-unit
-#     }
-#   } 
-#   
-#   # number of regions in the cases
-#   n_regions<-length(globalofuns)
-#   units_ll<-rep(NA, n_regions)
-#   for(i in 1:n_regions){ # for each unit
-#     # assign parameters
-#     if(length(unit_parms)>0){
-#       u_params<-c(shared_parms, unit_parms[[i]]) 
-#     }else{
-#       u_params<-c(shared_parms)
-#     }
-#     
-#     # calculate unit loglikelihood
-#     fn<-globalofuns[[i]]
-#     u_ll<-fn(u_params)
-#     units_ll[i]<-u_ll
-#   }
-#   
-#   # Calculate the global ll
-#   glob_ll<-sum(units_ll)
-#   return(glob_ll)
-# }
-
-
-
-
-
-
-
+calculate_global_loglik <- function(trans_vals) {
+  # Calculates the log-likelihood for each season, and combines to yield a global log-likelihood
+  # param trans_vals: Unnamed vector of transformed parameters; fxn only works if this is the only input?
+  # returns: The global, negative log-likelihood
+  
+  # Add names to vector:
+  if(is.null(names(trans_vals))) names(trans_vals) <- x0_trans_names
+  
+  # Split params into shared and unit params:
+  unit_in <- as.data.frame(sapply(paste0('^', seasons, '_'), grep, x = names(trans_vals)))
+  if (ncol(unit_in) == 1) {
+    unit_in <- as.data.frame(matrix(data = c(unlist(unit_in)), nrow = 1))
+  }
+  names(unit_in) <- seasons
+  shared_params <- trans_vals[-unique(unlist(unit_in))]
+  
+  unit_params <- list()
+  for (i in 1:length(seasons)) {
+    unit <- trans_vals[unit_in[, i]]
+    if (length(unit) > 0) {
+      names(unit) <- str_split(names(unit), '_', simplify = TRUE)[, 2]
+      unit_params[[i]] <- unit
+    }
+  }
+  
+  # Get -ll for each season:
+  units_ll <- rep(NA, length(seasons))
+  
+  for (i in 1:length(seasons)) {
+    if (length(unit_params) > 0) {
+      params_temp <- c(shared_params, unit_params[[i]])
+    } else {
+      params_temp <- c(shared_params)
+    }
+    
+    units_ll[i] <- obj_fun_list[[i]](params_temp)
+  }
+  
+  # Calculate global -ll:
+  glob_ll <- sum(units_ll)
+  return(glob_ll)
+}
 
 transform_params <- function(orig_vals, po, seas, params_all, params_shared) {
   # Transforms parameters as needed
@@ -151,7 +133,7 @@ back_transform_params <- function(trans_vals, po, seas, params_all, params_share
   # param params_shared: Names of the shared parameters to be estimated
   # returns: Vector of un-transformed parameter values
   
-  # NEED TO ADD NAMES?
+  names(trans_vals) <- params_all
   
   trans_vals_shared <- trans_vals[which(params_shared %in% params_all)]
   
@@ -208,8 +190,13 @@ seasons <- seasons[lapply(po_list, length) > 0]
 po_list <- po_list[lapply(po_list, length) > 0]
 
 # Choose parameters to estimate:
-shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-# shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+if (int_eff == 'susc') {
+  shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+} else if (int_eff == 'sev') {
+  shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+} else {
+  stop('Unrecognized int_eff value.')
+}
 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
@@ -257,27 +244,27 @@ for (i in 1:length(ci_list)) {
   
   # Check that initial conditions can't sum to >1:
   sums <- ci_temp %>% select(I10:R120) %>% rowSums()
-
+  
   if (sums[1] > 1.0) {
     print('Lower bounds sum to more than 1!')
     stop()
   }
-
+  
   if (sums[2] > 1.0) {
-
+    
     # Reduce the upper bounds of R10/R20/R120 proportionally:
     orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
-    red_needed <- sums[2] - 0.9999
+    red_needed <- sums[2] - 0.9999999
     new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
-
+    
     # Ensure upper bounds still greater than lower:
     orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
     expect_true(all(new_upper_bounds > orig_lower_bounds))
-
+    
     # Ensure upper bounds now sum to 1 or less:
     ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
     expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
-
+    
   }
   
   # Store in list:
@@ -318,11 +305,8 @@ obj_fun_list <- lapply(po_list, function(ix) {
   create_obj_fxn(ix, estpars = true_estpars)
 }) # equivalent to Libbie's GlobalOfun fxn
 
-# CHECK: Fit each season separately using these?
-# CHECK: Fit 'panel' but with no interaction?
-
 # Set maximal execution time for each estimation:
-nmins_exec <- time_max * 60 / (sobol_size / no_jobs) # do not exceed 23 hours
+nmins_exec <- time_max * 60 / (sobol_size / no_jobs)
 print(sprintf("Max estimation time=%.1f min", nmins_exec))
 
 # Get unique identifiers:
@@ -336,17 +320,19 @@ for (i in seq_along(sub_start)) {
   # Get start values:
   x0 <- as.numeric(start_values[sub_start[i], ])
   x0_trans <- transform_params(x0, resp_mod, seasons, estpars, shared_estpars)
+  x0_trans_names <- names(x0_trans)
   
   # Check that parameter transformations correct:
   x0_orig <- back_transform_params(x0_trans, resp_mod, seasons, estpars, shared_estpars)
   expect_equal(x0, unname(x0_orig))
+  rm(x0_orig)
   
   # Calculate initial log-likelihood:
-  #print(calculate_global_loglik(x0_trans))
+  print(-1 * calculate_global_loglik(x0_trans))
   
   # Fit models:
   tic <- Sys.time()
-  tm <- try(
+  m <- try(
     nloptr(x0 = x0_trans, 
            eval_f = calculate_global_loglik,
            opts = list(algorithm = "NLOPT_LN_SBPLX",
@@ -364,65 +350,16 @@ for (i in seq_along(sub_start)) {
   
   
   
+  x0_fit <- m$solution
+  names(x0_fit) <- x0_trans_names
+  print(-1 * calculate_global_loglik(x0_fit))
+  back_transform_params(x0_fit, resp_mod, seasons, estpars, shared_estpars) %>% print()
+  
+  
+  
 }
 rm(i)
 
-
-
-
-
-
-
-for (i in seq_along(sub_start)) {
-  
-  print(obj_fun(x0_trans))
-  
-  # Run trajectory matching using subplex algorithm:
-  # http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
-  tic <- Sys.time()
-  m <- try(
-    nloptr(x0 = unname(x0_trans),
-           eval_f = obj_fun,
-           opts = list(algorithm = 'NLOPT_LN_SBPLX',
-                       maxtime = 60.0,
-                       maxeval = -1, # disabled
-                       xtol_rel = -1, # disabled; default: 1e-4
-                       print_level = 0))
-  )
-  toc <- Sys.time()
-  etime <- toc - tic
-  units(etime) <- 'hours'
-  print(etime)
-  
-  # If estimation is successful, save results:
-  if (!inherits(m, 'try-error')) {
-    coef(resp_mod, estpars, transform = TRUE) <- m$solution
-    
-    # Collect all results:
-    out <- list(allpars = coef(resp_mod),
-                estpars = coef(resp_mod, estpars),
-                ll = -m$objective,
-                conv = m$status,
-                message = m$message,
-                niter = m$iterations,
-                etime = as.numeric(etime))
-    
-    # Write to file:
-    saveRDS(out,
-            file = sprintf('results/res_%s_%s_%d.rds',
-                           vir,
-                           as.character(yr),
-                           sub_start[i])
-    )
-    
-    # Print results:
-    print(out$ll)
-    print(out$estpars, digits = 2)
-    print(out$conv)
-    print(out$message)
-  }
-  
-}
 
 
 
