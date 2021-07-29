@@ -43,9 +43,9 @@ pars_df <- lapply(res_full, getElement, 'estpars') %>%
   bind_rows() %>%
   bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
               unlist()) %>%
-  mutate(vir1 = which_flu,
+  mutate(virus1 = which_flu,
          year = yrs) %>%
-  select(vir1:year, Ri1:loglik)
+  select(virus1:year, Ri1:loglik)
 
 expect_true(nrow(pars_df) == length(res_files))
 expect_true(ncol(pars_df) == (length(estpars) + 3))
@@ -77,8 +77,10 @@ for (vir1 in unique(which_flu)) {
       
       # Get results for just that flu/season:
       pars_temp <- pars_df %>%
-        filter(vir1 == vir1,
+        filter(virus1 == vir1,
                year == yr)
+      print(table(pars_temp$virus1))
+      print(table(pars_temp$year))
       
       # Sort results and store:
       pars_temp <- pars_temp %>%
