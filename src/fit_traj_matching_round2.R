@@ -225,7 +225,7 @@ estpars <- c(shared_estpars, unit_sp_estpars)
 # Set upper/lower values for global params:
 start_range <- data.frame(rho1 = c(0, 1),
                           rho2 = c(0, 1),
-                          delta = c(delta_min, 7 / 2),
+                          delta = c(7 / 14, 7 / 1),
                           theta_lambda1 = c(0, 1),
                           theta_lambda2 = c(0, 1),
                           theta_rho1 = c(0, 1),
