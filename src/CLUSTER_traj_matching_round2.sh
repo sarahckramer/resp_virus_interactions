@@ -16,10 +16,12 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=300 # memory in MB required by the job
 #SBATCH --time=8:00:00 # run time in h:m:s, up to 24h possible
- 
+
+export VIRUS1=$VIRUS1
+
 # --- start from a clean state and load necessary environment modules ---
 module purge
 module load R/4.0.2
 
 # --- run your executable via srun ---
-R --no-save --no-restore <src/fit_traj_matching_round2.R >results/Rout/R-tm-${SLURM_ARRAY_TASK_ID}.Rout
+R --no-save --no-restore <src/fit_traj_matching_round2.R >results/Rout/R-tm-$VIRUS1-${SLURM_ARRAY_TASK_ID}.Rout
