@@ -16,9 +16,10 @@ no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
+vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 
-vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / no_jobs)]; print(vir1)
-jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
+# vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / no_jobs)]; print(vir1)
+# jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -202,8 +203,7 @@ po_list <- po_list[lapply(po_list, length) > 0]
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-  shared_estpars <- c()
-  # shared_estpars <- c('theta_lambda1')
+  shared_estpars <- c('theta_lambda1')
 } else if (int_eff == 'sev') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
   shared_estpars <- c('theta_rho1')
