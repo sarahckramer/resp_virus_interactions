@@ -4,30 +4,40 @@
 
 # Setup
 
+# Set seed:
+set.seed(749501349)
+
 # Load libraries:
 library(nloptr)
 
+# Get cluster environmental variables:
+jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
+no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
+sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
+search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
+int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
+
+vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / no_jobs)]; print(vir1)
+jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
+
+# # Set parameters for local run:
+# jobid <- 1
+# no_jobs <- 20
+# vir1 <- 'flu_B' # 'flu_A', 'flu_B'
+# 
+# sobol_size <- 200
+# search_type <- 'broad'
+# int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
+
 # Set parameters for run:
-jobid <- 1
-no_jobs <- 20
+debug_bool <- FALSE
+vir2 <- 'rsv'
+seasons <- 2006:2014
 time_max <- 11.5 # Maximal execution time (in hours)
 
-debug_bool <- FALSE
-# yr <- 2006 # 2004:2014 # 2006 = 2005-06 season
-vir1 <- 'flu_B' # 'flu_A', 'flu_B'
-vir2 <- 'rsv'
-
-Ri_max1 <- 3.0
-Ri_max2 <- 3.0
+Ri_max1 <- 2.0
+Ri_max2 <- 2.0
 delta_min <- 7 / 60.0
-
-seasons <- 2006:2014
-
-sobol_size <- 100
-search_type <- 'round1_CIs'
-int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
-
-# CHECK: Fit 'panel' but with no interaction?
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -191,9 +201,12 @@ po_list <- po_list[lapply(po_list, length) > 0]
 
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
-  shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+  # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+  shared_estpars <- c()
+  # shared_estpars <- c('theta_lambda1')
 } else if (int_eff == 'sev') {
-  shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+  # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+  shared_estpars <- c('theta_rho1')
 } else {
   stop('Unrecognized int_eff value.')
 }
@@ -205,7 +218,6 @@ for (i in 1:length(seasons)) {
   unit_sp_estpars <- c(unit_sp_estpars, paste(seasons[i], unit_estpars, sep = '_'))
 }
 rm(i)
-# unit_sp_estpars <- paste0(seasons, '_', rep(unit_estpars, each = length(seasons)))
 
 true_estpars <- c(shared_estpars, unit_estpars)
 estpars <- c(shared_estpars, unit_sp_estpars)
@@ -228,49 +240,49 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R20 = c(0, 0.3),
                                R120 = c(0, 0.3))
 
-# Get 99% CI from round 1 for unit params:
-tj_res_list <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
-
-tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
-
-ci_list <- vector('list', length(seasons))
-
-for (i in 1:length(ci_list)) {
-  tj_res_temp <- tj_res_list[[i]] %>%
-    select(all_of(unit_estpars))
-  
-  ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
-                                 summarise(tj_res_temp, across(.cols = everything(), max))))
-  
-  # Check that initial conditions can't sum to >1:
-  sums <- ci_temp %>% select(I10:R120) %>% rowSums()
-  
-  if (sums[1] > 1.0) {
-    print('Lower bounds sum to more than 1!')
-    stop()
-  }
-  
-  if (sums[2] > 1.0) {
-    
-    # Reduce the upper bounds of R10/R20/R120 proportionally:
-    orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
-    red_needed <- sums[2] - 0.9999999
-    new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
-    
-    # Ensure upper bounds still greater than lower:
-    orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
-    expect_true(all(new_upper_bounds > orig_lower_bounds))
-    
-    # Ensure upper bounds now sum to 1 or less:
-    ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
-    expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
-    
-  }
-  
-  # Store in list:
-  ci_list[[i]] <- ci_temp
-}
-rm(i)
+# # Get 99% CI from round 1 for unit params:
+# tj_res_list <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
+# 
+# tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
+# 
+# ci_list <- vector('list', length(seasons))
+# 
+# for (i in 1:length(ci_list)) {
+#   tj_res_temp <- tj_res_list[[i]] %>%
+#     select(all_of(unit_estpars))
+#   
+#   ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
+#                                  summarise(tj_res_temp, across(.cols = everything(), max))))
+#   
+#   # Check that initial conditions can't sum to >1:
+#   sums <- ci_temp %>% select(I10:R120) %>% rowSums()
+#   
+#   if (sums[1] > 1.0) {
+#     print('Lower bounds sum to more than 1!')
+#     stop()
+#   }
+#   
+#   if (sums[2] > 1.0) {
+#     
+#     # Reduce the upper bounds of R10/R20/R120 proportionally:
+#     orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
+#     red_needed <- sums[2] - 0.9999999
+#     new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
+#     
+#     # Ensure upper bounds still greater than lower:
+#     orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
+#     expect_true(all(new_upper_bounds > orig_lower_bounds))
+#     
+#     # Ensure upper bounds now sum to 1 or less:
+#     ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
+#     expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
+#     
+#   }
+#   
+#   # Store in list:
+#   ci_list[[i]] <- ci_temp
+# }
+# rm(i)
 
 # Get data frame of all ranges:
 for (i in 1:length(seasons)) {
@@ -279,6 +291,8 @@ for (i in 1:length(seasons)) {
     start_range_temp <- unit_start_range
   } else if (search_type == 'round1_CIs') {
     start_range_temp <- ci_list[[i]]
+  } else {
+    stop('Unrecognized search type!')
   }
   
   names(start_range_temp) <- paste0(seasons[i], '_', names(unit_start_range))
@@ -346,36 +360,37 @@ for (i in seq_along(sub_start)) {
   units(etime) <- 'hours'
   print(etime)
   
-  
-  
-  
-  
-  x0_fit <- m$solution
-  names(x0_fit) <- x0_trans_names
-  print(-1 * calculate_global_loglik(x0_fit))
-  back_transform_params(x0_fit, resp_mod, seasons, estpars, shared_estpars) %>% print()
-  
-  
+  # If estimation is successful, save results:
+  if (!inherits(m, 'try-error')) {
+    x0_fit <- m$solution
+    names(x0_fit) <- x0_trans_names
+    x0_fit_untrans <- back_transform_params(x0_fit, resp_mod, seasons, estpars, shared_estpars)
+    
+    out <- list(estpars = x0_fit_untrans,
+                ll = -m$objective,
+                conv = m$status,
+                message = m$message,
+                niter = m$iterations,
+                etime = as.numeric(etime))
+    
+    # Write to file:
+    saveRDS(out, file = sprintf('results/res_%s_%s_%d.rds',
+                                vir1,
+                                int_eff,
+                                sub_start[i])
+    )
+    
+    # Print results:
+    print(out$ll)
+    print(out$estpars, digits = 2)
+    print(out$conv)
+    print(out$message)
+  }
   
 }
 rm(i)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ---------------------------------------------------------------------------------------------------------------------
-# ---------------------------------------------------------------------------------------------------------------------
-
 # Clean up:
 rm(list = ls())
+
+print('Done!')
