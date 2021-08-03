@@ -38,7 +38,7 @@ time_max <- 11.5 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 2.0
-delta_min <- 7 / 60.0
+delta_min <- 7 / 30.0
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -203,7 +203,7 @@ po_list <- po_list[lapply(po_list, length) > 0]
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-  shared_estpars <- c('theta_lambda1')
+  shared_estpars <- c('theta_lambda1', 'delta')
 } else if (int_eff == 'sev') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
   shared_estpars <- c('theta_rho1')
