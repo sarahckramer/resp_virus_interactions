@@ -34,7 +34,7 @@ vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 debug_bool <- FALSE
 vir2 <- 'rsv'
 seasons <- 2006:2014
-time_max <- 11.5 # Maximal execution time (in hours)
+time_max <- 9.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 2.0
@@ -203,7 +203,7 @@ po_list <- po_list[lapply(po_list, length) > 0]
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-  shared_estpars <- c('theta_lambda1', 'delta')
+  shared_estpars <- c('theta_lambda2')
 } else if (int_eff == 'sev') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
   shared_estpars <- c('theta_rho1')
