@@ -206,7 +206,7 @@ if (int_eff == 'susc') {
   shared_estpars <- c('theta_lambda2')
 } else if (int_eff == 'sev') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
-  shared_estpars <- c('theta_rho1')
+  shared_estpars <- c('theta_rho2')
 } else {
   stop('Unrecognized int_eff value.')
 }
@@ -240,49 +240,49 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R20 = c(0, 0.3),
                                R120 = c(0, 0.3))
 
-# # Get 99% CI from round 1 for unit params:
-# tj_res_list <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
-# 
-# tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
-# 
-# ci_list <- vector('list', length(seasons))
-# 
-# for (i in 1:length(ci_list)) {
-#   tj_res_temp <- tj_res_list[[i]] %>%
-#     select(all_of(unit_estpars))
-#   
-#   ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
-#                                  summarise(tj_res_temp, across(.cols = everything(), max))))
-#   
-#   # Check that initial conditions can't sum to >1:
-#   sums <- ci_temp %>% select(I10:R120) %>% rowSums()
-#   
-#   if (sums[1] > 1.0) {
-#     print('Lower bounds sum to more than 1!')
-#     stop()
-#   }
-#   
-#   if (sums[2] > 1.0) {
-#     
-#     # Reduce the upper bounds of R10/R20/R120 proportionally:
-#     orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
-#     red_needed <- sums[2] - 0.9999999
-#     new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
-#     
-#     # Ensure upper bounds still greater than lower:
-#     orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
-#     expect_true(all(new_upper_bounds > orig_lower_bounds))
-#     
-#     # Ensure upper bounds now sum to 1 or less:
-#     ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
-#     expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
-#     
-#   }
-#   
-#   # Store in list:
-#   ci_list[[i]] <- ci_temp
-# }
-# rm(i)
+# Get 99% CI from round 1 for unit params:
+tj_res_list <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
+
+tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
+
+ci_list <- vector('list', length(seasons))
+
+for (i in 1:length(ci_list)) {
+  tj_res_temp <- tj_res_list[[i]] %>%
+    select(all_of(unit_estpars))
+
+  ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
+                                 summarise(tj_res_temp, across(.cols = everything(), max))))
+
+  # Check that initial conditions can't sum to >1:
+  sums <- ci_temp %>% select(I10:R120) %>% rowSums()
+
+  if (sums[1] > 1.0) {
+    print('Lower bounds sum to more than 1!')
+    stop()
+  }
+
+  if (sums[2] > 1.0) {
+
+    # Reduce the upper bounds of R10/R20/R120 proportionally:
+    orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
+    red_needed <- sums[2] - 0.9999999
+    new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
+
+    # Ensure upper bounds still greater than lower:
+    orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
+    expect_true(all(new_upper_bounds > orig_lower_bounds))
+
+    # Ensure upper bounds now sum to 1 or less:
+    ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
+    expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
+
+  }
+
+  # Store in list:
+  ci_list[[i]] <- ci_temp
+}
+rm(i)
 
 # Get data frame of all ranges:
 for (i in 1:length(seasons)) {
