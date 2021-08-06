@@ -33,7 +33,8 @@ vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
-seasons <- 2006:2014
+# seasons <- 2006:2014
+seasons <- c(2006:2009, 2011:2014)
 time_max <- 9.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
@@ -175,7 +176,7 @@ back_transform_params <- function(trans_vals, po, seas, params_all, params_share
 # Fit using trajectory matching
 
 # Loop through years and construct pomp models:
-po_list <- vector('list', length(seasons))
+po_list <- vector('list', length(min(seasons):max(seasons)))
 for (yr in seasons) {
   print(yr)
   
@@ -197,7 +198,7 @@ for (yr in seasons) {
 }
 
 # Remove empty elements:
-seasons <- seasons[lapply(po_list, length) > 0]
+seasons <- c(min(seasons):max(seasons))[lapply(po_list, length) > 0]
 po_list <- po_list[lapply(po_list, length) > 0]
 
 # Choose parameters to estimate:
@@ -244,6 +245,7 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
 tj_res_list <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
 
 tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
+tj_res_list <- tj_res_list[!str_detect(names(tj_res_list), '2010')]
 
 ci_list <- vector('list', length(seasons))
 
