@@ -7,6 +7,7 @@
 library(tidyverse)
 library(pomp)
 library(viridis)
+library(gridExtra)
 
 # Load required functions:
 source('src/functions/functions_flu_RSV.R')
@@ -81,9 +82,9 @@ p3 <- ggplot(data = sim_determ, aes(x = time, y = Inc, group = Vir, col = Vir)) 
   theme_classic()
 if (debug_bool) print(p3)
 
-# # Run stochastic simulation and check that obs never more than n_samp:
-# p4 <- check_obs_lessthan_samples(resp_mod)
-# if (debug_bool) print(p4)
+# Run stochastic simulation and check that obs never more than n_samp:
+p4 <- check_obs_lessthan_samples(resp_mod)
+if (debug_bool) print(p4)
 
 # Check that measurement density model works:
 ll <- logLik(traj_objfun(data = resp_mod))
@@ -93,7 +94,11 @@ if (debug_bool) print(ll)
 p5 <- check_independent_dynamics(resp_mod)
 if (debug_bool) print(p5)
 
+# Quick exploration of how interactions impact dynamics:
+p6 <- quick_explore_interaction(resp_mod, c(0, 0.2, 0.4, 0.6, 0.8, 1.0), n_sim = 5)
+if (debug_bool) do.call('grid.arrange', c(p6, ncol = 2))
+
 # Clean up:
-rm(sim_determ, p3, p4, ll)
+rm(sim_determ, p3, p4, p5, p6, ll)
 
 # ---------------------------------------------------------------------------------------------------------------------
