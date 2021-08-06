@@ -161,7 +161,7 @@ pairs(pars_corr, pch = 20)
 #                                          seq(from = 1.0, to = 20, by = 1.0))) %>%
 #   mutate(ll = NA)
 # 
-# source('src/setup_global_likelilhood.R')
+# source('src/functions/setup_global_likelilhood.R')
 # 
 # for (i in 1:nrow(slices)) {
 #   x0 <- slices[i, 1:36]
@@ -247,7 +247,7 @@ pairs(pars_corr, pch = 20)
 # estpars <- c('theta_lambda2', 'delta', names(pars_top)[2:36])
 # shared_estpars <- c('theta_lambda2', 'delta')
 # true_estpars <- c(shared_estpars, unit_estpars)
-# source('src/setup_global_likelilhood.R')
+# source('src/functions/setup_global_likelilhood.R')
 # 
 # for (i in 1:4) {
 #   mle <- setNames(object = c(as.numeric(pars_top[i, 1]),
@@ -388,7 +388,7 @@ pairs(pars_corr, pch = 20)
 estpars <- c('theta_lambda2', 'delta', names(pars_top)[2:36])
 shared_estpars <- c('theta_lambda2', 'delta')
 true_estpars <- c(shared_estpars, unit_estpars)
-source('src/setup_global_likelilhood.R')
+source('src/functions/setup_global_likelilhood.R')
 
 for (i in 1:20) {
   mle <- setNames(object = c(as.numeric(pars_top[i, 1]),

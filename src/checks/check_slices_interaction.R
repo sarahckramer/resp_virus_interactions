@@ -59,7 +59,7 @@ shared_estpars <- c('theta_lambda1', 'theta_lambda2', 'delta')
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 true_estpars <- c(shared_estpars, unit_estpars)
 
-source('src/setup_global_likelilhood.R')
+source('src/functions/setup_global_likelilhood.R')
 
 for (i in 1:nrow(slices)) {
   x0 <- slices[i, 1:(length(estpars))]
