@@ -317,41 +317,41 @@ pairs(pars_corr, pch = 20)
 # certainly better than with theta_lambda1, but still having some issues
 # theta_lambda2 tends to be lower as Ri1 gets larger
 
-# Slice over theta_lambda2/delta for top 4 parameter sets:
-estpars <- c('theta_lambda2', 'delta', names(pars_top)[2:36])
-shared_estpars <- c('theta_lambda2', 'delta')
-true_estpars <- c(shared_estpars, unit_estpars)
-source('src/setup_global_likelilhood.R')
-
-for (i in 1:4) {
-  mle <- setNames(object = c(as.numeric(pars_top[i, 1]),
-                             7 / 5,
-                             as.numeric(pars_top[i, 2:36])),
-                  nm = estpars)
-  slices <- slice_design(center = mle, 
-                         theta_lambda2 = c(seq(from = 0, to = 1.0, by = 0.05),
-                                           seq(from = 1.0, to = 10, by = 0.5)),
-                         delta = 7 / seq(from = 30, to = 1, by = -1)) %>%
-    mutate(ll = NA)
-  
-  for (j in 1:nrow(slices)) {
-    x0 <- slices[j, 1:37]
-    x0_trans <- transform_params(x0, resp_mod, seasons, estpars, shared_estpars)
-    slices$ll[j] <- -1 * calculate_global_loglik(x0_trans)
-  }
-  rm(j, x0, x0_trans)
-  
-  par(mfrow = c(1, 2), bty = 'l')
-  for (par in shared_estpars) {
-    slices_cur <- filter(slices, slice == par)
-    plot(slices_cur[[par]], slices_cur$ll, type = 'l',
-         xlab = par, ylab = 'Log-Likelihood',
-         main = par)
-  }
-  rm(par, slices_cur)
-}
-# these are definitely the best estimates for these specific sets of season-specific conditions, but it seems like
-# small differences in these season-specific values can lead to large differences in the best-fitting theta_lambda2
+# # Slice over theta_lambda2/delta for top 4 parameter sets:
+# estpars <- c('theta_lambda2', 'delta', names(pars_top)[2:36])
+# shared_estpars <- c('theta_lambda2', 'delta')
+# true_estpars <- c(shared_estpars, unit_estpars)
+# source('src/setup_global_likelilhood.R')
+# 
+# for (i in 1:4) {
+#   mle <- setNames(object = c(as.numeric(pars_top[i, 1]),
+#                              7 / 5,
+#                              as.numeric(pars_top[i, 2:36])),
+#                   nm = estpars)
+#   slices <- slice_design(center = mle, 
+#                          theta_lambda2 = c(seq(from = 0, to = 1.0, by = 0.05),
+#                                            seq(from = 1.0, to = 10, by = 0.5)),
+#                          delta = 7 / seq(from = 30, to = 1, by = -1)) %>%
+#     mutate(ll = NA)
+#   
+#   for (j in 1:nrow(slices)) {
+#     x0 <- slices[j, 1:37]
+#     x0_trans <- transform_params(x0, resp_mod, seasons, estpars, shared_estpars)
+#     slices$ll[j] <- -1 * calculate_global_loglik(x0_trans)
+#   }
+#   rm(j, x0, x0_trans)
+#   
+#   par(mfrow = c(1, 2), bty = 'l')
+#   for (par in shared_estpars) {
+#     slices_cur <- filter(slices, slice == par)
+#     plot(slices_cur[[par]], slices_cur$ll, type = 'l',
+#          xlab = par, ylab = 'Log-Likelihood',
+#          main = par)
+#   }
+#   rm(par, slices_cur)
+# }
+# # these are definitely the best estimates for these specific sets of season-specific conditions, but it seems like
+# # small differences in these season-specific values can lead to large differences in the best-fitting theta_lambda2
 
 # How do season-specific values change with different theta_lambda2?:
 pars_comp <- pars_top %>%
@@ -386,6 +386,142 @@ plot(pars_comp, pch = 20)
 # Ri2/I20 not super sensitive to changes; R10 consistently very low (almost 0)
 # appears positively related to R20 and negatively to R120, but we know that these two have a tradeoff of their own
 # basically, mostly inflexible to parameters describing RSV alone
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Compile estimates of theta_lambda2 using round 1 CIs as starting values
+
+# Set estpars:
+shared_estpars <- c('theta_lambda2')
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+
+true_estpars <- c(shared_estpars, unit_estpars)
+
+# Get list of results files:
+res_files <- list.files(path = 'results/050821_fluB_thetalambda2_round1ci/', full.names = TRUE)
+
+# Read in results:
+res_full = list()
+for (i in seq_along(res_files)) {
+  res_full[[i]] <- read_rds(res_files[[i]])
+}
+rm(i)
+
+# Get parameter estimates and log-likelihoods:
+pars_df <- lapply(res_full, getElement, 'estpars') %>%
+  bind_rows() %>%
+  bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+              unlist())
+expect_true(nrow(pars_df) == length(res_files))
+expect_true(all(is.finite(pars_df$loglik)))
+
+# Keep only top results:
+pars_df <- pars_df %>%
+  arrange(desc(loglik))
+
+no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.99, df = (dim(pars_df)[2] - 1))))
+no_best <- max(no_best, 50)
+print(no_best)
+
+pars_top <- pars_df[1:no_best, ]
+
+# Clean up:
+rm(res_files, res_full, no_best)
+
+# Compare:
+res_glob <- pars_top %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  select(param:year) %>%
+  mutate(method = 'Global_p1_2_CI')
+
+# Combine data frames:
+res_df <- res_df %>%
+  bind_rows(res_glob)
+
+# Plot results:
+p5 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+  facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
+print(p5)
+# similar; narrower intervals than when using global search
+
+# Explore correlations:
+pars_corr <- pars_top %>% #filter(loglik > -720) %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  pivot_wider(names_from = param, values_from = value) %>%
+  select(-year)
+pairs(pars_corr, pch = 20)
+# logliks are fairly similar for the full range of theta_lambda2, from 0 to ~2.5
+# higher values tend to be fit for lower values of Ri1, but these are very small changes in Ri1
+# in one season, also higher values as I0 gets higher - 2011, where outbreaks are simultaneous
+
+# Slice over theta_lambda2/delta for top 4 parameter sets:
+estpars <- c('theta_lambda2', 'delta', names(pars_top)[2:36])
+shared_estpars <- c('theta_lambda2', 'delta')
+true_estpars <- c(shared_estpars, unit_estpars)
+source('src/setup_global_likelilhood.R')
+
+for (i in 1:20) {
+  mle <- setNames(object = c(as.numeric(pars_top[i, 1]),
+                             7 / 5,
+                             as.numeric(pars_top[i, 2:36])),
+                  nm = estpars)
+  slices <- slice_design(center = mle,
+                         theta_lambda2 = c(seq(from = 0, to = 1.0, by = 0.05),
+                                           seq(from = 1.0, to = 2, by = 0.5)),
+                         delta = 7 / seq(from = 30, to = 1, by = -1)) %>%
+    mutate(ll = NA)
+
+  for (j in 1:nrow(slices)) {
+    x0 <- slices[j, 1:37]
+    x0_trans <- transform_params(x0, resp_mod, seasons, estpars, shared_estpars)
+    slices$ll[j] <- -1 * calculate_global_loglik(x0_trans)
+  }
+  rm(j, x0, x0_trans)
+
+  par(mfrow = c(1, 2), bty = 'l')
+  for (par in shared_estpars) {
+    slices_cur <- filter(slices, slice == par)
+    plot(slices_cur[[par]], slices_cur$ll, type = 'l',
+         xlab = par, ylab = 'Log-Likelihood',
+         main = par)
+  }
+  rm(par, slices_cur)
+}
+# again, these are the best estimates for these specific sets of season-specific conditions, but it seems like
+# small differences in these season-specific values can lead to large differences in the best-fitting theta_lambda2
+
+# How do season-specific values change with different theta_lambda2?:
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri1'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri2'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I20'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R20'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R120'))
+plot(pars_comp, pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
