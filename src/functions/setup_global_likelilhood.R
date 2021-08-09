@@ -168,7 +168,9 @@ for (yr in seasons) {
   }
   
   if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
-    po_list[[yr - (seasons[1] - 1)]] <- resp_mod
+    if (yr != '2010') {
+      po_list[[yr - (seasons[1] - 1)]] <- resp_mod
+    }
   }
   
 }
