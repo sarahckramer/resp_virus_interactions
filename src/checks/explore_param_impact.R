@@ -18,7 +18,7 @@ int_parms <- c('theta_lambda1', 'theta_lambda2') # eventually also do theta_rhos
 int_eff <- c(seq(0, 1.0, by = 0.1))#, seq(1.25, 2.0, by = 0.25))
 n_lhs <- 300
 n_sim <- 10
-search_type <- 'round1CIs' # 'broad' or 'round1CIs'
+search_type <- 'broad' # 'broad' or 'round1CIs'
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -31,8 +31,8 @@ yr <- 2006
 
 debug_bool <- FALSE
 
-Ri_max1 <- 3.0
-Ri_max2 <- 3.0
+Ri_max1 <- 2.0
+Ri_max2 <- 2.0
 delta_min <- 7 / 60.0
 
 # Load pomp object:
@@ -48,7 +48,7 @@ nm_pars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 # Set parameter ranges:
 if (search_type == 'broad') {
   param_bound <- cbind(c(1.0, 1.0, 0, 0, 0, 0, 0),
-                       c(Ri_max1, Ri_max2, 1e-3, 1e-3, 0.5, 0.5, 0.5))
+                       c(Ri_max1, Ri_max2, 1e-3, 1e-3, 0.75, 0.75, 0.75))
 } else if (search_type == 'round1CIs') {
   mle_list <- read_rds('results/traj_match_round1_byvirseas_MLE.rds')
   mle_list <- mle_list[-which(str_detect(names(mle_list), '2010'))]
@@ -76,6 +76,21 @@ parms <- parms %>%
          R120 = if_else(sum >= 1.0, R120 - ((sum - 0.9995) * (R120 / sum)), R120)) %>%
   # mutate(sum_new = I10 + I20 + R10 + R20 + R120) %>%
   select(-sum)
+
+check_sum <- parms %>%
+  mutate(sum = I10 + I20 + R10 + R20 + R120) %>%
+  pull(sum) %>%
+  max()
+
+while (check_sum > 1.0) {
+  parms <- parms %>%
+    mutate(sum = I10 + I20 + R10 + R20 + R120) %>%
+    mutate(R10 = if_else(sum >= 1.0, R10 - ((sum - 0.9995) * (R10 / sum)), R10),
+           R20 = if_else(sum >= 1.0, R20 - ((sum - 0.9995) * (R20 / sum)), R20),
+           R120 = if_else(sum >= 1.0, R120 - ((sum - 0.9995) * (R120 / sum)), R120)) %>%
+    # mutate(sum_new = I10 + I20 + R10 + R20 + R120) %>%
+    select(-sum)
+}
 
 # ggplot(data = a) + geom_line(aes(x = R10, y = R10)) + geom_point(aes(x = R10, y = R10_new, col = (sum > 1.0))) + theme_classic()
 # ggplot(data = a) + geom_line(aes(x = R20, y = R20)) + geom_point(aes(x = R20, y = R20_new, col = (sum > 1.0))) + theme_classic()
@@ -106,6 +121,7 @@ expect_equal(length(int_eff_true), dim(parms_mat)[2])
 for (int_parm in int_parms) {
   
   # Remove packages as necessary:
+  try(detach('package:ppcor'))
   try(detach('package:MASS'))
   
   # Set interaction parameters accordingly:
