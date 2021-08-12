@@ -18,7 +18,8 @@ int_parms <- c('theta_lambda1', 'theta_lambda2') # eventually also do theta_rhos
 int_eff <- c(seq(0, 1.0, by = 0.1))#, seq(1.25, 2.0, by = 0.25))
 n_lhs <- 300
 n_sim <- 10
-search_type <- 'broad' # 'broad' or 'round1CIs'
+search_type <- 'round1CIs' # 'broad' or 'round1CIs'
+realistic_only <- TRUE
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -149,20 +150,6 @@ for (int_parm in int_parms) {
            int_parm_val = int_eff_true[id.parm.orig],
            id.parm = (id.parm.orig - 1) %% n_lhs + 1)
   
-  # Plot data to pdf:
-  pdf(paste0('results/plots/synth_data_', search_type, '_', int_parm, '.pdf'),
-      width = 15, height = 12)
-  for (i in 1:ceiling(n_lhs / 10)) {
-    sim_dat_temp <- sim_dat %>% filter(id.parm %in% seq(i * 10 - 9, i * 10, by = 1))
-    
-    p1 <- ggplot(data = sim_dat_temp) + geom_line(aes(x = time, y = n_P1, group = .id), col = 'steelblue2') +
-      geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') +
-      theme_classic() + facet_grid(int_parm_val ~ id.parm) +
-      labs(x = 'Time', y = 'Lab-Confirmed Cases')
-    print(p1)
-  }
-  dev.off()
-  
   # -------------------------------------------------------------------------------------------------------------------
   
   # Calculate outbreak summary statistics
@@ -198,12 +185,60 @@ for (int_parm in int_parms) {
   sim_dat <- sim_dat %>% filter(!(id.parm %in% parm_sets_to_remove))
   sim_metrics <- sim_metrics %>% filter(!(id.parm %in% parm_sets_to_remove))
   
-  # Identifying realistic outbreaks can occur at a later stage.
-  # Do this specifically for where NO INTERACTION is modeled.
+  # Identify parameter sets that can produce realistic outbreaks:
+  remaining_ids <- unique(sim_metrics$id.parm)
+  print(length(remaining_ids))
+  
+  if (realistic_only) {
+    
+    sim_metrics_red <- sim_metrics %>%
+      filter(int_parm_val == 1.0) %>%
+      filter(pt_diff >= 0 & pt_diff < 14)
+    
+    check_pt_diff <- unique(sim_metrics_red$id.parm)
+    print(length(check_pt_diff) / length(remaining_ids))
+    
+    sim_metrics_red <- sim_metrics_red %>%
+      filter(ar2 < 500 & ar1 < 1500 & ar1 > 200)
+    
+    check_ar <- unique(sim_metrics_red$id.parm)
+    print(length(check_ar) / length(remaining_ids))
+    
+    sim_metrics_red <- sim_metrics_red %>%
+      filter(pt1 >= 53 & pt1 <= 63 &
+               pt2 >= 46 & pt2 <= 55)
+    
+    check_pt <- unique(sim_metrics_red$id.parm)
+    print(length(check_pt) / length(remaining_ids))
+    
+    sim_dat <- sim_dat %>%
+      filter(id.parm %in% check_pt)
+    sim_metrics <- sim_metrics %>%
+      filter(id.parm %in% check_pt)
+    
+  }
+  
+  # When starting with round1 CIs, AR metric seems to be most discerning.
+  # When using broad ranges, pt_diff also plays a large role.
   
   # Save simulations/metrics:
-  write_csv(sim_dat, file = paste0('results/synthetic_data/synth_dat_', search_type, '_', int_parm, '.csv'))
-  write_csv(sim_metrics, file = paste0('results/synthetic_data/synth_metrics_', search_type, '_', int_parm, '.csv'))
+  write_csv(sim_dat, file = paste0('results/synthetic_data/synth_dat_', search_type, '_realistic', realistic_only, '_', int_parm, '.csv'))
+  write_csv(sim_metrics, file = paste0('results/synthetic_data/synth_metrics_', search_type, '_realistic', realistic_only, '_', int_parm, '.csv'))
+  
+  # Plot data to pdf:
+  pdf(paste0('results/plots/synth_data_', search_type, '_realistic', realistic_only, '_', int_parm, '.pdf'),
+      width = 15, height = 12)
+  unique_ids <- sort(unique(sim_dat$id.parm))
+  for (i in 1:ceiling(length(unique_ids) / 10)) {
+    sim_dat_temp <- sim_dat %>% filter(id.parm %in% unique_ids[seq(i * 10 - 9, i * 10, by = 1)])
+
+    p1 <- ggplot(data = sim_dat_temp) + geom_line(aes(x = time, y = n_P1, group = .id), col = 'steelblue2') +
+      geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') +
+      theme_classic() + facet_grid(int_parm_val ~ id.parm) +
+      labs(x = 'Time', y = 'Lab-Confirmed Cases')
+    print(p1)
+  }
+  dev.off()
   
   # -------------------------------------------------------------------------------------------------------------------
   
@@ -245,17 +280,17 @@ for (int_parm in int_parms) {
   # # pairs(sim_corr[, 3:(dim(sim_corr)[2])], pch = 20)
   
   # Lengthen results for plotting:
-  sim_corr_long <- sim_corr %>%
+  sim_corr_long <- sim_corr %>% mutate(R20plusR120 = R20 + R120) %>%
     pivot_longer(cor_ar1:cor_pt_diff, names_to = 'metric', values_to = 'corr') %>%
-    pivot_longer(Ri1:R120, names_to = 'param', values_to = 'param_vals') %>%
+    pivot_longer(Ri1:R20plusR120, names_to = 'param', values_to = 'param_vals') %>%
     mutate(metric = factor(metric),
            param = factor(param))
   
   sim_corr_long$metric <- factor(sim_corr_long$metric, levels = levels(sim_corr_long$metric)[c(1:2, 4:5, 3)])
-  sim_corr_long$param <- factor(sim_corr_long$param, levels = levels(sim_corr_long$param)[c(6:7, 1:3, 5, 4)])
+  sim_corr_long$param <- factor(sim_corr_long$param, levels = levels(sim_corr_long$param)[c(7:8, 1:3, 5, 4, 6)])
   
   # Plot correlations:
-  pdf(paste0('results/plots/param_inf_', search_type, '_', int_parm, '.pdf'),
+  pdf(paste0('results/plots/param_inf_', search_type, '_realistic', realistic_only, '_', int_parm, '.pdf'),
       width = 14, height = 9)
   p2 <- ggplot(data = sim_corr_long, aes(x = param_vals, y = corr, col = param)) +
     geom_point(size = 0.8) + facet_grid(metric ~ param, scales = 'free_x') +
@@ -415,5 +450,7 @@ for (int_parm in int_parms) {
   dev.off()
   
 }
+
+rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
