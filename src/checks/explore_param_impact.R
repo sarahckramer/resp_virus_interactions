@@ -90,6 +90,11 @@ while (check_sum > 1.0) {
            R120 = if_else(sum >= 1.0, R120 - ((sum - 0.9995) * (R120 / sum)), R120)) %>%
     # mutate(sum_new = I10 + I20 + R10 + R20 + R120) %>%
     select(-sum)
+  
+  check_sum <- parms %>%
+    mutate(sum = I10 + I20 + R10 + R20 + R120) %>%
+    pull(sum) %>%
+    max()
 }
 
 # ggplot(data = a) + geom_line(aes(x = R10, y = R10)) + geom_point(aes(x = R10, y = R10_new, col = (sum > 1.0))) + theme_classic()
