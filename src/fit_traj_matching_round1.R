@@ -34,7 +34,7 @@ jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 # Set parameters for run:
 vir2 <- 'rsv'
 
-time_max <- 11.5 # Maximal execution time (in hours)
+time_max <- 9.75 # Maximal execution time (in hours)
 debug_bool <- FALSE
 
 Ri_max1 <- 3.0
