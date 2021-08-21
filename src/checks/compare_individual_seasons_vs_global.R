@@ -451,6 +451,202 @@ plot(pars_comp, pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Compile estimates of theta_lambda2 using round 1 CIs as starting values AND rho2 = 0.15
+
+# Set estpars:
+shared_estpars <- c('theta_lambda2')
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+
+true_estpars <- c(shared_estpars, unit_estpars)
+
+# Get list of results files:
+res_files <- list.files(path = 'results/160821_fluB_thetalambda2_rho015/', full.names = TRUE)
+
+# Read in results:
+res_full = list()
+for (i in seq_along(res_files)) {
+  res_full[[i]] <- read_rds(res_files[[i]])
+}
+rm(i)
+
+# Get parameter estimates and log-likelihoods:
+pars_df <- lapply(res_full, getElement, 'estpars') %>%
+  bind_rows() %>%
+  bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+              unlist())
+expect_true(nrow(pars_df) == length(res_files))
+expect_true(all(is.finite(pars_df$loglik)))
+
+# Keep only top results:
+pars_df <- pars_df %>%
+  arrange(desc(loglik))
+
+no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.99, df = (dim(pars_df)[2] - 1))))
+no_best <- max(no_best, 50)
+print(no_best)
+
+pars_top <- pars_df[1:no_best, ]
+
+# Clean up:
+rm(res_files, res_full, no_best)
+
+# Compare:
+res_glob <- pars_top %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  select(param:year) %>%
+  mutate(method = 'Global_p1_2_CI_rho015')
+
+# Combine data frames:
+res_df <- res_df %>%
+  bind_rows(res_glob)
+
+# Plot results:
+p5 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+  facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
+# print(p5)
+# R120 estimates actually pretty similar, although broader; but R20 estimates lower
+
+# Explore correlations:
+pars_corr <- pars_top %>% #filter(loglik > -720) %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  pivot_wider(names_from = param, values_from = value) %>%
+  select(-year)
+pairs(pars_corr, pch = 20)
+# theta_lambda2 values are narrower, but still quite broad, and associated with Ri1
+
+# How do season-specific values change with different theta_lambda2?:
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri1'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri2'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I20'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R20'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R120'))
+plot(pars_comp, pch = 20)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Compile estimates of theta_lambda2 using broad starting values AND rho2 = 0.15
+
+# Set estpars:
+shared_estpars <- c('theta_lambda2')
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+
+true_estpars <- c(shared_estpars, unit_estpars)
+
+# Get list of results files:
+res_files <- list.files(path = 'results/190821_fluB_thetalambda2_rho015_broad/', full.names = TRUE)
+
+# Read in results:
+res_full = list()
+for (i in seq_along(res_files)) {
+  res_full[[i]] <- read_rds(res_files[[i]])
+}
+rm(i)
+
+# Get parameter estimates and log-likelihoods:
+pars_df <- lapply(res_full, getElement, 'estpars') %>%
+  bind_rows() %>%
+  bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+              unlist())
+expect_true(nrow(pars_df) == length(res_files))
+expect_true(all(is.finite(pars_df$loglik)))
+
+# Keep only top results:
+pars_df <- pars_df %>%
+  arrange(desc(loglik))
+
+no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.99, df = (dim(pars_df)[2] - 1))))
+no_best <- max(no_best, 50)
+print(no_best)
+
+pars_top <- pars_df[1:no_best, ]
+
+# Clean up:
+rm(res_files, res_full, no_best)
+
+# Compare:
+res_glob <- pars_top %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  select(param:year) %>%
+  mutate(method = 'Global_p1_2_broad_rho015')
+
+# Combine data frames:
+res_df <- res_df %>%
+  bind_rows(res_glob)
+
+# Plot results:
+p6 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+  facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
+print(p6)
+# broad has higher R10/R20 and lower R120/Ri1
+
+# Explore correlations:
+pars_corr <- pars_top %>% #filter(loglik > -720) %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  pivot_wider(names_from = param, values_from = value) %>%
+  select(-year)
+pairs(pars_corr, pch = 20)
+# still a wide range of theta_lambda2 values; associated with Ri1; highest ll to very low values
+
+# How do season-specific values change with different theta_lambda2?:
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri1'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri2'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I20'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R20'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R120'))
+plot(pars_comp, pch = 20)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # # Compile estimates of theta_rho2 using round 1 CIs as starting values
 # 
 # # Set estpars:
@@ -503,9 +699,9 @@ plot(pars_comp, pch = 20)
 #   bind_rows(res_glob)
 # 
 # # Plot results:
-# p5 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+# p6 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
 #   facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
-# # print(p5)
+# # print(p6)
 # 
 # # Explore correlations:
 # pars_corr <- pars_top %>% #filter(loglik > -720) %>%
@@ -605,9 +801,9 @@ res_df <- res_df %>%
   bind_rows(res_glob)
 
 # Plot results:
-p5 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+p7 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
   facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
-print(p5)
+print(p7)
 # when we allow rho2 to be fit, Ri1 and R10 and I20 tend to be higher, while R20 and R120 are lower
 
 # Explore correlations:
@@ -985,7 +1181,7 @@ res_df <- res_df %>%
 # Plot results:
 p2 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
   facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
-print(p2)
+# print(p2)
 # Ri1/R10/I20 higher, R20/R120 lower
 
 # Explore correlations:
@@ -998,6 +1194,110 @@ pars_corr <- pars_top %>%
 pairs(pars_corr, pch = 20)
 # best theta_lambda2 around 0.1-0.2; best rho2 around 0.25-0.30
 # negative association between Ri1 and theta_lambda2 and between rho2 and I20
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Compile estimates of theta_lambda2 using rho2=0.15 and round 1 CIs as starting values
+
+# Set estpars:
+shared_estpars <- c('theta_lambda2')
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+
+true_estpars <- c(shared_estpars, unit_estpars)
+
+# Get list of results files:
+res_files <- list.files(path = 'results/170821_fluA_thetalambda2_rho015/', full.names = TRUE)
+
+# Read in results:
+res_full = list()
+for (i in seq_along(res_files)) {
+  res_full[[i]] <- read_rds(res_files[[i]])
+}
+rm(i)
+
+# Get parameter estimates and log-likelihoods:
+pars_df <- lapply(res_full, getElement, 'estpars') %>%
+  bind_rows() %>%
+  bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+              unlist())
+expect_true(nrow(pars_df) == length(res_files))
+expect_true(all(is.finite(pars_df$loglik)))
+
+# Keep only top results:
+pars_df <- pars_df %>%
+  arrange(desc(loglik))
+
+no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.99, df = (dim(pars_df)[2] - 1))))
+no_best <- max(no_best, 50)
+print(no_best)
+
+pars_top <- pars_df[1:no_best, ]
+
+# Clean up:
+rm(res_files, res_full, no_best)
+
+# Compare:
+res_glob <- pars_top %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  select(param:year) %>%
+  mutate(method = 'Global_p1_2_CI_rho15')
+
+# Get combined data frame:
+res_df <- res_df %>%
+  bind_rows(res_glob)
+
+# Plot results:
+p3 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+  facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
+print(p3)
+# When rho2 is set to 0.15, we get higher Ri1/R10/I20 and lower R20
+# R120 itself is pretty similar, but range is wider
+
+# Explore correlations:
+pars_corr <- pars_top %>% #filter(loglik > -720) %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  pivot_wider(names_from = param, values_from = value) %>%
+  select(-year)
+pairs(pars_corr, pch = 20)
+# Almost all estimates are less than 1.0; tend to cluster around 0.07-0.15, although ll's very similar
+# Again, negative relationship with Ri1
+
+# Almost all estimates are less than 1.0; best seem to concentrate around 0.2, although all within ~3 ll points
+# Negative relationship with Ri1, as with flu B; positive with I10 (mostly in 2011/2014, but in general relationship is there)
+
+# How do season-specific values change with different theta_lambda2?:
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri1'))
+plot(pars_comp, pch = 20)
+# almost looks like there's a line that represents an upper bound on theta_lambda2 for different Ri1 values?
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri2'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I20'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R20'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('R120'))
+plot(pars_comp, pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
