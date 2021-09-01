@@ -5,7 +5,7 @@
 # Setup
 
 # Save as pdf:
-pdf('results/plots/trajectory_matching_round2.pdf',
+pdf('results/plots/010921_trajectory_matching_round2.pdf',
     width = 18, height = 10)
 
 # Load libraries:
@@ -703,11 +703,9 @@ res_df <- res_df %>%
   bind_rows(res_glob)
 
 # Plot results:
-res_df$method <- factor(res_df$method)
-res_df$method <- factor(res_df$method, levels = levels(res_df$method)[c(8, 1:3, 6, 4, 7, 5)])
 p7 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
   facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
-print(p7)
+# print(p7)
 # broad has higher R10/R20 and lower R120/Ri1
 
 # Explore correlations:
@@ -740,14 +738,94 @@ plot(pars_comp, pch = 20)
 # pars_comp <- pars_top %>%
 #   select(theta_lambda2, contains('R10'))
 # plot(pars_comp, pch = 20)
-# 
-# pars_comp <- pars_top %>%
-#   select(theta_lambda2, contains('R20'))
-# plot(pars_comp, pch = 20)
-# 
-# pars_comp <- pars_top %>%
-#   select(theta_lambda2, contains('R120'))
-# plot(pars_comp, pch = 20)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Compile estimates of theta_lambda2 using broad starting values AND rho2 = 0.15 AND holding R10/R20 to realistic values
+
+# Set estpars:
+shared_estpars <- c('theta_lambda2')
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20')
+
+true_estpars <- c(shared_estpars, unit_estpars)
+
+# Get list of results files:
+res_files <- list.files(path = 'results/310821_fluB_thetalambda2_R_realistic/', full.names = TRUE)
+
+# Read in results:
+res_full = list()
+for (i in seq_along(res_files)) {
+  res_full[[i]] <- read_rds(res_files[[i]])
+}
+rm(i)
+
+# Get parameter estimates and log-likelihoods:
+pars_df <- lapply(res_full, getElement, 'estpars') %>%
+  bind_rows() %>%
+  bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+              unlist())
+expect_true(nrow(pars_df) == length(res_files))
+expect_true(all(is.finite(pars_df$loglik)))
+
+# Keep only top results:
+pars_df <- pars_df %>%
+  arrange(desc(loglik))
+
+no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.99, df = (dim(pars_df)[2] - 1))))
+no_best <- max(no_best, 50)
+print(no_best)
+
+pars_top <- pars_df[1:no_best, ]
+
+# Clean up:
+rm(res_files, res_full, no_best)
+
+# Compare:
+res_glob <- pars_top %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  select(param:year) %>%
+  mutate(method = 'Global_p1_2_broad_rho015_R_realistic')
+
+# Combine data frames:
+res_df <- res_df %>%
+  bind_rows(res_glob)
+
+# Plot results:
+res_df$method <- factor(res_df$method)
+res_df$method <- factor(res_df$method, levels = levels(res_df$method)[c(9, 1:3, 7, 4, 8, 6:5)])
+p8 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+  facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
+print(p8)
+
+# Explore correlations:
+pars_corr <- pars_top %>% #filter(loglik > -720) %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  pivot_wider(names_from = param, values_from = value) %>%
+  select(-year)
+pairs(pars_corr, pch = 20, main = 'theta_lambda2_broad_rho=0.15_R_realistic')
+# now theta_lambda2 tends to fit toward 1, but many seem to just get stuck at either 0 or 1; lower ll than when R allowed to be fit
+# pretty highly correlated with all other parameters, but params also fit to a really narrow range - still suggests that a very small change in other parameters changes the best-fit theta_lambda2 value...
+
+# How do season-specific values change with different theta_lambda2?:
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri1'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri2'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I20'))
+plot(pars_comp, pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -1353,11 +1431,9 @@ res_df <- res_df %>%
   bind_rows(res_glob)
 
 # Plot results:
-res_df$method <- factor(res_df$method)
-res_df$method <- factor(res_df$method, levels = levels(res_df$method)[c(4, 1:3)])
 p3 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
   facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
-print(p3)
+# print(p3)
 # When rho2 is set to 0.15, we get higher Ri1/R10/I20 and lower R20
 # R120 itself is pretty similar, but range is wider
 
@@ -1404,6 +1480,94 @@ plot(pars_comp, pch = 20)
 # pars_comp <- pars_top %>%
 #   select(theta_lambda2, contains('R120'))
 # plot(pars_comp, pch = 20)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Compile estimates of theta_lambda2 using rho2=0.15 and broad starting values and R realistic
+
+# Set estpars:
+shared_estpars <- c('theta_lambda2')
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20')
+
+true_estpars <- c(shared_estpars, unit_estpars)
+
+# Get list of results files:
+res_files <- list.files(path = 'results/310821_fluA_thetalambda2_R_realistic/', full.names = TRUE)
+
+# Read in results:
+res_full = list()
+for (i in seq_along(res_files)) {
+  res_full[[i]] <- read_rds(res_files[[i]])
+}
+rm(i)
+
+# Get parameter estimates and log-likelihoods:
+pars_df <- lapply(res_full, getElement, 'estpars') %>%
+  bind_rows() %>%
+  bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+              unlist())
+expect_true(nrow(pars_df) == length(res_files))
+expect_true(all(is.finite(pars_df$loglik)))
+
+# Keep only top results:
+pars_df <- pars_df %>%
+  arrange(desc(loglik))
+
+no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.99, df = (dim(pars_df)[2] - 1))))
+no_best <- max(no_best, 50)
+print(no_best)
+
+pars_top <- pars_df[1:no_best, ]
+
+# Clean up:
+rm(res_files, res_full, no_best)
+
+# Compare:
+res_glob <- pars_top %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  select(param:year) %>%
+  mutate(method = 'Global_p1_2_broad_rho15_R_realistic')
+
+# Get combined data frame:
+res_df <- res_df %>%
+  bind_rows(res_glob)
+
+# Plot results:
+res_df$method <- factor(res_df$method)
+res_df$method <- factor(res_df$method, levels = levels(res_df$method)[c(5, 2:4, 1)])
+p4 <- ggplot(data = res_df, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+  facet_wrap(~param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
+print(p4)
+
+# Explore correlations:
+pars_corr <- pars_top %>% #filter(loglik > -720) %>%
+  pivot_longer(-c(theta_lambda2, loglik), names_to = 'param') %>%
+  mutate(year = str_sub(param, 1, 4),
+         param = str_sub(param, 6, str_length(param))) %>%
+  pivot_wider(names_from = param, values_from = value) %>%
+  select(-year)
+pairs(pars_corr, pch = 20, main = 'theta_lambda2_broad_rho=0.15_R_realistic')
+# ll maximized at 1, but values fit often to 1.0 or 0.0, and ll is much lower than when R fit
+# correlated with Ri1; with other params, too, but not as much
+
+# How do season-specific values change with different theta_lambda2?:
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri1'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('Ri2'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I10'))
+plot(pars_comp, pch = 20)
+
+pars_comp <- pars_top %>%
+  select(theta_lambda2, contains('I20'))
+plot(pars_comp, pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
