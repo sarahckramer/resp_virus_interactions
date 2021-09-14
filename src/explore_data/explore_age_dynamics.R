@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------------------------
-
+# Plot ARI/flu/RSV incidence and positivity by age group
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load libraries:
@@ -33,6 +33,10 @@ fr_dat <- fr_dat %>%
   select(-c(pop_eff, n_ARI)) %>%
   filter(epiyear >= 2006)
 
+# ---------------------------------------------------------------------------------------------------------------------
+
+pdf('results/plots/patterns_by_age.pdf', width = 14, height = 9)
+
 # Plots to explore dynamics by age:
 fr_dat %>% group_by(agecat) %>% summarise(mean_pop = mean(pop_tot))
 # ages 0-4 make up ~6% of the population
@@ -56,8 +60,8 @@ print(p3)
 # flus tend to hit all age groups, but most reported RSV cases are in the 0-4 group; does this implay substantial
 # asymptomatic infection among older age groups? probably; but to what extent do these age groups transmit?
 
-p4 <- ggplot(data = fr_dat, aes(x = week_no, y = prop_pos, group = virus, col = virus)) + geom_line() +
-  facet_grid(agecat ~ epiyear) + theme_classic() + labs(x = 'Week', y = '% of Samples Positive') +
+p4 <- ggplot(data = fr_dat, aes(x = week_no, y = prop_pos, group = virus, col = virus)) + geom_line(lwd = 0.75) +
+  facet_grid(agecat ~ epiyear) + theme_classic() + labs(x = 'Week', y = 'Proportion Positive') +
   scale_color_brewer(palette = 'Set1')
 print(p4)
 
@@ -68,5 +72,7 @@ p5 <- ggplot(data = fr_dat, aes(x = week_no, y = i_ARI_plus, group = virus, col 
   scale_color_brewer(palette = 'Set1')
 print(p5)
 # estimated incidence of (medically-attended) flu also decreases in adults compared to young children
+
+dev.off()
 
 # ---------------------------------------------------------------------------------------------------------------------
