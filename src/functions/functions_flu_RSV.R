@@ -113,7 +113,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                         delta = 7 / 5,
                         # delta1 = 7 / 5, delta2 = 7 / 5,
                         theta_lambda1 = 1.0, theta_lambda2 = 1.0,
-                        rho1 = 0.5, rho2 = 0.5,
+                        rho1 = 0.5, rho2 = 0.15,
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
                         N = unique(dat$pop),
                         I10 = 1e-5, I20 = 1e-5,
