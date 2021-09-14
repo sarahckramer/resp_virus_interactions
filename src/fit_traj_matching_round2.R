@@ -24,17 +24,17 @@ vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 # # Set parameters for local run:
 # jobid <- 1
 # no_jobs <- 20
-# vir1 <- 'flu_B' # 'flu_A', 'flu_B'
+# vir1 <- 'flu_A' # 'flu_A', 'flu_B'
 # 
 # sobol_size <- 200
-# search_type <- 'broad'
+# search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
-# seasons <- 2006:2014
-seasons <- c(2006:2009, 2011:2014)
+seasons <- 2006:2014
+# seasons <- c(2006:2009, 2011:2014)
 time_max <- 9.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
@@ -204,10 +204,10 @@ po_list <- po_list[lapply(po_list, length) > 0]
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-  shared_estpars <- c('theta_lambda2')
+  shared_estpars <- c('theta_lambda1')
 } else if (int_eff == 'sev') {
   # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
-  shared_estpars <- c('theta_rho2')
+  shared_estpars <- c('theta_rho1')
 } else {
   stop('Unrecognized int_eff value.')
 }
@@ -245,7 +245,7 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
 tj_res_list <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
 
 tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
-tj_res_list <- tj_res_list[!str_detect(names(tj_res_list), '2010')]
+# tj_res_list <- tj_res_list[!str_detect(names(tj_res_list), '2010')]
 
 ci_list <- vector('list', length(seasons))
 
