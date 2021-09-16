@@ -17,6 +17,7 @@ sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
+prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 
 # vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / no_jobs)]; print(vir1)
 # jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
@@ -29,6 +30,7 @@ vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 # sobol_size <- 200
 # search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
+# prof_lik <- TRUE
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -40,6 +42,8 @@ time_max <- 9.75 # Maximal execution time (in hours)
 Ri_max1 <- 2.0
 Ri_max2 <- 2.0
 delta_min <- 7 / 30.0
+
+prof_val <- 1.0
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -191,6 +195,11 @@ for (yr in seasons) {
     print('Insufficient virus 2')
   }
   
+  # If doing profile likelihood, set theta_lambda1:
+  if (prof_lik) {
+    coef(resp_mod, 'theta_lambda1') <- prof_val
+  }
+  
   if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
     po_list[[yr - (seasons[1] - 1)]] <- resp_mod
   }
@@ -203,11 +212,19 @@ po_list <- po_list[lapply(po_list, length) > 0]
 
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
-  # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-  shared_estpars <- c('theta_lambda1')
+  if (prof_lik) {
+    shared_estpars <- c()
+  } else {
+    # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+    shared_estpars <- c('theta_lambda1')
+  }
 } else if (int_eff == 'sev') {
-  # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
-  shared_estpars <- c('theta_rho1')
+  if (prof_lik) {
+    shared_estpars <- c()
+  } else {
+    # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+    shared_estpars <- c('theta_rho1')
+  }
 } else {
   stop('Unrecognized int_eff value.')
 }
