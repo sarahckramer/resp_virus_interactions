@@ -13,16 +13,19 @@ years <- 2014:2021
 # Read in data:
 file_list_flu <- list.files(path = 'data/raw/', pattern = 'flu', full.names = TRUE)
 file_list_rsv <- list.files(path = 'data/raw/', pattern = 'rsv', full.names = TRUE)
+file_list_ili <- list.files(path = 'data/raw/', pattern = 'ili', full.names = TRUE)
 
-data_list_flu = data_list_rsv = vector('list', length = length(file_list_flu))
+data_list_flu = data_list_rsv = data_list_ili = vector('list', length = length(file_list_flu))
 for (i in 1:length(file_list_flu)) {
   data_list_flu[[i]] <- read_csv2(file_list_flu[i]) %>%
     mutate(Year = years[i])
   data_list_rsv[[i]] <- read_csv2(file_list_rsv[i]) %>%
     mutate(Year = years[i])
+  data_list_ili[[i]] <- read.table(file_list_ili[i], sep = '\t', skip = 1) %>%
+    mutate(Year = years[i])
 }
 
-rm(file_list_flu, file_list_rsv, i)
+rm(file_list_flu, file_list_rsv, file_list_ili, i)
 
 # Format flu data:
 data_list_flu <- lapply(data_list_flu, function(ix) {
@@ -53,16 +56,29 @@ data_list_rsv <- lapply(data_list_rsv, function(ix) {
 })
 # Starting in 2020 week 8, ages are only <18!
 
+# Format ILI data:
+data_list_ili <- lapply(data_list_ili, function(ix) {
+  names(ix)[1:2] <- c('GOPC', 'PMP.Clinics')
+  ix %>%
+    as_tibble() %>%
+    mutate(Week = 1:nrow(ix)) %>%
+    select(Year, Week, GOPC, PMP.Clinics) %>%
+    mutate(across(.cols = everything(), as.numeric))
+})
+
 # Combine:
 dat_flu <- bind_rows(data_list_flu)
 dat_rsv <- bind_rows(data_list_rsv)
+dat_ili <- bind_rows(data_list_ili)
 expect_true(nrow(dat_flu) == nrow(dat_rsv))
+expect_true(nrow(dat_flu) == nrow(dat_ili))
 
 dat_flu <- dat_flu %>%
   select(Year:n_h3, n_b)
 
 dat_hk <- dat_flu %>%
-  inner_join(dat_rsv, by = c('Year', 'Week'))
+  inner_join(dat_rsv, by = c('Year', 'Week')) %>%
+  inner_join(dat_ili, by = c('Year', 'Week'))
 # expect_true(all(dat_hk$n_samp.x == dat_hk$n_samp.y))
 if (!all(dat_hk$n_samp.x == dat_hk$n_samp.y)) {
   dat_hk %>% filter(n_samp.x != n_samp.y)
@@ -79,8 +95,16 @@ dat_hk <- dat_hk %>%
 # Plot:
 p1 <- ggplot(data = dat_hk %>% pivot_longer(n_h1:n_rsv, names_to = 'vir', values_to = 'val'),
              aes(x = Time, y = val, color = vir)) + geom_line() + theme_classic() + #facet_wrap(~ vir) +
+  labs(x = 'Time', y = '# Samples Pos', color = 'Virus') +
   scale_x_continuous(breaks = c(1, 53, 105, 158, 210, 262, 314, 366), labels = years)
 p2 <- ggplot(data = dat_hk %>% pivot_longer(n_h1:n_rsv, names_to = 'vir', values_to = 'val'),
              aes(x = Time, y = val / n_samp, color = vir)) + geom_line() + theme_classic() +
-  scale_x_continuous(breaks = c(1, 53, 105, 158, 210, 262, 314, 366), labels = years)
-grid.arrange(p1, p2, ncol = 1)
+  labs(x = 'Time', y = '% Samples Pos', color = 'Virus') +
+  scale_x_continuous(breaks = c(1, 53, 105, 158, 210, 262, 314, 366), labels = years) +
+  theme(legend.position = 'bottom')
+p3 <- ggplot(data = dat_hk %>% pivot_longer(GOPC:PMP.Clinics, names_to = 'clinic_type', values_to = 'val'),
+       aes(x = Time, y = val, color = clinic_type)) + geom_line() + theme_classic() +
+  labs(x = 'Time', y = 'ILI Rate (per 1000 consultations)', color = 'Clinic') +
+  scale_x_continuous(breaks = c(1, 53, 105, 158, 210, 262, 314, 366), labels = years) +
+  theme(legend.position = 'bottom')
+grid.arrange(p2, p3, ncol = 1)
