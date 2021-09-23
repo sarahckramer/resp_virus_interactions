@@ -65,6 +65,7 @@ data_list_ili <- lapply(data_list_ili, function(ix) {
     select(Year, Week, GOPC, PMP.Clinics) %>%
     mutate(across(.cols = everything(), as.numeric))
 })
+# General Out-patient Clinics (GOPC) and Private Medical Practitioner (PMP) Clinics
 
 # Combine:
 dat_flu <- bind_rows(data_list_flu)
