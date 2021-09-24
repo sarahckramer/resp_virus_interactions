@@ -103,6 +103,9 @@ fP2 = dbinom(n_P2, n_T, rho2_w, 1); // Second likelihood component, natural scal
 // Replace by a big, but finite penalty if that's the case 
 ll = fmax2(fP1 + fP2, -1e3);
 
+// If data are NA, ll will be NA; in this case, set to zero
+ll = ISNA(ll) ? 0.0 : ll;
+
 if(debug) {
   Rprintf("t=%.1f, rho1_w=%.1f, rho2_w=%.1f, n_T=%.1f, fP1=%.1f, fP2=%.1f, sum=%.1f, ll=%.f\n", t, rho1_w, rho2_w, n_T, fP1, fP2, fP1 + fP2, ll);
 } 
