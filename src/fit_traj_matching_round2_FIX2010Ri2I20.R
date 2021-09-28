@@ -41,7 +41,7 @@ time_max <- 9.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 2.0
-delta_min <- 7 / 30.0
+delta_min <- 7 / 60.0
 
 prof_val <- 1.0
 
@@ -205,10 +205,10 @@ for (yr in seasons) {
   source('src/resp_interaction_model.R')
   
   # Check whether appreciable activity for both viruses:
-  if (sum(resp_mod@data[1, ]) <= 100) {
+  if (sum(resp_mod@data[1, ], na.rm = TRUE) <= 100) {
     print('Insufficient virus 1')
   }
-  if (sum(resp_mod@data[2, ]) <= 100) {
+  if (sum(resp_mod@data[2, ], na.rm = TRUE) <= 100) {
     print('Insufficient virus 2')
   }
   
@@ -217,7 +217,7 @@ for (yr in seasons) {
     coef(resp_mod, 'theta_lambda1') <- prof_val
   }
   
-  if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
+  if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm = TRUE) > 100) {
     po_list[[yr - (seasons[1] - 1)]] <- resp_mod
   }
   
@@ -361,7 +361,7 @@ tj_res_list %>%
   summarise(Ri2 = median(Ri2),
             I20 = median(I20))
 
-coef(po_list[[5]], c('Ri2', 'I20')) <- c(1.59, 0.00137)
+coef(po_list[[5]], c('Ri2', 'I20')) <- c(1.59, 0.00137) # c(1.61, 0.0000111)
 
 # Get list of season-specific objective functions:
 obj_fun_list <- lapply(po_list, function(ix) {
