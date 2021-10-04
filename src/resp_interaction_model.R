@@ -12,6 +12,11 @@ library(viridis)
 source('src/functions/functions_flu_RSV.R')
 source('src/functions/test_code.R')
 
+# Set early start value if it doesn't exist:
+if (!exists('early_start_val')) {
+  early_start_val <- FALSE
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load and format data
@@ -24,7 +29,7 @@ fr_dat <- read_rds('data/formatted/GROG_pop_vir_ari_dat_2003-4_2013-14.rds')
 # ggplot(data = fr_dat, aes(x = week_date, y = n_pos, group = agecat, col = agecat)) + geom_line() + facet_grid(area ~ type, scales = 'free_y') + theme_classic()
 
 # Format data:
-formatted_dat <- prepare_data(vir1, vir2, yr, fr_dat)#, early_start = TRUE)
+formatted_dat <- prepare_data(vir1, vir2, yr, fr_dat, early_start = early_start_val)
 dat_full <- formatted_dat[[1]]
 dat_pomp <- formatted_dat[[2]]
 rm(fr_dat, formatted_dat)
