@@ -429,15 +429,27 @@ source('src/resp_interaction_model.R')
 
 par(mfrow = c(1, 1))
 matplot(resp_mod@data %>% t(), pch = 20, type = 'b', lty = 1)
+obs_df <- resp_mod@data %>%
+  t() %>%
+  as_tibble() %>%
+  mutate(time = 1:ncol(resp_mod@data)) %>%
+  rename('obs1' = 'n_P1',
+         'obs2' = 'n_P2')
 
 plot_list <- list()
-for (i in 1:20) {
+for (i in 1:9) {
   coef(resp_mod, names(pars_temp)) <- pars_temp[i, ]
-  # sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
   traj_temp <- trajectory(resp_mod, format = 'data.frame')
   p_temp <- ggplot(data = traj_temp) + geom_line(aes(x = time, y = H1, group = .id), col = 'black') +
-    geom_line(aes(x = time, y = H2, group = .id), col = 'coral') + theme_classic() +
-    labs(x = 'Time', y = 'Cases')
+    geom_line(aes(x = time, y = H2, group = .id), col = 'coral') +
+    theme_classic() + labs(x = 'Time', y = 'Cases')
+  # sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
+  # sim_temp <- sim_temp %>% inner_join(obs_df, by = 'time')
+  # p_temp <- ggplot(data = sim_temp) + geom_line(aes(x = time, y = n_P1, group = .id), col = 'black') +
+  #   geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') +
+  #   geom_point(aes(x = time, y = obs1, group = .id), col = 'black') +
+  #   geom_point(aes(x = time, y = obs2, group = .id), col = 'coral') +
+  #   theme_classic() + labs(x = 'Time', y = 'Cases')
   plot_list[[i]] <- p_temp
   # print(sum(traj_temp$H1))
 }
@@ -451,13 +463,19 @@ source('src/resp_interaction_model.R')
 coef(resp_mod, c('Ri2', 'I20')) <- c(1.61, 0.0000111)
 
 plot_list <- list()
-for (i in 1:20) {
+for (i in 1:9) {
   coef(resp_mod, names(pars_temp)) <- pars_temp[i, ]
-  # sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
   traj_temp <- trajectory(resp_mod, format = 'data.frame')
   p_temp <- ggplot(data = traj_temp) + geom_line(aes(x = time, y = H1, group = .id), col = 'black') +
-    geom_line(aes(x = time, y = H2, group = .id), col = 'coral') + theme_classic() +
-    labs(x = 'Time', y = 'Cases')
+    geom_line(aes(x = time, y = H2, group = .id), col = 'coral') +
+    theme_classic() + labs(x = 'Time', y = 'Cases')
+  # sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
+  # sim_temp <- sim_temp %>% inner_join(obs_df, by = 'time')
+  # p_temp <- ggplot(data = sim_temp) + geom_line(aes(x = time, y = n_P1, group = .id), col = 'black') +
+  #   geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') +
+  #   geom_point(aes(x = time, y = obs1, group = .id), col = 'black') +
+  #   geom_point(aes(x = time, y = obs2, group = .id), col = 'coral') +
+  #   theme_classic() + labs(x = 'Time', y = 'Cases')
   plot_list[[i]] <- p_temp
   # print(sum(traj_temp$H1))
 }
@@ -471,13 +489,19 @@ source('src/resp_interaction_model.R')
 coef(resp_mod, c('Ri2', 'I20')) <- c(1.61, 0.0000111)
 
 plot_list <- list()
-for (i in 1:20) {
+for (i in 1:9) {
   coef(resp_mod, names(pars_temp)) <- pars_temp[i, ]
-  # sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
   traj_temp <- trajectory(resp_mod, format = 'data.frame')
   p_temp <- ggplot(data = traj_temp) + geom_line(aes(x = time, y = H1, group = .id), col = 'black') +
-    geom_line(aes(x = time, y = H2, group = .id), col = 'coral') + theme_classic() +
-    labs(x = 'Time', y = 'Cases')
+    geom_line(aes(x = time, y = H2, group = .id), col = 'coral') +
+    theme_classic() + labs(x = 'Time', y = 'Cases')
+  # sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
+  # sim_temp <- sim_temp %>% inner_join(obs_df, by = 'time')
+  # p_temp <- ggplot(data = sim_temp) + geom_line(aes(x = time, y = n_P1, group = .id), col = 'black') +
+  #   geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') +
+  #   geom_point(aes(x = time, y = obs1, group = .id), col = 'black') +
+  #   geom_point(aes(x = time, y = obs2, group = .id), col = 'coral') +
+  #   theme_classic() + labs(x = 'Time', y = 'Cases')
   plot_list[[i]] <- p_temp
   # print(sum(traj_temp$H1))
 }
