@@ -216,4 +216,92 @@ DH2 = gamma2 * (X_SI + theta_rho1 * (X_II + X_TI) + X_RI) / N; // Incidence rate
 //end_skel
 
 //start_rsim
+double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
+double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
+
+double beta1 = Ri1 / (1.0 - (R10 + R120)) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
+double beta2 = Ri2 / (1.0 - (R20 + R120)) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+double lambda1 = beta1 * p1; // Force of infection with virus 1
+double lambda2 = beta2 * p2; // Force of infection with virus 2
+
+// Calculate transitions:
+double rates[18];
+double fromSS[2], fromIS[2], fromTS[2], fromSI[2], fromII[2], fromTI[2], fromST[2], fromIT[2], fromTT[2];
+double fromRS, fromRI, fromRT, fromSR, fromIR, fromTR;
+double reportII1, reportII2, reportIT, reportTI;
+
+// dw = rgammawn(sigmaSE, dt); // white noise (extrademographic stochasticity)
+// this eventually gets multiplied by any rates involving lambda?
+
+rates[0] = lambda1;
+rates[1] = lambda2;
+rates[2] = gamma1;
+rates[3] = theta_lambda1 * lambda2;
+rates[4] = delta;
+rates[5] = theta_lambda1 * lambda2;
+rates[6] = theta_lambda2 * lambda1;
+rates[7] = gamma2;
+rates[8] = gamma1;
+rates[9] = gamma2;
+rates[10] = delta;
+rates[11] = gamma2;
+rates[12] = theta_lambda2 * lambda1;
+rates[13] = delta;
+rates[14] = gamma1;
+rates[15] = delta;
+rates[16] = delta;
+rates[17] = delta;
+
+reulermultinom(2, X_SS, &rates[0], dt, fromSS);
+reulermultinom(2, X_IS, &rates[2], dt, fromIS);
+reulermultinom(2, X_TS, &rates[4], dt, fromTS);
+reulermultinom(2, X_SI, &rates[6], dt, fromSI);
+reulermultinom(2, X_II, &rates[8], dt, fromII);
+reulermultinom(2, X_TI, &rates[10], dt, fromTI);
+reulermultinom(2, X_ST, &rates[12], dt, fromST);
+reulermultinom(2, X_IT, &rates[14], dt, fromIT);
+reulermultinom(2, X_TT, &rates[16], dt, fromTT);
+
+// Rprintf("first=%.1f, second=%.f, first=%.1f, second=%.f\n", fromSS[0], fromSS[1], fromIS[0], fromIS[1]);
+
+fromRS = rbinom(X_RS, pTrans(lambda2, dt));
+fromRI = rbinom(X_RI, pTrans(gamma2, dt));
+fromRT = rbinom(X_RT, pTrans(delta, dt));
+fromSR = rbinom(X_SR, pTrans(lambda1, dt));
+fromIR = rbinom(X_IR, pTrans(gamma1, dt));
+fromTR = rbinom(X_TR, pTrans(delta, dt));
+
+reportII1 = rbinom(fromII[0], theta_rho2);
+reportIT = rbinom(fromIT[0], theta_rho2);
+reportII2 = rbinom(fromII[1], theta_rho1);
+reportTI = rbinom(fromTI[1], theta_rho1);
+
+// Balance equations:
+X_SS += -fromSS[0] - fromSS[1];
+X_IS += fromSS[0] - fromIS[0] - fromIS[1];
+X_TS += fromIS[0] - fromTS[0] - fromTS[1];
+X_RS += fromTS[0] - fromRS;
+
+X_SI += fromSS[1] - fromSI[0] - fromSI[1];
+X_II += fromIS[1] + fromSI[0] - fromII[0] - fromII[1];
+X_TI += fromTS[1] + fromII[0] - fromTI[0] - fromTI[1];
+X_RI += fromRS + fromTI[0] - fromRI;
+
+X_ST += fromSI[1] - fromST[0] - fromST[1];
+X_IT += fromII[1] + fromST[0] - fromIT[0] - fromIT[1];
+X_TT += fromTI[1] + fromIT[0] - fromTT[0] - fromTT[1];
+X_RT += fromRI + fromTT[0] - fromRT;
+
+X_SR += fromST[1] - fromSR;
+X_IR += fromIT[1] + fromSR - fromIR;
+X_TR += fromTT[1] + fromIR - fromTR;
+X_RR += fromRT + fromTR;
+
+//W += (dw - dt) / sigmaSE; // standardized i.i.d. white noise
+
+H1_tot += (fromIS[0] + fromII[0] + fromIT[0] + fromIR) / N;
+H2_tot += (fromSI[1] + fromII[1] + fromTI[1] + fromRI) / N;
+H1 += (fromIS[0] + reportII1 + reportIT + fromIR) / N;
+H2 += (fromSI[1] + reportII2 + reportTI + fromRI) / N;
+
 //end_rsim
