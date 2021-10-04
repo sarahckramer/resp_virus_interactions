@@ -21,7 +21,7 @@ Ri_max2 <- 3.0
 delta_min <- 7 / 60.0
 
 # # Output plots to file:
-# pdf('results/plots/240921_trajectory_matching_2010only_fixRi2I20.pdf',
+# pdf('results/plots/041021_trajectory_matching_2010only_fixRi2I20.pdf',
 #     width = 15, height = 10)
 
 # ---------------------------------------------------------------------------------------------------------------------
