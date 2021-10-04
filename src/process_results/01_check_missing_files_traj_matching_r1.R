@@ -70,3 +70,4 @@ if (length(check_list_fluB) != sobol_size * 5) {
 
 # Clean up:
 rm(list = ls())
+print('Done.')

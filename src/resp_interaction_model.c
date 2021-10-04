@@ -37,20 +37,23 @@ T_gamma2 = log(gamma2);
 T_delta = logitCons(delta, delta_min, 7 / 1);
 //T_delta1 = log(delta1);
 //T_delta2 = log(delta2); 
-T_theta_lambda1 = log(theta_lambda1);
-T_theta_lambda2 = log(theta_lambda2);
-T_theta_rho1 = log(theta_rho1);
-T_theta_rho2 = log(theta_rho2);
+T_theta_lambda1 = logit(theta_lambda1);
+T_theta_lambda2 = logit(theta_lambda2);
+T_theta_rho1 = logit(theta_rho1);
+T_theta_rho2 = logit(theta_rho2);
 T_rho1 = logit(rho1); 
 T_rho2 = logit(rho2);
 T_N = N;
 
 sum_init = I10 + I20 + R10 + R20 + R120;
+//sum_init = I10 + R10 + R20 + R120;
 T_I10 = log(I10 / (1.0 - sum_init));
 T_I20 = log(I20 / (1.0 - sum_init));
 T_R10 = log(R10 / (1.0 - sum_init));
 T_R20 = log(R20 / (1.0 - sum_init));
 T_R120 = log(R120 / (1.0 - sum_init));
+
+//T_I20 = logit(I20);
 
 //end_toest
 
@@ -64,20 +67,23 @@ gamma2 = exp(T_gamma2);
 delta = expitCons(T_delta, delta_min, 7 / 1);
 //delta1 = exp(T_delta1);
 //delta2 = exp(T_delta2);
-theta_lambda1 = exp(T_theta_lambda1);
-theta_lambda2 = exp(T_theta_lambda2);
-theta_rho1 = exp(T_theta_rho1);
-theta_rho2 = exp(T_theta_rho2);
+theta_lambda1 = expit(T_theta_lambda1);
+theta_lambda2 = expit(T_theta_lambda2);
+theta_rho1 = expit(T_theta_rho1);
+theta_rho2 = expit(T_theta_rho2);
 rho1 = expit(T_rho1);
 rho2 = expit(T_rho2);
 N = T_N;
 
 sum_init = exp(T_I10) + exp(T_I20) + exp(T_R10) + exp(T_R20) + exp(T_R120);
+//sum_init = exp(T_I10) + exp(T_R10) + exp(T_R20) + exp(T_R120);
 I10 = exp(T_I10) / (1.0 + sum_init);
 I20 = exp(T_I20) / (1.0 + sum_init);
 R10 = exp(T_R10) / (1.0 + sum_init);
 R20 = exp(T_R20) / (1.0 + sum_init);
 R120 = exp(T_R120) / (1.0 + sum_init);
+
+//I20 = expit(T_I20);
 
 //end_fromest
 
@@ -102,6 +108,9 @@ fP2 = dbinom(n_P2, n_T, rho2_w, 1); // Second likelihood component, natural scal
 // If rho_w == 1, the resulting observation probability might be 0 (-Inf on log-scale)
 // Replace by a big, but finite penalty if that's the case 
 ll = fmax2(fP1 + fP2, -1e3);
+
+// If data are NA, ll will be NA; in this case, set to zero
+ll = ISNA(ll) ? 0.0 : ll;
 
 if(debug) {
   Rprintf("t=%.1f, rho1_w=%.1f, rho2_w=%.1f, n_T=%.1f, fP1=%.1f, fP2=%.1f, sum=%.1f, ll=%.f\n", t, rho1_w, rho2_w, n_T, fP1, fP2, fP1 + fP2, ll);
@@ -160,6 +169,8 @@ double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with vir
 
 double beta1 = Ri1 / (1.0 - (R10 + R120)) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
 double beta2 = Ri2 / (1.0 - (R20 + R120)) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+//double beta1 = Ri1 * gamma1; // R0 instead of initial Reff
+//double beta2 = Ri2 * gamma2; // same
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 

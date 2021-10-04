@@ -2,12 +2,13 @@
 # Functions to assist with flu/RSV model
 # ---------------------------------------------------------------------------------------------------------------------
 
-prepare_data <- function(virus1_nm, virus2_nm, epiyear_val, dat) {
+prepare_data <- function(virus1_nm, virus2_nm, epiyear_val, dat, early_start = FALSE) {
   # Function to format French flu/RSV data for input into pomp object
   # param virus1_nm: Name of first virus of interest (string, 'flu_A', 'flu_B', or 'rsv')
   # param virus2_nm: Name of second virus of interest (string, 'flu_A', 'flu_B', or 'rsv')
   # param epiyear_val: season (numeric, for example 2010 for season 2009/2010)
   # param dat: Unformatted data (data frame or tibble)
+  # param early_start: Start model run before data are available?
   # returns: List containing formatted data and data formatted specifically for pomp
   
   out <- vector(mode = 'list', length = 2)
@@ -49,6 +50,24 @@ prepare_data <- function(virus1_nm, virus2_nm, epiyear_val, dat) {
   stopifnot(all(out[['dat_pomp']]$n_P2 >= 0))
   stopifnot(all(out[['dat_pomp']]$n_T >= 0))
   stopifnot(all(out[['dat_pomp']]$i_ARI >= 0))
+  
+  # Add option to start run before week 40:
+  if (early_start) {
+    desired_start_wk <- 30
+    n_rep <- length(desired_start_wk:39)
+    
+    na_df <- matrix(data = NA, nrow = n_rep, ncol = ncol(out[['dat_pomp']])) %>%
+      as_tibble() %>%
+      mutate(V1 = 39:desired_start_wk,
+             V2 = min(out[['dat_pomp']]$week_date) - seq(7, by = 7, length.out = n_rep),
+             V3 = unique(out[['dat_pomp']]$pop))
+    names(na_df) <- names(out[['dat_pomp']])
+    
+    out[['dat_pomp']] <- out[['dat_pomp']] %>%
+      bind_rows(na_df) %>%
+      arrange(week_date) %>%
+      mutate(time = as.numeric(week_date - min(week_date)) / 7 + 1)
+  }
   
   return(out)
 }
@@ -113,7 +132,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                         delta = 7 / 5,
                         # delta1 = 7 / 5, delta2 = 7 / 5,
                         theta_lambda1 = 1.0, theta_lambda2 = 1.0,
-                        rho1 = 0.5, rho2 = 0.5,
+                        rho1 = 0.5, rho2 = 0.15,
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
                         N = unique(dat$pop),
                         I10 = 1e-5, I20 = 1e-5,

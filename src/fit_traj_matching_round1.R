@@ -25,7 +25,7 @@ jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 # jobid <- 1
 # no_jobs <- 10
 # 
-# vir1 <- 'flu_B' # 'flu_A', 'flu_B'
+# vir1 <- 'flu_A' # 'flu_A', 'flu_B'
 # yr <- 2006
 # 
 # sobol_size <- 500
@@ -34,7 +34,7 @@ jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 # Set parameters for run:
 vir2 <- 'rsv'
 
-time_max <- 11.5 # Maximal execution time (in hours)
+time_max <- 9.75 # Maximal execution time (in hours)
 debug_bool <- FALSE
 
 Ri_max1 <- 3.0
@@ -50,7 +50,7 @@ delta_min <- 7 / 60.0
 source('src/resp_interaction_model.R')
 
 # Check that sufficient epidemic activity:
-if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
+if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm = TRUE) > 100) {
   
   # Set start ranges for estimated parameters:
   estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')

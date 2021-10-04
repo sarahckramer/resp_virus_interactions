@@ -170,3 +170,5 @@ write_rds(res_list_full, 'traj_match_round1_byvirseas_FULL.rds')
 write_rds(res_list, 'traj_match_round1_byvirseas_TOP.rds')
 write_rds(mle_list, 'traj_match_round1_byvirseas_MLE.rds')
 write_rds(slice_list, 'traj_match_round1_byvirseas_SLICE.rds')
+
+print('Done.')

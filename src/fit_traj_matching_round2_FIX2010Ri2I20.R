@@ -30,7 +30,7 @@ prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # sobol_size <- 200
 # search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
-# prof_lik <- TRUE
+# prof_lik <- FALSE
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -41,7 +41,7 @@ time_max <- 9.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 2.0
-delta_min <- 7 / 30.0
+delta_min <- 7 / 60.0
 
 prof_val <- 1.0
 
@@ -72,20 +72,37 @@ calculate_global_loglik <- function(trans_vals) {
   if(is.null(names(trans_vals))) names(trans_vals) <- x0_trans_names
   
   # Split params into shared and unit params:
-  unit_in <- as.data.frame(sapply(paste0('^', seasons, '_'), grep, x = names(trans_vals)))
-  if (ncol(unit_in) == 1) {
-    unit_in <- as.data.frame(matrix(data = c(unlist(unit_in)), nrow = 1))
-  }
-  names(unit_in) <- seasons
-  shared_params <- trans_vals[-unique(unlist(unit_in))]
+  # unit_in <- as.data.frame(sapply(paste0('^', seasons, '_'), grep, x = names(trans_vals)))
+  # if (ncol(unit_in) == 1) {
+  #   unit_in <- as.data.frame(matrix(data = c(unlist(unit_in)), nrow = 1))
+  # }
+  # names(unit_in) <- seasons
+  # shared_params <- trans_vals[-unique(unlist(unit_in))]
+  
+  unit_in <- sapply(paste0('^', seasons, '_'), grep, x = names(trans_vals))
+  unit_in <- unit_in[c(1:4, 6:9)] %>% as.data.frame()
+  names(unit_in) <- seasons[c(1:4, 6:9)]
+  shared_params <- trans_vals[1]
   
   unit_params <- list()
   for (i in 1:length(seasons)) {
-    unit <- trans_vals[unit_in[, i]]
-    if (length(unit) > 0) {
-      names(unit) <- str_split(names(unit), '_', simplify = TRUE)[, 2]
-      unit_params[[i]] <- unit
+    # unit <- trans_vals[unit_in[, i]]
+    # if (length(unit) > 0) {
+    #   names(unit) <- str_split(names(unit), '_', simplify = TRUE)[, 2]
+    #   unit_params[[i]] <- unit
+    # }
+    
+    if (i < 5) {
+      unit <- trans_vals[unit_in[, i]]
+    } else if (i > 5) {
+      unit <- trans_vals[unit_in[, i - 1]]
+    } else if (i == 5) {
+      unit <- trans_vals[30:34]
     }
+    
+    names(unit) <- str_split(names(unit), '_', simplify = TRUE)[, 2]
+    unit_params[[i]] <- unit
+    
   }
   
   # Get -ll for each season:
@@ -188,10 +205,10 @@ for (yr in seasons) {
   source('src/resp_interaction_model.R')
   
   # Check whether appreciable activity for both viruses:
-  if (sum(resp_mod@data[1, ]) <= 100) {
+  if (sum(resp_mod@data[1, ], na.rm = TRUE) <= 100) {
     print('Insufficient virus 1')
   }
-  if (sum(resp_mod@data[2, ]) <= 100) {
+  if (sum(resp_mod@data[2, ], na.rm = TRUE) <= 100) {
     print('Insufficient virus 2')
   }
   
@@ -200,7 +217,7 @@ for (yr in seasons) {
     coef(resp_mod, 'theta_lambda1') <- prof_val
   }
   
-  if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
+  if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm = TRUE) > 100) {
     po_list[[yr - (seasons[1] - 1)]] <- resp_mod
   }
   
@@ -237,6 +254,8 @@ for (i in 1:length(seasons)) {
 }
 rm(i)
 
+unit_sp_estpars <- unit_sp_estpars[c(1:29, 31, 33:63)]
+
 true_estpars <- c(shared_estpars, unit_estpars)
 estpars <- c(shared_estpars, unit_sp_estpars)
 
@@ -269,35 +288,35 @@ ci_list <- vector('list', length(seasons))
 for (i in 1:length(ci_list)) {
   tj_res_temp <- tj_res_list[[i]] %>%
     select(all_of(unit_estpars))
-
+  
   ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
                                  summarise(tj_res_temp, across(.cols = everything(), max))))
-
+  
   # Check that initial conditions can't sum to >1:
   sums <- ci_temp %>% select(I10:R120) %>% rowSums()
-
+  
   if (sums[1] > 1.0) {
     print('Lower bounds sum to more than 1!')
     stop()
   }
-
+  
   if (sums[2] > 1.0) {
-
+    
     # Reduce the upper bounds of R10/R20/R120 proportionally:
     orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
     red_needed <- sums[2] - 0.9999999
     new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
-
+    
     # Ensure upper bounds still greater than lower:
     orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
     expect_true(all(new_upper_bounds > orig_lower_bounds))
-
+    
     # Ensure upper bounds now sum to 1 or less:
     ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
     expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
-
+    
   }
-
+  
   # Store in list:
   ci_list[[i]] <- ci_temp
 }
@@ -332,6 +351,17 @@ start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), name
 print(start_range)
 print(summary(start_values))
 print(estpars)
+
+# Set Ri2/I20 during pandemic:
+start_range %>% select(contains('Ri2'))
+tj_res_list %>%
+  bind_rows() %>%
+  filter(year != '2010') %>%
+  select(Ri2, I20) %>%
+  summarise(Ri2 = median(Ri2),
+            I20 = median(I20))
+
+coef(po_list[[5]], c('Ri2', 'I20')) <- c(1.59, 0.00137) # c(1.61, 0.0000111)
 
 # Get list of season-specific objective functions:
 obj_fun_list <- lapply(po_list, function(ix) {

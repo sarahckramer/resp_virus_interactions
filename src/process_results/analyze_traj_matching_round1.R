@@ -10,6 +10,9 @@ library(corrplot)
 library(ppcor)
 library(gridExtra)
 
+# Get/format date (for saving results):
+date <- format(Sys.Date(), '%d%m%y')
+
 # Specify parameters estimated:
 estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
@@ -73,7 +76,8 @@ for (vir1 in flu_types) {
 rm(vir_seas, vir1, yr)
 
 # Output plots to file (for A and B separately):
-pdf('results/plots/290721_trajectory_matching_round1_byVirSeas.pdf', width = 15, height = 10)
+pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas.pdf'),
+    width = 15, height = 10)
 
 for (vir1 in flu_types) {
   pars_list_temp <- pars_list[str_detect(names(pars_list), vir1)]
@@ -170,7 +174,8 @@ p4 <- ggplot(data = pars_mle, aes(x = virus_pair, y = mle, group = virus_pair)) 
   labs(x = 'Virus', y = 'Parameter Value', title = 'MLE Values')
 
 # Save plots to file:
-pdf('results/plots/290721_trajectory_matching_round1.pdf', width = 15, height = 8)
+pdf(paste0('results/plots/', date, '_trajectory_matching_round1.pdf'),
+    width = 15, height = 8)
 print(p1)
 print(p2)
 print(p3)
