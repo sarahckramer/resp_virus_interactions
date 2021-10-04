@@ -46,11 +46,14 @@ T_rho2 = logit(rho2);
 T_N = N;
 
 sum_init = I10 + I20 + R10 + R20 + R120;
+//sum_init = I10 + R10 + R20 + R120;
 T_I10 = log(I10 / (1.0 - sum_init));
 T_I20 = log(I20 / (1.0 - sum_init));
 T_R10 = log(R10 / (1.0 - sum_init));
 T_R20 = log(R20 / (1.0 - sum_init));
 T_R120 = log(R120 / (1.0 - sum_init));
+
+//T_I20 = logit(I20);
 
 //end_toest
 
@@ -73,11 +76,14 @@ rho2 = expit(T_rho2);
 N = T_N;
 
 sum_init = exp(T_I10) + exp(T_I20) + exp(T_R10) + exp(T_R20) + exp(T_R120);
+//sum_init = exp(T_I10) + exp(T_R10) + exp(T_R20) + exp(T_R120);
 I10 = exp(T_I10) / (1.0 + sum_init);
 I20 = exp(T_I20) / (1.0 + sum_init);
 R10 = exp(T_R10) / (1.0 + sum_init);
 R20 = exp(T_R20) / (1.0 + sum_init);
 R120 = exp(T_R120) / (1.0 + sum_init);
+
+//I20 = expit(T_I20);
 
 //end_fromest
 
