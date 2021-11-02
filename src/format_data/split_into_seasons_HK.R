@@ -220,15 +220,6 @@ for (vir_index in 4:5) {
 rm(dat_temp, above.baseline.count, below.baseline.count, baseline, baseline_perc, onsets, ends, i, j, obs_i, obs_temp, vir_index, vir)
 
 # Now find overlap between flu "seasons" and other viruses:
-
-# par(mfrow = c(2, 1))
-# plot(dat_hk$prop_h1, type = 'b', pch = 20)
-# abline(v = onset_list[[1]], col = 'blue')
-# abline(v = end_list[[1]], col = 'green')
-# plot(dat_hk$prop_rhino, type = 'b', pch = 20)
-# abline(v = onset_list[[5]], col = 'blue')
-# abline(v = end_list[[5]], col = 'green')
-
 outbreak_df <- NULL
 for (flu_index in 1:3) {
   
