@@ -133,6 +133,9 @@ dat_hk <- dat_hk %>%
          n_entero_est_rnd = round(n_entero_est)) %>%
   select(Time, Year:n_rhino_entero, n_rhino_est:n_entero_est_rnd, GOPC:PMP.Clinics)
 
+# Save data:
+write_csv(dat_hk, file = 'data/formatted/dat_hk.csv')
+
 # Plot:
 p1 <- ggplot(data = dat_hk %>% pivot_longer(c(n_h1:n_rsv, n_rhino_est), names_to = 'vir', values_to = 'val'),
              aes(x = Time, y = val, color = vir)) + geom_line() + theme_classic() + #facet_wrap(~ vir) +
