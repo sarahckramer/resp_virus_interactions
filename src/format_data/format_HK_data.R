@@ -143,15 +143,18 @@ p1 <- ggplot(data = dat_hk %>% pivot_longer(c(n_h1:n_rsv, n_rhino_est), names_to
   scale_x_continuous(breaks = c(1, 53, 105, 158, 210, 262, 314, 366), labels = years)
 p2 <- ggplot(data = dat_hk %>% pivot_longer(c(n_h1:n_rsv, n_rhino_est), names_to = 'vir', values_to = 'val'),
              aes(x = Time, y = val / n_samp, color = vir)) + geom_line() + theme_classic() +
-  labs(x = 'Time', y = '% Samples Pos', color = 'Virus') +
-  scale_x_continuous(breaks = c(1, 53, 105, 158, 210, 262, 314, 366), labels = years) +
-  theme(legend.position = 'bottom')
+  labs(x = 'Time', y = 'Prop. Samples Pos', color = 'Virus') +
+  scale_x_continuous(breaks = c(1, 53, 105, 158, 210, 262, 314, 366), labels = years)# +
+  # theme(legend.position = 'bottom')
+grid.arrange(p1, p2, ncol = 1)
+
 p3 <- ggplot(data = dat_hk %>% pivot_longer(GOPC:PMP.Clinics, names_to = 'clinic_type', values_to = 'val'),
-       aes(x = Time, y = val, color = clinic_type)) + geom_line() + theme_classic() +
+       aes(x = Time, y = val)) + geom_line() + theme_classic() +
+  facet_wrap(~ clinic_type, ncol = 1, scales = 'free_y') +
   labs(x = 'Time', y = 'ILI Rate (per 1000 consultations)', color = 'Clinic') +
   scale_x_continuous(breaks = c(1, 53, 105, 158, 210, 262, 314, 366), labels = years) +
   theme(legend.position = 'bottom')
-grid.arrange(p2, p3, ncol = 1)
+print(p3)
 
 p4 <- ggplot(data = dat_hk %>% pivot_longer(c(n_h1:n_hmpv, n_rhino_est:n_entero_est), names_to = 'vir', values_to = 'val'),
        aes(x = Time, y = val / n_samp, color = vir)) + geom_line() + theme_classic() +
@@ -167,7 +170,8 @@ print(p5)
 
 # Output to pdf:
 pdf('results/plots/data_Hong_Kong.pdf', width = 10, height = 6)
-grid.arrange(p2, p3, ncol = 1)
+grid.arrange(p1, p2, ncol = 1)
+print(p3)
 print(p4)
 print(p5)
 dev.off()
