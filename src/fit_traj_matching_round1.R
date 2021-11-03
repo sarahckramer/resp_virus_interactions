@@ -17,16 +17,18 @@ no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 
-yr <- c(2006:2014)[(ceiling(jobid / no_jobs) - 1) %% 9 + 1]; print(yr)
-vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / (no_jobs * 9))]; print(vir1)
+# yr <- c(2006:2014)[(ceiling(jobid / no_jobs) - 1) %% 9 + 1]; print(yr)
+# vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / (no_jobs * 9))]; print(vir1)
+yr <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')[(ceiling(jobid / no_jobs) - 1) %% 9 + 1]; print(yr)
+vir1 <- c('flu_h1', 'flu_B')[ceiling(jobid / (no_jobs * 9))]; print(vir1)
 jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 
 # # Set parameters for local runs (temp):
 # jobid <- 1
 # no_jobs <- 10
 # 
-# vir1 <- 'flu_A' # 'flu_A', 'flu_B'
-# yr <- 2006
+# vir1 <- 'flu_h1' # 'flu_A', 'flu_B'
+# yr <- 's15-16'
 # 
 # sobol_size <- 500
 # search_type <- 'broad'
