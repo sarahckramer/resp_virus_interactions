@@ -23,36 +23,58 @@ if (!exists('early_start_val')) {
 # Load and format data
 
 # Read in data:
-fr_dat <- read_rds('data/formatted/GROG_pop_vir_ari_dat_2003-4_2013-14.rds')
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT.rds')
+# fr_dat <- read_rds('data/formatted/GROG_pop_vir_ari_dat_2003-4_2013-14.rds')
 
-# # Visualize:
-# ggplot(data = fr_dat, aes(x = week_date, y = ira_rate, group = agecat, col = agecat)) + geom_line() + facet_grid(area ~ type, scales = 'free_y') + theme_classic()
-# ggplot(data = fr_dat, aes(x = week_date, y = n_pos, group = agecat, col = agecat)) + geom_line() + facet_grid(area ~ type, scales = 'free_y') + theme_classic()
+# Get data of interest:
+dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
+  filter(season == yr)
 
 # Format data:
-formatted_dat <- prepare_data(vir1, vir2, yr, fr_dat, early_start = early_start_val)
-dat_full <- formatted_dat[[1]]
-dat_pomp <- formatted_dat[[2]]
-rm(fr_dat, formatted_dat)
+dat_pomp <- dat_pomp %>%
+  rename('i_ARI' = 'GOPC') %>%
+  mutate(i_ARI = i_ARI / 1000,
+         pop = 7071600)
+# https://www.censtatd.gov.hk/en/
+# https://www.censtatd.gov.hk/en/web_table.html?id=1A#
+
+# formatted_dat <- prepare_data('flu_A', vir2, 2006, fr_dat, early_start = early_start_val)
+# dat_full <- formatted_dat[[1]]
+# dat_pomp <- formatted_dat[[2]]
+# rm(fr_dat, formatted_dat)
 
 # Plot data:
-if(debug_bool) {
-  # Plot ARI incidence rate (based on total or effective pop size) 
-  p1 <- ggplot(data = dat_full %>% pivot_longer(cols = c("i_ARI", "i_ARI_wrong"), names_to = "var", values_to = "val"), 
-               mapping = aes(x = week_date, y = 100 * val, color = var)) + 
-    geom_line() + 
-    labs(x = "Time (weeks)", y = "ARI incidence rate (per week per 100)") +
+if (debug_bool) {
+  # Plot ILI incidence:
+  p1 <- ggplot(data = dat_pomp, aes(x = time, y = i_ARI)) + geom_line() +
+    labs(x = 'Time (Weeks)', y = 'ILI Incidence Rate (per 1000 Consultations)') +
     theme_classic()
   print(p1)
   
-  # Plot positivity fraction
-  p2 <- ggplot(data = dat_full, 
-               mapping = aes(x = week_date, y = n_pos / n_samp, color = virus)) + 
-    geom_line() + 
-    labs(x = "Time (weeks)", y = "Positivity fraction") +
+  p2 <- ggplot(data = dat_pomp %>% pivot_longer(n_P1:n_P2, names_to = 'virus', values_to = 'n_pos'),
+               aes(x = time, y = n_pos / n_T, color = virus)) +
+    geom_line() + labs(x = 'Time (Weeks)', y = 'Positivity Fraction') +
     theme_classic()
   print(p2)
 }
+
+# if(debug_bool) {
+#   # Plot ARI incidence rate (based on total or effective pop size) 
+#   p1 <- ggplot(data = dat_full %>% pivot_longer(cols = c("i_ARI", "i_ARI_wrong"), names_to = "var", values_to = "val"), 
+#                mapping = aes(x = week_date, y = 100 * val, color = var)) + 
+#     geom_line() + 
+#     labs(x = "Time (weeks)", y = "ARI incidence rate (per week per 100)") +
+#     theme_classic()
+#   print(p1)
+#   
+#   # Plot positivity fraction
+#   p2 <- ggplot(data = dat_full, 
+#                mapping = aes(x = week_date, y = n_pos / n_samp, color = virus)) + 
+#     geom_line() + 
+#     labs(x = "Time (weeks)", y = "Positivity fraction") +
+#     theme_classic()
+#   print(p2)
+# }
 
 # ---------------------------------------------------------------------------------------------------------------------
 
