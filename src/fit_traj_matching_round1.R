@@ -52,6 +52,7 @@ delta_min <- 7 / 60.0
 source('src/resp_interaction_model.R')
 
 # Check that sufficient epidemic activity:
+if (exists('resp_mod')) {
 if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm = TRUE) > 100) {
   
   # Set start ranges for estimated parameters:
@@ -151,6 +152,9 @@ if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm 
   
 } else {
   print('Insufficient epidemic activity')
+}
+} else {
+  print('No data for given season.')
 }
 
 print('Done.')
