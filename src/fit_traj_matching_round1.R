@@ -55,7 +55,7 @@ source('src/resp_interaction_model.R')
 if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm = TRUE) > 100) {
   
   # Set start ranges for estimated parameters:
-  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
   
   start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                             Ri2 = c(1.0, Ri_max2),
@@ -63,7 +63,9 @@ if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm 
                             I20 = c(0, 1e-3),
                             R10 = c(0, 0.3),
                             R20 = c(0, 0.3),
-                            R120 = c(0, 0.3))
+                            R120 = c(0, 0.3),
+                            rho1 = c(0, 1.0),
+                            rho2 = c(0, 1.0))
   start_range <- start_range[, estpars]
   
   if (search_type == 'broad') {
