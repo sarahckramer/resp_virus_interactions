@@ -43,6 +43,8 @@ T_theta_rho1 = logit(theta_rho1);
 T_theta_rho2 = logit(theta_rho2);
 T_rho1 = logit(rho1); 
 T_rho2 = logit(rho2);
+//T_rho1 = log(rho1); 
+//T_rho2 = log(rho2);
 T_N = N;
 
 sum_init = I10 + I20 + R10 + R20 + R120;
@@ -73,6 +75,8 @@ theta_rho1 = expit(T_theta_rho1);
 theta_rho2 = expit(T_theta_rho2);
 rho1 = expit(T_rho1);
 rho2 = expit(T_rho2);
+//rho1 = exp(T_rho1);
+//rho2 = exp(T_rho2);
 N = T_N;
 
 sum_init = exp(T_I10) + exp(T_I20) + exp(T_R10) + exp(T_R20) + exp(T_R120);
