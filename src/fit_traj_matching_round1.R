@@ -56,7 +56,8 @@ if (exists('resp_mod')) {
 if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm = TRUE) > 100) {
   
   # Set start ranges for estimated parameters:
-  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2', 'theta_lambda1', 'delta')
+  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+  # estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2', 'theta_lambda1', 'delta')
   
   start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                             Ri2 = c(1.0, Ri_max2),
