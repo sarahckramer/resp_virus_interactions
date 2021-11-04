@@ -19,28 +19,25 @@ int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 
-# vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / no_jobs)]; print(vir1)
-# jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
-
 # # Set parameters for local run:
 # jobid <- 1
-# no_jobs <- 20
-# vir1 <- 'flu_A' # 'flu_A', 'flu_B'
+# no_jobs <- 100
+# vir1 <- 'flu_h1' # 'flu_A', 'flu_B'
 # 
-# sobol_size <- 200
+# sobol_size <- 500
 # search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
-# prof_lik <- TRUE
+# prof_lik <- FALSE
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
-seasons <- 2006:2014
-# seasons <- c(2006:2009, 2011:2014)
+seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+# seasons <- 2006:2014
 time_max <- 9.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
-Ri_max2 <- 2.0
+Ri_max2 <- 3.0
 delta_min <- 7 / 30.0
 
 prof_val <- 1.0
@@ -180,34 +177,62 @@ back_transform_params <- function(trans_vals, po, seas, params_all, params_share
 # Fit using trajectory matching
 
 # Loop through years and construct pomp models:
-po_list <- vector('list', length(min(seasons):max(seasons)))
-for (yr in seasons) {
+po_list <- vector('list', length(seasons))
+for (yr_index in 1:length(seasons)) {
+  yr <- seasons[yr_index]
   print(yr)
   
   # Load data and create pomp object:
   source('src/resp_interaction_model.R')
   
-  # Check whether appreciable activity for both viruses:
-  if (sum(resp_mod@data[1, ]) <= 100) {
-    print('Insufficient virus 1')
-  }
-  if (sum(resp_mod@data[2, ]) <= 100) {
-    print('Insufficient virus 2')
+  # Check whether any data for given season:
+  if (exists('resp_mod')) {
+    
+    # If doing profile likelihood, set theta_lambda1:
+    if (prof_lik) {
+      coef(resp_mod, 'theta_lambda1') <- prof_val
+    }
+    
+    # Add pomp object to list:
+    po_list[[yr_index]] <- resp_mod
+    
   }
   
-  # If doing profile likelihood, set theta_lambda1:
-  if (prof_lik) {
-    coef(resp_mod, 'theta_lambda1') <- prof_val
-  }
-  
-  if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
-    po_list[[yr - (seasons[1] - 1)]] <- resp_mod
-  }
+  # Remove pomp object before repeating loop:
+  rm(resp_mod)
   
 }
 
+# po_list <- vector('list', length(min(seasons):max(seasons)))
+# for (yr in seasons) {
+#   print(yr)
+#   
+#   # Load data and create pomp object:
+#   source('src/resp_interaction_model.R')
+#   
+#   # Check whether appreciable activity for both viruses:
+#   if (sum(resp_mod@data[1, ]) <= 100) {
+#     print('Insufficient virus 1')
+#   }
+#   if (sum(resp_mod@data[2, ]) <= 100) {
+#     print('Insufficient virus 2')
+#   }
+#   
+#   # If doing profile likelihood, set theta_lambda1:
+#   if (prof_lik) {
+#     coef(resp_mod, 'theta_lambda1') <- prof_val
+#   }
+#   
+#   # Add pomp object to list:
+#   if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
+#     po_list[[yr - (seasons[1] - 1)]] <- resp_mod
+#   }
+#   
+# }
+
 # Remove empty elements:
-seasons <- c(min(seasons):max(seasons))[lapply(po_list, length) > 0]
+seasons <- seasons[lapply(po_list, length) > 0]
+# seasons <- c(min(seasons):max(seasons))[lapply(po_list, length) > 0]
 po_list <- po_list[lapply(po_list, length) > 0]
 
 # Choose parameters to estimate:
@@ -216,14 +241,14 @@ if (int_eff == 'susc') {
     shared_estpars <- c()
   } else {
     # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-    shared_estpars <- c('theta_lambda1')
+    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1')
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
     shared_estpars <- c()
   } else {
     # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
-    shared_estpars <- c('theta_rho1')
+    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1')
   }
 } else {
   stop('Unrecognized int_eff value.')
@@ -243,7 +268,7 @@ estpars <- c(shared_estpars, unit_sp_estpars)
 # Set upper/lower values for global params:
 start_range <- data.frame(rho1 = c(0, 1),
                           rho2 = c(0, 1),
-                          delta = c(7 / 14, 7 / 1),
+                          delta = c(7 / 60, 7 / 1),
                           theta_lambda1 = c(0, 1),
                           theta_lambda2 = c(0, 1),
                           theta_rho1 = c(0, 1),
@@ -259,7 +284,7 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R120 = c(0, 0.3))
 
 # Get 99% CI from round 1 for unit params:
-tj_res_list <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
+tj_res_list <- read_rds('results/round1_interaction/traj_match_round1_byvirseas_TOP.rds')
 
 tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
 # tj_res_list <- tj_res_list[!str_detect(names(tj_res_list), '2010')]
@@ -269,35 +294,35 @@ ci_list <- vector('list', length(seasons))
 for (i in 1:length(ci_list)) {
   tj_res_temp <- tj_res_list[[i]] %>%
     select(all_of(unit_estpars))
-
+  
   ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
                                  summarise(tj_res_temp, across(.cols = everything(), max))))
-
+  
   # Check that initial conditions can't sum to >1:
   sums <- ci_temp %>% select(I10:R120) %>% rowSums()
-
+  
   if (sums[1] > 1.0) {
     print('Lower bounds sum to more than 1!')
     stop()
   }
-
+  
   if (sums[2] > 1.0) {
-
+    
     # Reduce the upper bounds of R10/R20/R120 proportionally:
     orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
     red_needed <- sums[2] - 0.9999999
     new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
-
+    
     # Ensure upper bounds still greater than lower:
     orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
     expect_true(all(new_upper_bounds > orig_lower_bounds))
-
+    
     # Ensure upper bounds now sum to 1 or less:
     ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
     expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
-
+    
   }
-
+  
   # Store in list:
   ci_list[[i]] <- ci_temp
 }
@@ -352,11 +377,11 @@ for (i in seq_along(sub_start)) {
   
   # Get start values:
   x0 <- as.numeric(start_values[sub_start[i], ])
-  x0_trans <- transform_params(x0, resp_mod, seasons, estpars, shared_estpars)
+  x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
   x0_trans_names <- names(x0_trans)
   
   # Check that parameter transformations correct:
-  x0_orig <- back_transform_params(x0_trans, resp_mod, seasons, estpars, shared_estpars)
+  x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
   expect_equal(x0, unname(x0_orig))
   rm(x0_orig)
   
@@ -383,7 +408,7 @@ for (i in seq_along(sub_start)) {
   if (!inherits(m, 'try-error')) {
     x0_fit <- m$solution
     names(x0_fit) <- x0_trans_names
-    x0_fit_untrans <- back_transform_params(x0_fit, resp_mod, seasons, estpars, shared_estpars)
+    x0_fit_untrans <- back_transform_params(x0_fit, po_list[[1]], seasons, estpars, shared_estpars)
     
     out <- list(estpars = x0_fit_untrans,
                 ll = -m$objective,
