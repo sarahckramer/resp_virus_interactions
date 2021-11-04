@@ -9,19 +9,17 @@ library(tidyverse)
 sobol_size <- 500
 
 # Get list of completed runs:
-check_list_fluA <- list.files(path = 'results/', pattern = 'flu_A')
-check_list_fluB <- list.files(path = 'results/', pattern = 'flu_B')
+check_list_flu_h1 <- list.files(path = 'results/', pattern = 'flu_h1')
+check_list_flu_b <- list.files(path = 'results/', pattern = 'flu_b')
 
 # Check for complete results for flu_A/RSV:
-if (length(check_list_fluA) != sobol_size * 9) {
-  # print(paste0('Missing ', (sobol_size * 5) - length(check_list_fluA), ' record(s).'))
+if (length(check_list_flu_h1) != sobol_size * 5) {
   
-  yr_list <- unique(str_sub(check_list_fluA, 15, 18))
+  yr_list <- unique(str_sub(check_list_flu_h1, 16, 21))
   for (yr in yr_list) {
-    temp_list <- check_list_fluA[str_detect(check_list_fluA, pattern = yr)]
+    temp_list <- check_list_flu_h1[str_detect(check_list_flu_h1, pattern = yr)]
     
     if (length(temp_list) != sobol_size) {
-      # print(paste0('Missing records in ', yr, '!'))
       
       completed_runs <- str_split(temp_list, '_') %>%
         lapply(., function(ix) {ix[6]}) %>%
@@ -33,7 +31,7 @@ if (length(check_list_fluA) != sobol_size * 9) {
       missing_runs <- which(!(c(1:sobol_size) %in% completed_runs))
       
       for (run in missing_runs) {
-        print(paste0('For flu_A/RSV in ', yr, ', missing run: ', run))
+        print(paste0('For flu_h1/RSV in ', yr, ', missing run: ', run))
       }
       
     }
@@ -41,15 +39,13 @@ if (length(check_list_fluA) != sobol_size * 9) {
 }
 
 # Check for complete results for flu_B/RSV:
-if (length(check_list_fluB) != sobol_size * 5) {
-  # print(paste0('Missing ', (sobol_size * 5) - length(check_list_fluB), ' record(s).'))
+if (length(check_list_flu_b) != sobol_size * 5) {
   
-  yr_list <- unique(str_sub(check_list_fluB, 15, 18))
+  yr_list <- unique(str_sub(check_list_flu_b, 15, 20))
   for (yr in yr_list) {
-    temp_list <- check_list_fluB[str_detect(check_list_fluB, pattern = yr)]
+    temp_list <- check_list_flu_b[str_detect(check_list_flu_b, pattern = yr)]
     
     if (length(temp_list) != sobol_size) {
-      # print(paste0('Missing records in ', yr, '!'))
       
       completed_runs <- str_split(temp_list, '_') %>%
         lapply(., function(ix) {ix[6]}) %>%
@@ -61,7 +57,7 @@ if (length(check_list_fluB) != sobol_size * 5) {
       missing_runs <- which(!(c(1:sobol_size) %in% completed_runs))
       
       for (run in missing_runs) {
-        print(paste0('For flu_B/RSV in ', yr, ', missing run: ', run))
+        print(paste0('For flu_b/RSV in ', yr, ', missing run: ', run))
       }
       
     }
