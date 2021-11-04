@@ -14,19 +14,19 @@ library(gridExtra)
 date <- format(Sys.Date(), '%d%m%y')
 
 # Specify parameters estimated:
-estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Plot results by flu type/season
 
 # Read in results:
-pars_list <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
-slice_list <- read_rds('results/traj_match_round1_byvirseas_SLICE.rds')
+pars_list <- read_rds('results/round1_rho-logit/traj_match_round1_byvirseas_TOP.rds')
+slice_list <- read_rds('results/round1_rho-logit/traj_match_round1_byvirseas_SLICE.rds')
 
 # Get vectors of flu types/seasons:
-flu_types <- c('flu_A', 'flu_B')
-seasons <- 2006:2014
+flu_types <- c('flu_h1', 'flu_b')
+seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
 # Create lists to store results:
 cor_list = pcor_list = vector('list', length(pars_list))
@@ -89,7 +89,7 @@ for (vir1 in flu_types) {
     pairs(x = ix %>% dplyr::select(all_of(estpars), 'loglik'))
   })
   
-  par(mfrow = c(4, ceiling(length(pars_list_temp) / 2)))
+  par(mfrow = c(2, ceiling(length(pars_list_temp) / 2)))
   lapply(cor_list_temp, function(ix) {
     corrplot(ix)
   })
@@ -98,7 +98,7 @@ for (vir1 in flu_types) {
   })
   
   for (i in 1:length(slice_list_temp)) {
-    par(mfrow = c(4, 2), bty = 'l')
+    par(mfrow = c(3, 3), bty = 'l')
     for (par in estpars) {
       slices_cur <- filter(slice_list_temp[[i]], slice == par)
       plot(slices_cur[[par]], slices_cur$ll, type = 'l',
@@ -127,13 +127,12 @@ rm(pars_list)
 
 # Format results and get MLEs:
 pars_df <- pars_df %>%
-  pivot_longer(Ri1:R120, names_to = 'param', values_to = 'value') %>%
+  pivot_longer(Ri1:rho2, names_to = 'param', values_to = 'value') %>%
   group_by(virus1, year, param) %>%
   mutate(param = factor(param)) %>%
   mutate(mle = value[which.max(loglik)]) %>%
   mutate(par_mle = paste0(param, '=', signif(mle, 3))) %>%
-  ungroup %>%
-  mutate(year = as.numeric(year))
+  ungroup()
 pars_df$param <- factor(pars_df$param, levels = estpars)
 
 # Distinguish between RSV when fit alongside flu_A vs. flu_B:
@@ -153,9 +152,9 @@ p2 <- ggplot(data = pars_df, aes(x = year, y = value, group = paste(virus_pair, 
   geom_boxplot() + theme_classic() +
   facet_wrap(~ param, scales = 'free_y') +
   labs(x = 'Season', y = 'Parameter Value') +
-  scale_x_continuous(breaks = 2006:2014,
-                     labels = paste0('s', str_pad(c(5:13), width = 2, side = 'left', pad = '0'),
-                                     '-', str_pad(c(6:14), width = 2, side = 'left', pad = '0'))) +
+  # scale_x_continuous(breaks = 2006:2014,
+  #                    labels = paste0('s', str_pad(c(5:13), width = 2, side = 'left', pad = '0'),
+  #                                    '-', str_pad(c(6:14), width = 2, side = 'left', pad = '0'))) +
   scale_fill_brewer(palette = 'Set2')
 
 # Plot overall fit range across all years, by virus:
