@@ -15,6 +15,7 @@ date <- format(Sys.Date(), '%d%m%y')
 
 # Specify parameters estimated:
 estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+# estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2', 'theta_lambda1', 'delta')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
