@@ -24,6 +24,10 @@ estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 pars_list <- read_rds('results/round1_rho-logit/traj_match_round1_byvirseas_TOP.rds')
 slice_list <- read_rds('results/round1_rho-logit/traj_match_round1_byvirseas_SLICE.rds')
 
+# Read in results (2013-14):
+pars_list_1314 <- read_rds('results/round1_rho-logit_leadNAs/traj_match_round1_byvirseas_TOP.rds')
+slice_list_1314 <- read_rds('results/round1_rho-logit_leadNAs/traj_match_round1_byvirseas_SLICE.rds')
+
 # Get vectors of flu types/seasons:
 flu_types <- c('flu_h1', 'flu_b')
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
@@ -44,7 +48,11 @@ for (vir1 in flu_types) {
     if (vir_seas %in% names(pars_list)) {
       
       # Get results for specific vir1/yr:
-      pars_temp <- pars_list[[vir_seas]]
+      if (yr == 's13-14') {
+        pars_temp <- pars_list_1314[[vir_seas]]
+      } else {
+        pars_temp <- pars_list[[vir_seas]]
+      }
       
       # Get correlation coefficients:
       cor_mat <- pars_temp %>% dplyr::select(Ri1:loglik) %>% cor(method = 'spearman')
@@ -85,6 +93,9 @@ for (vir1 in flu_types) {
   pcor_list_temp <- pcor_list[str_detect(names(pcor_list), vir1)]
   slice_list_temp <- slice_list[str_detect(names(slice_list), vir1)]
   
+  pars_list_temp[paste(vir1, 's13-14', sep = '_')] <- pars_list_1314[str_detect(names(pars_list_1314), vir1)]
+  slice_list_temp[paste(vir1, 's13-14', sep = '_')] <- slice_list_1314[str_detect(names(slice_list_1314), vir1)]
+  
   lapply(pars_list_temp, function(ix) {
     pairs(x = ix %>% dplyr::select(all_of(estpars), 'loglik'))
   })
@@ -114,7 +125,7 @@ for (vir1 in flu_types) {
 dev.off()
 
 # Clean up:
-rm(vir1, cor_list, pcor_list, slice_list,
+rm(vir1, cor_list, pcor_list, slice_list, slice_list_1314,
    pars_list_temp, cor_list_temp, pcor_list_temp, slice_list_temp)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -123,7 +134,14 @@ rm(vir1, cor_list, pcor_list, slice_list,
 
 # Compile all parameter estimates:
 pars_df <- bind_rows(pars_list)
-rm(pars_list)
+pars_df_1314 <- bind_rows(pars_list_1314)
+
+pars_df <- pars_df %>%
+  filter(year != 's13-14') %>%
+  bind_rows(pars_df_1314) %>%
+  arrange(virus1, year)
+
+rm(pars_list, pars_list_1314, pars_df_1314)
 
 # Format results and get MLEs:
 pars_df <- pars_df %>%

@@ -23,7 +23,7 @@ if (!exists('early_start_val')) {
 # Load and format data
 
 # Read in data:
-hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT.rds')
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')
 # fr_dat <- read_rds('data/formatted/GROG_pop_vir_ari_dat_2003-4_2013-14.rds')
 
 # Get data of interest:
