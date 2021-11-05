@@ -21,6 +21,10 @@ seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
 # Read in full results:
 pars_list <- read_rds('results/round1_interaction/traj_match_round1_byvirseas_FULL.rds')
+pars_list_1314 <- read_rds('results/round1_interaction_leadNAs/traj_match_round1_byvirseas_FULL.rds')
+
+pars_list[names(pars_list) %in% names(pars_list_1314)] <- pars_list_1314
+rm(pars_list_1314)
 
 # Get best-fit values and values within 95% CI:
 pars_top <- vector('list', length = length(pars_list))
