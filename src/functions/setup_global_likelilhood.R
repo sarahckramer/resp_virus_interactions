@@ -11,10 +11,11 @@ library(nloptr)
 debug_bool <- FALSE
 # vir1 <- 'flu_B' # 'flu_A', 'flu_B'
 vir2 <- 'rsv'
-seasons <- 2006:2014
+seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+# seasons <- 2006:2014
 
 Ri_max1 <- 2.0
-Ri_max2 <- 2.0
+Ri_max2 <- 3.0
 delta_min <- 7 / 30.0
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -153,30 +154,57 @@ back_transform_params <- function(trans_vals, po, seas, params_all, params_share
 
 # Loop through years and construct pomp models:
 po_list <- vector('list', length(seasons))
-for (yr in seasons) {
+for (yr_index in 1:length(seasons)) {
+  yr <- seasons[yr_index]
   print(yr)
   
   # Load data and create pomp object:
   source('src/resp_interaction_model.R')
   
-  # Check whether appreciable activity for both viruses:
-  if (sum(resp_mod@data[1, ]) <= 100) {
-    print('Insufficient virus 1')
-  }
-  if (sum(resp_mod@data[2, ]) <= 100) {
-    print('Insufficient virus 2')
+  # Check whether any data for given season:
+  if (exists('resp_mod')) {
+    
+    # If doing profile likelihood, set theta_lambda1:
+    if (prof_lik) {
+      coef(resp_mod, 'theta_lambda1') <- prof_val
+    }
+    
+    # Add pomp object to list:
+    po_list[[yr_index]] <- resp_mod
+    
   }
   
-  if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
-    if (yr != '2010') {
-      po_list[[yr - (seasons[1] - 1)]] <- resp_mod
-    }
-  }
+  # Remove pomp object before repeating loop:
+  rm(resp_mod)
   
 }
 
+# po_list <- vector('list', length(seasons))
+# for (yr in seasons) {
+#   print(yr)
+#   
+#   # Load data and create pomp object:
+#   source('src/resp_interaction_model.R')
+#   
+#   # Check whether appreciable activity for both viruses:
+#   if (sum(resp_mod@data[1, ]) <= 100) {
+#     print('Insufficient virus 1')
+#   }
+#   if (sum(resp_mod@data[2, ]) <= 100) {
+#     print('Insufficient virus 2')
+#   }
+#   
+#   if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
+#     if (yr != '2010') {
+#       po_list[[yr - (seasons[1] - 1)]] <- resp_mod
+#     }
+#   }
+#   
+# }
+
 # Remove empty elements:
 seasons <- seasons[lapply(po_list, length) > 0]
+# seasons <- c(min(seasons):max(seasons))[lapply(po_list, length) > 0]
 po_list <- po_list[lapply(po_list, length) > 0]
 
 # Get list of season-specific objective functions:
