@@ -72,13 +72,17 @@ write_csv(pars_df, 'res_traj_match_round1.csv')
 # Get total number of virus/season pairs:
 virus_seasons <- unique(paste(which_flu, yrs, sep = '_'))
 
+# Order unique years correctly:
+yrs_unique <- unique(yrs)[order(str_sub(unique(yrs), 2, 3))]
+print(yrs_unique)
+
 # Create lists to store results:
 res_list_full = res_list = mle_list = slice_list = vector('list', length(virus_seasons))
 
 # Loop through flus/seasons:
 counter <- 1
 for (vir1 in unique(which_flu)) {
-  for (yr in unique(yrs)) {
+  for (yr in yrs_unique) {
     print(vir1)
     print(yr)
     
