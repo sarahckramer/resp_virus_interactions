@@ -97,10 +97,12 @@ for (vir1 in flu_types) {
   pars_list_temp[paste(vir1, 's13-14', sep = '_')] <- pars_list_1314[str_detect(names(pars_list_1314), vir1)]
   slice_list_temp[paste(vir1, 's13-14', sep = '_')] <- slice_list_1314[str_detect(names(slice_list_1314), vir1)]
   
+  # Pairs plots:
   lapply(pars_list_temp, function(ix) {
     pairs(x = ix %>% dplyr::select(all_of(estpars), 'loglik'))
   })
   
+  # Plot correlations:
   par(mfrow = c(2, ceiling(length(pars_list_temp) / 2)))
   lapply(cor_list_temp, function(ix) {
     corrplot(ix)
@@ -109,6 +111,7 @@ for (vir1 in flu_types) {
     try(corrplot(ix))
   })
   
+  # Plot slices:
   for (i in 1:length(slice_list_temp)) {
     par(mfrow = c(4, 3), bty = 'l')
     for (par in estpars) {
@@ -120,6 +123,45 @@ for (vir1 in flu_types) {
     rm(par, slices_cur)
   }
   rm(i)
+  
+  # Plot simulations:
+  try(detach('package:ppcor'))
+  try(detach('package:MASS'))
+  
+  plot_list <- vector('list', length = length(pars_list_temp))
+  
+  for (i in 1:length(pars_list_temp)) {
+    yr <- pars_list_temp[[i]] %>% pull(year) %>% unique()
+    print(yr)
+    vir2 <- 'rsv'; debug_bool <- FALSE; Ri_max1 <- 3.0; Ri_max2 <- 3.0; delta_min <- 7/60;
+    source('src/resp_interaction_model.R')
+    
+    x0s <- pars_list_temp[[i]] %>% select(all_of(estpars))
+    
+    coef(resp_mod, estpars) <- x0s[1, ]
+    
+    # x0_trans <- coef(resp_mod, estpars, transform = TRUE)
+    # obj_fun <- traj_objfun(data = resp_mod,
+    #                        est = estpars,
+    #                        partrans = resp_mod@partrans,
+    #                        verbose = TRUE)
+    # print(-1 * obj_fun(x0_trans))
+    
+    sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame') %>%
+      select(time:.id, n_P1:n_P2) %>%
+      arrange(.id) %>%
+      cbind(t(resp_mod@data))
+    names(sim_temp)[5:6] <- c('obs1', 'obs2')
+    
+    p_temp <- ggplot(data = sim_temp) + geom_line(aes(x = time, y = n_P1, group = .id), col = 'black') +
+      geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') + 
+      geom_point(aes(x = time, y = obs1, group = .id)) + geom_point(aes(x = time, y = obs2, group = .id), col = 'coral') +
+      theme_classic() +
+      labs(x = 'Time', y = '# Positive Tests', title = unique(pars_list_temp[[i]]$year))
+    plot_list[[i]] <- p_temp
+  }
+  
+  do.call('grid.arrange', plot_list)
   
 }
 
