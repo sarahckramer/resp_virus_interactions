@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Code to fit DETERMINISTIC flu/RSV interaction model
-# Round 1: Fit each season without interaction to obtain good start values for Ri/initial conditions
+# Round 1: Fit each season individually (w/ or w/o interaction) to obtain good start values for Ri/initial conditions
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Setup
