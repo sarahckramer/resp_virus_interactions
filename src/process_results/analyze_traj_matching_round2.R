@@ -105,6 +105,7 @@ res_b_broad <- load_and_format_mega_results(filepath = 'results/round2_flu_b_bro
 
 # Extract results:
 res_LIST <- list(res_h1_round1CI, res_h1_broad, res_b_round1CI, res_b_broad)
+# res_LIST <- list(res_h1_round1CI, res_b_round1CI)
 pars_top_LIST = pars_top_long_LIST = pars_corr_LIST = vector('list', length = length(res_LIST))
 for (i in 1:length(res_LIST)) {
   pars_top_LIST[[i]] <- res_LIST[[i]][[1]]
@@ -113,8 +114,16 @@ for (i in 1:length(res_LIST)) {
 }
 rm(i)
 
+names(pars_top_LIST) <- c('flu_h1_round1CI', 'flu_h1_broad', 'flu_b_round1CI', 'flu_b_broad')
+names(pars_top_long_LIST) <- c('flu_h1_round1CI', 'flu_h1_broad', 'flu_b_round1CI', 'flu_b_broad')
+names(pars_corr_LIST) <- c('flu_h1_round1CI', 'flu_h1_broad', 'flu_b_round1CI', 'flu_b_broad')
+
+# names(pars_top_LIST) <- c('flu_h1_round1CI', 'flu_b_round1CI')
+# names(pars_top_long_LIST) <- c('flu_h1_round1CI', 'flu_b_round1CI')
+# names(pars_corr_LIST) <- c('flu_h1_round1CI', 'flu_b_round1CI')
+
 # Clean up:
-rm(res_LIST, res_h1_round1CI, res_h1_broad, res_b_round1CI, res_b_broad)
+try(rm(res_LIST, res_h1_round1CI, res_h1_broad, res_b_round1CI, res_b_broad))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -208,6 +217,7 @@ for (i in 1:length(pars_top_LIST)) {
                         sep = '_'))
   }
 }
+rm(i)
 
 dev.off()
 
@@ -224,7 +234,7 @@ for (i in 1:length(pars_top_LIST)) {
   estpars <- names(pars_top_LIST[[i]])[1:39]
   
   # Set vir1:
-  if (i %in% 1:2) {
+  if (str_detect(names(pars_top_LIST)[i], 'h1')) {
     vir1 <- 'flu_h1'
   } else {
     vir1 <- 'flu_b'
@@ -261,16 +271,9 @@ for (i in 1:length(pars_top_LIST)) {
     
     for (par in shared_estpars) {
       slices_cur <- filter(slices, slice == par)
-      
-      if (par == 'delta') {
-        plot(slices_cur[[par]], slices_cur$ll, type = 'l',
-             xlab = par, ylab = 'Log-Likelihood',
-             main = par)
-      } else {
-        plot(slices_cur[[par]], slices_cur$ll, type = 'l',
-             xlab = par, ylab = 'Log-Likelihood',
-             main = par)
-      }
+      plot(slices_cur[[par]], slices_cur$ll, type = 'l',
+           xlab = par, ylab = 'Log-Likelihood',
+           main = par)
       
     }
     rm(par, slices_cur)
@@ -290,7 +293,7 @@ pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations.pdf'
 for (i in 1:length(pars_top_LIST)) {
   
   # Set vir1:
-  if (i %in% 1:2) {
+  if (str_detect(names(pars_top_LIST)[i], 'h1')) {
     vir1 <- 'flu_h1'
   } else {
     vir1 <- 'flu_b'
