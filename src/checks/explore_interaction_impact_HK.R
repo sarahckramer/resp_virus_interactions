@@ -104,6 +104,70 @@ calculate_slices_and_grid <- function(pars_top, vir1, shared_estpars) {
   
 }
 
+# Function to simulate for each season and parameter combination:
+simulate_grid <- function(pars_top, vir1, shared_estpars, unit_estpars, param1, param2, int_val_ranges, n_sim = 5) {
+  
+  # Read in pomp models:
+  source('src/functions/setup_global_likelilhood.R')
+  
+  # Get interaction parameter values:
+  if (param1 == 'delta') {
+    param1_vals <- int_val_ranges[[2]]
+  } else {
+    param1_vals <- int_val_ranges[[1]]
+  }
+  
+  if (param2 == 'delta') {
+    param2_vals <- int_val_ranges[[2]]
+  } else {
+    param2_vals <- int_val_ranges[[1]]
+  }
+  
+  # Get grid of interaction parameters:
+  grid_vals <- expand_grid(param1_vals, param2_vals) %>%
+    rename({{param1}} := 'param1_vals',
+           {{param2}} := 'param2_vals')
+  
+  # Get parameters for simulations:
+  p_mat_list <- lapply(1:length(seasons), function(ix) {
+    pars_temp <- pars_top %>%
+      # arrange(desc(loglik)) %>%
+      select(all_of(shared_estpars), contains(seasons[ix]))
+    names(pars_temp) <- c(shared_estpars, unit_estpars)
+    
+    coef(po_list[[ix]], names(pars_temp)) <- pars_temp[1, ]
+    p_mat <- parmat(coef(po_list[[ix]]), nrep = nrow(grid_vals))
+    p_mat[param1, ] <- unlist(grid_vals[, param1])
+    p_mat[param2, ] <- unlist(grid_vals[, param2])
+    
+    p_mat
+  })
+  
+  # Simulate for each season and parameter set:
+  sim_list_temp <- lapply(1:length(seasons), function(ix) {
+    
+    simulate(object = po_list[[ix]],
+             params = p_mat_list[[ix]],
+             nsim = n_sim,
+             format = 'data.frame') %>%
+      select(time:.id, H1:n_P2) %>%
+      pivot_longer(H1:n_P2, names_to = 'output', values_to = 'val') %>%
+      mutate(id.parm = as.numeric(str_split(.id, '_') %>% map_chr(., 1)),
+             id.sim = as.numeric(str_split(.id, '_') %>% map_chr(., 2)),
+             param1_val = unlist(grid_vals[, param1])[id.parm],
+             param2_val = unlist(grid_vals[, param2])[id.parm],
+             season = seasons[ix])
+    
+  })
+  
+  # Compile simulations:
+  sim_df <- bind_rows(sim_list_temp)
+  
+  # Return simulations:
+  return(sim_df)
+  
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Set shared and unit parameters:
@@ -188,3 +252,109 @@ for (i in 1:length(res_list)) {
     labs(fill = 'LL')
   print(p_temp)
 }
+rm(i, grid_temp, p_temp)
+
+if (save_plots) {
+  dev.off()
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Simulations at different parameter values
+
+# Set interaction parameter values:
+int_vals <- seq(0, 1, by = 0.1)
+delta_vals <- c(7/5, 7/14, 7/30, 7/60, 7/200)
+int_vals_all <- list(int_vals, delta_vals)
+rm(int_vals, delta_vals)
+
+# Loop through results:
+sim_list <- vector('list', length = length(res_list))
+for (i in 1:length(res_list)) {
+  
+  # Get vir1:
+  if (str_detect(names(res_list)[i], 'H1')) {
+    vir1 <- 'flu_h1'
+  } else {
+    vir1 <- 'flu_b'
+  }
+  
+  # Run simulations across interaction parameter values:
+  sim_temp <- simulate_grid(res_list[[i]], vir1, shared_estpars, unit_estpars, 'theta_lambda1', 'delta', int_vals_all)
+  
+  # Store simulations:
+  sim_list[[i]] <- sim_temp
+  
+}
+rm(i, int_vals_all, vir1, sim_temp, dat_pomp, hk_dat, obj_fun_list, po_list, seasons, yr, yr_index)
+
+# Generate plots of simulations:
+plot_list <- vector('list', length = length(res_list))
+seasons_all <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+for (i in 1:length(res_list)) {
+  sim_temp <- sim_list[[i]]
+  sim_temp <- sim_temp %>%
+    mutate(param2_val = 7 / param2_val)
+  
+  seasons <- res_list[[i]] %>%
+    select(contains(seasons_all)) %>%
+    pivot_longer(cols = everything(),
+                 names_to = 'season') %>%
+    mutate(season = str_sub(season, 1, 6)) %>%
+    pull(season) %>%
+    unique()
+  
+  plot_list_temp <- vector('list', length = length(seasons))
+  
+  for (j in 1:length(seasons)) {
+    sim_temp_yr <- sim_temp %>%
+      filter(season == seasons[j])
+    
+    p_cases <- ggplot(data = sim_temp_yr %>%
+                        filter(output %in% c('H1', 'H2')),
+                      aes(x = time, y = val, col = output, group = paste(output, id.sim))) +
+      geom_line() + theme_classic() + facet_grid(param1_val ~ param2_val) +
+      scale_color_brewer(palette = 'Set1') +
+      labs(x = 'Time (Weeks)', y = 'Cases (Total)', col = 'Vir.', title = seasons[j])
+    p_obs <- ggplot(data = sim_temp_yr %>%
+                      filter(output %in% c('n_P1', 'n_P2')),
+                    aes(x = time, y = val, col = output, group = paste(output, id.sim))) +
+      geom_line() + theme_classic() + facet_grid(param1_val ~ param2_val) +
+      scale_color_brewer(palette = 'Set1') +
+      labs(x = 'Time (Weeks)', y = 'Postive Tests', col = 'Vir.', title = seasons[j])
+    
+    # p_obs_alt1 <- ggplot(data = sim_temp_yr %>%
+    #                        filter(output %in% c('n_P1', 'n_P2')),
+    #                      aes(x = time, y = val, col = param1_val, lty = output, group = paste(output, id.sim, param1_val))) +
+    #   geom_line() + theme_classic() + facet_wrap(~ param2_val) +
+    #   scale_color_viridis() +
+    #   labs(x = 'Time (Weeks)', y = 'Postive Tests', col = 'theta_lambda1', title = seasons[j])
+    # p_obs_alt2 <- ggplot(data = sim_temp_yr %>%
+    #                        filter(output %in% c('n_P1', 'n_P2')),
+    #                      aes(x = time, y = val, col = param2_val, lty = output, group = paste(output, id.sim, param2_val))) +
+    #   geom_line() + theme_classic() + facet_wrap(~ param1_val) +
+    #   scale_color_viridis() +
+    #   labs(x = 'Time (Weeks)', y = 'Postive Tests', col = 'delta', title = seasons[j])
+    # print(p_obs_alt1)
+    # print(p_obs_alt2)
+    
+    plot_list_temp[[j]] <- list(p_cases, p_obs)
+  }
+  rm(j, sim_temp_yr, p_cases, p_obs)
+  
+  plot_list[[i]] <- plot_list_temp
+}
+rm(i, sim_temp, seasons_all, seasons, plot_list_temp)
+
+# Save plots to file:
+if (save_plots) {
+  pdf('results/plots/explore_interaction_param_impact_HK_simulations.pdf',
+      width = 15, height = 10)
+  print(plot_list)
+  dev.off()
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Clean up:
+rm(list = ls())
