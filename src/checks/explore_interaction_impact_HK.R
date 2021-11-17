@@ -9,6 +9,9 @@ library(tidyverse)
 library(gridExtra)
 library(testthat)
 
+# Set whether plots should be stored:
+save_plots <- TRUE
+
 # Set model parameters:
 prof_lik <- FALSE
 
@@ -54,7 +57,7 @@ load_and_format_mega_results <- function(filepath, true_estpars, run_name) {
 }
 
 # Function to generate slices/grids and calculate log-likelihoods:
-calculate_slices_and_grid <- function(pars_top, vir1, shared_estpars, method) {
+calculate_slices_and_grid <- function(pars_top, vir1, shared_estpars) {
   
   # Set estpars:
   estpars <- names(pars_top %>%
@@ -145,7 +148,7 @@ for (i in 1:length(res_list)) {
   }
   
   # Calculate ll over slices:
-  res_temp <- calculate_slices_and_grid(res_list[[i]], vir1, shared_estpars, 'slice')
+  res_temp <- calculate_slices_and_grid(res_list[[i]], vir1, shared_estpars)
   
   # Store slices:
   slice_list[[i]] <- res_temp[[1]]
@@ -153,6 +156,11 @@ for (i in 1:length(res_list)) {
   
 }
 rm(i, vir1, res_temp, dat_pomp, hk_dat, obj_fun_list, po_list, seasons, yr, yr_index)
+
+# Save plots to file?:
+if (save_plots) {
+  pdf('results/plots/explore_interaction_param_impact_HK_likelihood.pdf', width = 12, height = 9)
+}
 
 # Plot slices:
 par(mfrow = c(3, 3))
@@ -166,6 +174,7 @@ for (i in 1:length(res_list)) {
          main = names(res_list)[i])
   }
 }
+rm(i, slice_temp, par, slices_cur)
 
 # Plot grids:
 for (i in 1:length(res_list)) {
