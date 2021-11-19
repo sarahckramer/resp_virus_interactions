@@ -15,7 +15,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=300 # memory in MB required by the job
-#SBATCH --time=8:00:00 # run time in h:m:s, up to 24h possible
+#SBATCH --time=12:00:00 # run time in h:m:s, up to 24h possible
 
 export VIRUS1=$VIRUS1
 

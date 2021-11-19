@@ -35,7 +35,7 @@ debug_bool <- FALSE
 vir2 <- 'rsv'
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 # seasons <- 2006:2014
-time_max <- 9.75 # Maximal execution time (in hours)
+time_max <- 11.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
