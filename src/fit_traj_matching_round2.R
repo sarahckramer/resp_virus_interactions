@@ -240,15 +240,13 @@ if (int_eff == 'susc') {
   if (prof_lik) {
     shared_estpars <- c()
   } else {
-    # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1')
+    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
     shared_estpars <- c()
   } else {
-    # shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1')
+    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
   }
 } else {
   stop('Unrecognized int_eff value.')
