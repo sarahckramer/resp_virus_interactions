@@ -18,6 +18,7 @@ search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
+# prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -40,7 +41,14 @@ Ri_max1 <- 2.0
 Ri_max2 <- 3.0
 delta_min <- 7 / 30.0
 
-prof_val <- 1.0
+if (prof_lik) {
+  prof_param <- 'theta_lambda1'
+  
+  prof_val <- seq(0.0, 1.0, by = 0.02)[jobid]
+  print(prof_val)
+  
+  jobid <- 1
+}
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -190,7 +198,7 @@ for (yr_index in 1:length(seasons)) {
     
     # If doing profile likelihood, set theta_lambda1:
     if (prof_lik) {
-      coef(resp_mod, 'theta_lambda1') <- prof_val
+      coef(resp_mod, prof_param) <- prof_val
     }
     
     # Add pomp object to list:
@@ -238,13 +246,15 @@ po_list <- po_list[lapply(po_list, length) > 0]
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   if (prof_lik) {
-    shared_estpars <- c()
+    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+    shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
     shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
-    shared_estpars <- c()
+    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+    shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
     shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
   }
@@ -327,23 +337,39 @@ for (i in 1:length(ci_list)) {
 rm(i)
 
 # Get data frame of all ranges:
-for (i in 1:length(seasons)) {
+if (search_type == 'round2_CIs') {
   
-  if (search_type == 'broad') {
-    start_range_temp <- unit_start_range
-  } else if (search_type == 'round1_CIs') {
-    start_range_temp <- ci_list[[i]]
+  if (vir1 == 'flu_h1') {
+    start_range <- read_rds('results/round2_cis/round2CI_startvals_H1.rds')
+  } else if (vir1 == 'flu_b') {
+    start_range <- read_rds('results/round2_cis/round2CI_startvals_B.rds')
   } else {
-    stop('Unrecognized search type!')
+    stop('Unknown vir1!')
   }
   
-  names(start_range_temp) <- paste0(seasons[i], '_', names(unit_start_range))
-  start_range <- start_range %>%
-    bind_cols(start_range_temp)
-  rm(start_range_temp)
+} else {
+  
+  for (i in 1:length(seasons)) {
+    
+    if (search_type == 'broad') {
+      start_range_temp <- unit_start_range
+    } else if (search_type == 'round1_CIs') {
+      start_range_temp <- ci_list[[i]]
+    } else if (search_type == 'round2_CIs') {
+      print('ERROR: Round2 CIs used.')
+    } else {
+      stop('Unrecognized search type!')
+    }
+    
+    names(start_range_temp) <- paste0(seasons[i], '_', names(unit_start_range))
+    start_range <- start_range %>%
+      bind_cols(start_range_temp)
+    rm(start_range_temp)
+    
+  }
+  rm(i)
   
 }
-rm(i)
 
 start_range <- start_range[, estpars]
 
