@@ -47,6 +47,7 @@ if (prof_lik) {
   prof_val <- seq(0.0, 1.0, by = 0.02)[jobid]
   print(prof_val)
   
+  jobid_orig <- jobid
   jobid <- 1
 }
 
@@ -442,9 +443,10 @@ for (i in seq_along(sub_start)) {
                 etime = as.numeric(etime))
     
     # Write to file:
-    saveRDS(out, file = sprintf('results/res_%s_%s_%d.rds',
+    saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d.rds',
                                 vir1,
                                 int_eff,
+                                jobid_orig,
                                 sub_start[i])
     )
     
