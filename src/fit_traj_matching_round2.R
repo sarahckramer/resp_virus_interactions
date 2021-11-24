@@ -197,7 +197,7 @@ for (yr_index in 1:length(seasons)) {
   # Check whether any data for given season:
   if (exists('resp_mod')) {
     
-    # If doing profile likelihood, set theta_lambda1:
+    # If doing profile likelihood, set interaction parameter:
     if (prof_lik) {
       coef(resp_mod, prof_param) <- prof_val
     }
