@@ -43,8 +43,14 @@ delta_min <- 7 / 30.0
 
 if (prof_lik) {
   prof_param <- 'theta_lambda1'
+  # prof_param <- 'theta_lambda2'
+  # prof_param <- 'delta'
   
-  prof_val <- seq(0.0, 1.0, by = 0.02)[jobid]
+  if (prof_param == 'delta') {
+    prof_val <- (7 / seq(5, 255, by = 5))[jobid]
+  } else {
+    prof_val <- seq(0.0, 1.0, by = 0.02)[jobid]
+  }
   print(prof_val)
   
   jobid_orig <- jobid
