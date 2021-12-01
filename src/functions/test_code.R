@@ -60,7 +60,8 @@ check_obs_lessthan_samples <- function(pomp_object, n_sim = 10) {
     rename(sim_nP1 = n_P1.x,
            sim_nP2 = n_P2.x,
            obs_nP1 = n_P1.y,
-           obs_nP2 = n_P2.y)
+           obs_nP2 = n_P2.y) %>%
+    filter(!is.na(sim_nP1))
   
   expect_true(all(sim_stoch$sim_nP1 <= sim_stoch$n_T))
   expect_true(all(sim_stoch$sim_nP2 <= sim_stoch$n_T))

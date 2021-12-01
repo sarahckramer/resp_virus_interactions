@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------------------------
-# Calculate observed attack rates and peak timings for flu and RSV outbreaks
+# Calculate observed attack rates and peak timings for flu and RSV outbreaks (France)
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load libraries:
