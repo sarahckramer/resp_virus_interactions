@@ -47,6 +47,7 @@ T_rho2 = logit(rho2);
 //T_rho1 = log(rho1); 
 //T_rho2 = log(rho2);
 T_N = N;
+T_sigmaSE = log(sigmaSE);
 
 sum_init = I10 + I20 + R10 + R20 + R120;
 //sum_init = I10 + R10 + R20 + R120;
@@ -80,6 +81,7 @@ rho2 = expit(T_rho2);
 //rho1 = exp(T_rho1);
 //rho2 = exp(T_rho2);
 N = T_N;
+sigmaSE = exp(T_sigmaSE);
 
 sum_init = exp(T_I10) + exp(T_I20) + exp(T_R10) + exp(T_R20) + exp(T_R120);
 //sum_init = exp(T_I10) + exp(T_R10) + exp(T_R20) + exp(T_R120);
@@ -230,14 +232,19 @@ double beta2 = Ri2 / (1.0 - (R20 + R120)) * gamma2; // Initial reproduction no o
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 
+// Incorporate extrademographic stochasticity:
+
+double dw = rgammawn(sigmaSE, dt); // white noise (extrademographic stochasticity)
+// this eventually gets multiplied by any rates involving lambda?
+
+lambda1 = lambda1 * (dw / dt);
+lambda2 = lambda2 * (dw / dt);
+
 // Calculate transitions:
 double rates[18];
 double fromSS[2], fromIS[2], fromTS[2], fromSI[2], fromII[2], fromTI[2], fromST[2], fromIT[2], fromTT[2];
 double fromRS, fromRI, fromRT, fromSR, fromIR, fromTR;
 double reportII1, reportII2, reportIT, reportTI;
-
-// dw = rgammawn(sigmaSE, dt); // white noise (extrademographic stochasticity)
-// this eventually gets multiplied by any rates involving lambda?
 
 rates[0] = lambda1;
 rates[1] = lambda2;

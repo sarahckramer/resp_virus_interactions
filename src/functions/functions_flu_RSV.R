@@ -124,6 +124,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                             'theta_lambda1', 'theta_lambda2', # interaction effects on susceptibility to infection
                             'rho1', 'rho2', # probs. infection leads to ARI consultation
                             'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
+                            'sigmaSE', # extrademographic process noise
                             'N', # population size
                             'I10', 'I20', # props. infectious at outbreak start
                             'R10', 'R20', 'R120'), # props. recovered at outbreak start
@@ -134,6 +135,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                         theta_lambda1 = 1.0, theta_lambda2 = 1.0,
                         rho1 = 0.5, rho2 = 0.15,
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
+                        sigmaSE = 0.1,
                         N = unique(dat$pop),
                         I10 = 1e-5, I20 = 1e-5,
                         R10 = 0, R20 = 0, R120 = 0),
