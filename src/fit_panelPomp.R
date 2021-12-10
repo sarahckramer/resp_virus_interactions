@@ -251,10 +251,10 @@ sub_start <- (1 + (jobid - 1) * sobol_size / no_jobs) : (jobid * sobol_size / no
 # Loop through start values and perform MIF:
 for (i in seq_along(sub_start)) {
   
-  print(paste0('Estimation: ', i))
+  print(paste0('Estimation: ', sub_start[i]))
   
   # Get param start values:
-  x0 <- as.numeric(start_values[i, ])
+  x0 <- as.numeric(start_values[sub_start[i], ])
   coef(resp_mod)[estpars] <- x0
   params <- coef(resp_mod)
   print(params)
