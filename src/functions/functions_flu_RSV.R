@@ -123,6 +123,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                             'delta1', 'd2', #'delta2', # 1 / average refractory periods; relative length of refractory period for RSV->flu
                             'theta_lambda1', 'theta_lambda2', # interaction effects on susceptibility to infection
                             'rho1', 'rho2', # probs. infection leads to ARI consultation
+                            'alpha', 'phi', # amplitude and phase of seasonality of all-cause consultations
                             'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
                             'sigmaSE', # extrademographic process noise
                             'N', # population size
@@ -134,6 +135,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                         delta1 = 7 / 5, d2 = 1.0, #delta2 = 7 / 5,
                         theta_lambda1 = 1.0, theta_lambda2 = 1.0,
                         rho1 = 0.5, rho2 = 0.15,
+                        alpha = 0, phi = 0,
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
                         sigmaSE = 0.1,
                         N = unique(dat$pop),

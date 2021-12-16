@@ -47,6 +47,8 @@ T_rho1 = logit(rho1);
 T_rho2 = logit(rho2);
 //T_rho1 = log(rho1); 
 //T_rho2 = log(rho2);
+T_alpha = log(alpha);
+T_phi = logitCons(phi, 0.0, 52.25);
 T_N = N;
 T_sigmaSE = log(sigmaSE);
 
@@ -82,6 +84,8 @@ rho1 = expit(T_rho1);
 rho2 = expit(T_rho2);
 //rho1 = exp(T_rho1);
 //rho2 = exp(T_rho2);
+alpha = exp(T_alpha);
+phi = expitCons(T_phi, 0.0, 52.25);
 N = T_N;
 sigmaSE = exp(T_sigmaSE);
 
@@ -99,9 +103,10 @@ R120 = exp(T_R120) / (1.0 + sum_init);
 
 //start_dmeas
 double fP1, fP2, ll;
+double omega = (2 * M_PI) / 52.25;
 
-double rho1_w = fmin2(1.0, rho1 * H1 / i_ARI); // Probability of detecting virus 1
-double rho2_w = fmin2(1.0, rho2 * H2 / i_ARI); // Probability of detecting virus 2
+double rho1_w = fmin2(1.0, rho1 * (1 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
 
 fP1 = dbinom(n_P1, n_T, rho1_w, 1); // First likelihood component, natural scale
 fP2 = dbinom(n_P2, n_T, rho2_w, 1); // Second likelihood component, natural scale
@@ -130,8 +135,10 @@ lik = (give_log) ? ll : exp(ll);
 //end_dmeas
 
 //start_rmeas
-double rho1_w = fmin2(1.0, rho1 * H1 / i_ARI); // Probability of detecting virus 1
-double rho2_w = fmin2(1.0, rho2 * H2 / i_ARI); // Probability of detecting virus 2
+double omega = (2 * M_PI) / 52.25;
+
+double rho1_w = fmin2(1.0, rho1 * (1 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
 
 n_P1 = rbinom(n_T, rho1_w); // Generate of tests positive to virus 1
 n_P2 = rbinom(n_T, rho2_w); // Generate of tests positive to virus 2
