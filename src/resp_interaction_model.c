@@ -54,7 +54,8 @@ T_eta_temp2 = eta_temp2;
 T_eta_ah1 = eta_ah1;
 T_eta_ah2 = eta_ah2;
 T_N = N;
-T_sigmaSE = log(sigmaSE);
+T_beta_sd1 = log(beta_sd1);
+T_beta_sd2 = log(beta_sd2);
 
 sum_init = I10 + I20 + R10 + R20 + R120;
 //sum_init = I10 + R10 + R20 + R120;
@@ -95,7 +96,8 @@ eta_temp2 = T_eta_temp2;
 eta_ah1 = T_eta_ah1;
 eta_ah2 = T_eta_ah2;
 N = T_N;
-sigmaSE = exp(T_sigmaSE);
+beta_sd1 = exp(T_beta_sd1);
+beta_sd2 = exp(T_beta_sd2);
 
 sum_init = exp(T_I10) + exp(T_I20) + exp(T_R10) + exp(T_R20) + exp(T_R120);
 //sum_init = exp(T_I10) + exp(T_R10) + exp(T_R20) + exp(T_R120);
@@ -228,25 +230,33 @@ DH2 = gamma2 * (X_SI + theta_rho1 * (X_II + X_TI) + X_RI) / N; // Incidence rate
 //end_skel
 
 //start_rsim
+
+// Calculate prevalences:
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
-double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
-double beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
-// double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
-// double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
+// Calculate R0:
+double R0_1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp); // Basic reproductive number (virus 1)
+double R0_2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp); // Basic reproductive number (virus 2)
+
+// Incorporate extrademographic stochasticity:
+double beta1, beta2;
+if (p1 > 0.0 && beta_sd1 > 0.0) {
+  beta1 = rgammawn(sqrt(R0_1 / (p1 * N * beta_sd1 * dt)), R0_1 * gamma1);
+} else {
+  beta1 = R0_1 * gamma1;
+}
+if (p2 > 0.0 && beta_sd2 > 0.0) {
+  beta2 = rgammawn(sqrt(R0_2 / (p2 * N * beta_sd2 * dt)), R0_2 * gamma2);
+} else {
+  beta2 = R0_2 * gamma2;
+}
+
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 
+// Calculate duration of refractory period of virus 2:
 double delta2 = d2 * delta1; // 1 / duration of refractory period (virus2 -> virus1)
-
-// Incorporate extrademographic stochasticity:
-
-double dw = rgammawn(sigmaSE, dt); // white noise (extrademographic stochasticity)
-// this eventually gets multiplied by any rates involving lambda?
-
-lambda1 = lambda1 * (dw / dt);
-lambda2 = lambda2 * (dw / dt);
 
 // Calculate transitions:
 double rates[18];
@@ -317,8 +327,6 @@ X_SR += fromST[1] - fromSR;
 X_IR += fromIT[1] + fromSR - fromIR;
 X_TR += fromTT[1] + fromIR - fromTR;
 X_RR += fromRT + fromTR;
-
-//W += (dw - dt) / sigmaSE; // standardized i.i.d. white noise
 
 H1_tot += (fromIS[0] + fromII[0] + fromIT[0] + fromIR) / N;
 H2_tot += (fromSI[1] + fromII[1] + fromTI[1] + fromRI) / N;

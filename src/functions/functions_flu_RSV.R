@@ -127,7 +127,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                             'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
                             'eta_temp1', 'eta_temp2', # temperature forcing on virus 1 and 2
                             'eta_ah1', 'eta_ah2', # absolute humidity on virus 1 and 2
-                            'sigmaSE', # extrademographic process noise
+                            'beta_sd1', 'beta_sd2', # extrademographic stochasticity (k-value) for virus 1 and 2
                             'N', # population size
                             'I10', 'I20', # props. infectious at outbreak start
                             'R10', 'R20', 'R120'), # props. recovered at outbreak start
@@ -141,7 +141,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
                         eta_temp1 = 0, eta_temp2 = 0,
                         eta_ah1 = 0, eta_ah2 = 0,
-                        sigmaSE = 0.1,
+                        beta_sd1 = 0.1, beta_sd2 = 0.1,
                         N = unique(dat$pop),
                         I10 = 1e-5, I20 = 1e-5,
                         R10 = 0, R20 = 0, R120 = 0),
