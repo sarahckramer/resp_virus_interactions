@@ -108,7 +108,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
   po <- pomp(data = dat[, c('time', 'n_P1', 'n_P2')],
              times = 'time',
              t0 = 0,
-             covar = covariate_table(dat[, c('time', 'i_ARI', 'n_T')], times = 'time'),
+             covar = covariate_table(dat[, c('time', 'i_ARI', 'n_T', 'temp', 'ah')], times = 'time'),
              accumvars = c('H1_tot', 'H2_tot', 'H1', 'H2'),
              obsnames = c('n_P1', 'n_P2'),
              statenames = c('X_SS', 'X_IS', 'X_TS', 'X_RS', 
@@ -125,6 +125,8 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                             'rho1', 'rho2', # probs. infection leads to ARI consultation
                             'alpha', 'phi', # amplitude and phase of seasonality of all-cause consultations
                             'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
+                            'eta_temp1', 'eta_temp2', # temperature forcing on virus 1 and 2
+                            'eta_ah1', 'eta_ah2', # absolute humidity on virus 1 and 2
                             'sigmaSE', # extrademographic process noise
                             'N', # population size
                             'I10', 'I20', # props. infectious at outbreak start
@@ -137,6 +139,8 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                         rho1 = 0.5, rho2 = 0.15,
                         alpha = 0, phi = 0,
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
+                        eta_temp1 = 0, eta_temp2 = 0,
+                        eta_ah1 = 0, eta_ah2 = 0,
                         sigmaSE = 0.1,
                         N = unique(dat$pop),
                         I10 = 1e-5, I20 = 1e-5,

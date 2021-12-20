@@ -49,6 +49,10 @@ T_rho2 = logit(rho2);
 //T_rho2 = log(rho2);
 T_alpha = log(alpha);
 T_phi = logitCons(phi, 0.0, 52.25);
+T_eta_temp1 = eta_temp1;
+T_eta_temp2 = eta_temp2;
+T_eta_ah1 = eta_ah1;
+T_eta_ah2 = eta_ah2;
 T_N = N;
 T_sigmaSE = log(sigmaSE);
 
@@ -86,6 +90,10 @@ rho2 = expit(T_rho2);
 //rho2 = exp(T_rho2);
 alpha = exp(T_alpha);
 phi = expitCons(T_phi, 0.0, 52.25);
+eta_temp1 = T_eta_temp1;
+eta_temp2 = T_eta_temp2;
+eta_ah1 = T_eta_ah1;
+eta_ah2 = T_eta_ah2;
 N = T_N;
 sigmaSE = exp(T_sigmaSE);
 
@@ -184,8 +192,10 @@ if(debug) {
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
-double beta1 = Ri1 / (1.0 - (R10 + R120)) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
-double beta2 = Ri2 / (1.0 - (R20 + R120)) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
+double beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+// double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
+// double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
 //double beta1 = Ri1 * gamma1; // R0 instead of initial Reff
 //double beta2 = Ri2 * gamma2; // same
 double lambda1 = beta1 * p1; // Force of infection with virus 1
@@ -221,8 +231,10 @@ DH2 = gamma2 * (X_SI + theta_rho1 * (X_II + X_TI) + X_RI) / N; // Incidence rate
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
-double beta1 = Ri1 / (1.0 - (R10 + R120)) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
-double beta2 = Ri2 / (1.0 - (R20 + R120)) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
+double beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+// double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
+// double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 
