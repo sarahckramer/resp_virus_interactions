@@ -104,6 +104,9 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
     components_l[[nm]] <- Csnippet(text = components_l[[nm]])
   }
   
+  # Check that population size is the same at all timepoints:
+  expect_true(length(unique(dat$pop)) == 1)
+  
   # Create pomp object:
   po <- pomp(data = dat[, c('time', 'n_P1', 'n_P2')],
              times = 'time',

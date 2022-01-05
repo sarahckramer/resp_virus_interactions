@@ -5,6 +5,7 @@
 # Load libraries:
 library(GSODR)
 library(tidyverse)
+library(testthat)
 
 # # List all available country names:
 # get_inventory() %>%
@@ -135,6 +136,10 @@ print(p_hk)
 # Normalize data (as in Yaari et al.):
 dat_hk_norm <- dat_hk %>%
   mutate(across(temp:prcp, ~ (.x - mean(.x)) / sd(.x)))
+dat_hk_norm_CHECK <- dat_hk %>%
+  mutate(across(temp:prcp, ~ scale(.x)[,1 ]))
+expect_true(all.equal(dat_hk_norm, dat_hk_norm_CHECK))
+rm(dat_hk_norm_CHECK)
 
 # Check that means ~ 0 and sd ~ 1:
 dat_hk_norm %>%
