@@ -32,6 +32,24 @@ dat_hk <- dat_hk %>%
 # Check for NAs:
 dat_hk %>% pull(season) %>% is.na() %>% any() %>% expect_false()
 
+# Get population sizes:
+pop_dat <- read_csv('data/raw/hk/pop_dat_hk.csv', skip = 4) %>%
+  rename('X1' = 'Year') %>%
+  filter(X1 == 'Both sexes',
+         X2 == 'All age groups') %>%
+  select(!contains('_1')) %>%
+  select(all_of(as.character(unique(dat_hk$Year))))
+
+pop_dat <- pop_dat %>%
+  pivot_longer(cols = everything(), names_to = 'season', values_to = 'pop') %>%
+  mutate(season = as.numeric(season),
+         pop = as.numeric(pop)) %>%
+  mutate(season = paste0('s', str_sub(season - 1, 3, 4), '-', str_sub(season, 3, 4))) %>%
+  mutate(pop = pop * 1000)
+
+dat_hk <- dat_hk %>%
+  left_join(pop_dat, by = 'season')
+
 # Ensure that Time begins at 1 for each season:
 dat_hk <- dat_hk %>%
   group_by(season) %>%
@@ -51,7 +69,7 @@ for (vir1_nm in vir_list[1:3]) {
     
     # Limit to data of interest:
     dat_out <- dat_hk %>%
-      select(Time:n_samp, contains(vir1_nm), contains(vir2_nm), GOPC:season)
+      select(Time:n_samp, contains(vir1_nm), contains(vir2_nm), GOPC:pop)
     
     # Remove 19-20 season:
     dat_out <- dat_out %>%
@@ -113,6 +131,24 @@ dev.off()
 
 # Save formatted data:
 write_rds(dat_hk_pomp, file = 'data/formatted/dat_hk_byOutbreak_ALT.rds')
+
+# Add leading NAs to 2013-14 season:
+dat_hk_pomp<- lapply(dat_hk_pomp, function(ix) {
+  ix %>%
+    complete(Week, season) %>%
+    filter(!(Week == 53 & is.na(n_P1))) %>%
+    select(time:GOPC, Week:season, pop) %>%
+    mutate(Year = if_else(is.na(Year), 2013, Year),
+           time = if_else(is.na(time), Week - 52, time),
+           pop = if_else(is.na(pop), min(dat_hk$pop), pop)) %>%
+    arrange(Year, Week) %>%
+    group_by(season) %>%
+    mutate(time = time - min(time) + 1) %>%
+    ungroup()
+})
+
+# Save formatted data:
+write_rds(dat_hk_pomp, file = 'data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')
 
 # Clean up:
 rm(list = ls())
