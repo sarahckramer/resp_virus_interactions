@@ -115,8 +115,8 @@ R120 = exp(T_R120) / (1.0 + sum_init);
 double fP1, fP2, ll;
 double omega = (2 * M_PI) / 52.25;
 
-double rho1_w = fmin2(1.0, rho1 * (1 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
-double rho2_w = fmin2(1.0, rho2 * (1 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
+double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
 
 fP1 = dbinom(n_P1, n_T, rho1_w, 1); // First likelihood component, natural scale
 fP2 = dbinom(n_P2, n_T, rho2_w, 1); // Second likelihood component, natural scale
@@ -147,8 +147,8 @@ lik = (give_log) ? ll : exp(ll);
 //start_rmeas
 double omega = (2 * M_PI) / 52.25;
 
-double rho1_w = fmin2(1.0, rho1 * (1 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
-double rho2_w = fmin2(1.0, rho2 * (1 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
+double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
 
 n_P1 = rbinom(n_T, rho1_w); // Generate of tests positive to virus 1
 n_P2 = rbinom(n_T, rho2_w); // Generate of tests positive to virus 2
@@ -262,7 +262,7 @@ double delta2 = d2 * delta1; // 1 / duration of refractory period (virus2 -> vir
 double rates[18];
 double fromSS[2], fromIS[2], fromTS[2], fromSI[2], fromII[2], fromTI[2], fromST[2], fromIT[2], fromTT[2];
 double fromRS, fromRI, fromRT, fromSR, fromIR, fromTR;
-double reportII1, reportII2, reportIT, reportTI;
+//double reportII1, reportII2, reportIT, reportTI;
 
 rates[0] = lambda1;
 rates[1] = lambda2;
@@ -283,15 +283,15 @@ rates[15] = delta2;
 rates[16] = delta1;
 rates[17] = delta2;
 
-reulermultinom(2, X_SS, &rates[0], dt, fromSS);
-reulermultinom(2, X_IS, &rates[2], dt, fromIS);
-reulermultinom(2, X_TS, &rates[4], dt, fromTS);
-reulermultinom(2, X_SI, &rates[6], dt, fromSI);
-reulermultinom(2, X_II, &rates[8], dt, fromII);
-reulermultinom(2, X_TI, &rates[10], dt, fromTI);
-reulermultinom(2, X_ST, &rates[12], dt, fromST);
-reulermultinom(2, X_IT, &rates[14], dt, fromIT);
-reulermultinom(2, X_TT, &rates[16], dt, fromTT);
+reulermultinom(2, X_SS, &rates[0], dt, &fromSS[0]);
+reulermultinom(2, X_IS, &rates[2], dt, &fromIS[0]);
+reulermultinom(2, X_TS, &rates[4], dt, &fromTS[0]);
+reulermultinom(2, X_SI, &rates[6], dt, &fromSI[0]);
+reulermultinom(2, X_II, &rates[8], dt, &fromII[0]);
+reulermultinom(2, X_TI, &rates[10], dt, &fromTI[0]);
+reulermultinom(2, X_ST, &rates[12], dt, &fromST[0]);
+reulermultinom(2, X_IT, &rates[14], dt, &fromIT[0]);
+reulermultinom(2, X_TT, &rates[16], dt, &fromTT[0]);
 
 // Rprintf("first=%.1f, second=%.f, first=%.1f, second=%.f\n", fromSS[0], fromSS[1], fromIS[0], fromIS[1]);
 
@@ -302,10 +302,10 @@ fromSR = rbinom(X_SR, pTrans(lambda1, dt));
 fromIR = rbinom(X_IR, pTrans(gamma1, dt));
 fromTR = rbinom(X_TR, pTrans(delta1, dt));
 
-reportII1 = rbinom(fromII[0], theta_rho2);
-reportIT = rbinom(fromIT[0], theta_rho2);
-reportII2 = rbinom(fromII[1], theta_rho1);
-reportTI = rbinom(fromTI[1], theta_rho1);
+//reportII1 = rbinom(fromII[0], theta_rho2);
+//reportIT = rbinom(fromIT[0], theta_rho2);
+//reportII2 = rbinom(fromII[1], theta_rho1);
+//reportTI = rbinom(fromTI[1], theta_rho1);
 
 // Balance equations:
 X_SS += -fromSS[0] - fromSS[1];
@@ -330,7 +330,9 @@ X_RR += fromRT + fromTR;
 
 H1_tot += (fromIS[0] + fromII[0] + fromIT[0] + fromIR) / N;
 H2_tot += (fromSI[1] + fromII[1] + fromTI[1] + fromRI) / N;
-H1 += (fromIS[0] + reportII1 + reportIT + fromIR) / N;
-H2 += (fromSI[1] + reportII2 + reportTI + fromRI) / N;
+H1 += (fromIS[0] + theta_rho2 * (fromII[0] + fromIT[0]) + fromIR) / N;
+H2 += (fromSI[1] + theta_rho1 * (fromII[1] + fromTI[1]) + fromRI) / N;
+//H1 += (fromIS[0] + reportII1 + reportIT + fromIR) / N;
+//H2 += (fromSI[1] + reportII2 + reportTI + fromRI) / N;
 
 //end_rsim
