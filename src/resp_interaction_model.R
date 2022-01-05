@@ -37,7 +37,7 @@ dat_pomp <- dat_pomp %>%
   inner_join(dat_clim,
              by = c('Year' = 'year',
                     'Week' = 'week')) %>%
-  select(time:season, temp, ah, rh)
+  select(time:pop, temp, ah, rh)
 expect_true(nrow(dat_pomp) == nrow_check)
 rm(dat_clim)
 
@@ -53,8 +53,7 @@ if (nrow(dat_pomp) > 0) {
   # Format data:
   dat_pomp <- dat_pomp %>%
     rename('i_ARI' = 'GOPC') %>%
-    mutate(i_ARI = i_ARI / 1000,
-           pop = 7071600)
+    mutate(i_ARI = i_ARI / 1000)
   # https://www.censtatd.gov.hk/en/
   # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
   
