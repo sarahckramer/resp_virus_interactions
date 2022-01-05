@@ -5,6 +5,7 @@
 # Load libraries:
 library(GSODR)
 library(tidyverse)
+library(testthat)
 
 # # List all available country names:
 # get_inventory() %>%
@@ -38,9 +39,14 @@ dat_chile <- dat_chile %>%
 
 # Get week numbers:
 dat_hk <- dat_hk %>%
-  mutate(WEEK = as.numeric(strftime(YEARMODA, format = '%V')),
-         YEAR = ifelse(WEEK == 1 & MONTH == 12, YEAR + 1, YEAR),
-         YEAR = ifelse((WEEK == 52 | WEEK == 53) & MONTH == 1, YEAR - 1, YEAR)) %>%
+  mutate(WEEK = as.numeric(strftime(YEARMODA, format = '%U'))) %>%
+  group_by(YEAR) %>%
+  mutate(YEAR_NEW = ifelse(WEEK == max(WEEK) & YEAR != 2016, YEAR + 1, YEAR),
+         WEEK = ifelse(WEEK == max(WEEK) & YEAR != 2016, 0, WEEK)) %>%
+  ungroup() %>%
+  mutate(YEAR = YEAR_NEW) %>%
+  select(-YEAR_NEW) %>%
+  mutate(WEEK = ifelse(YEAR == 2017, WEEK, WEEK + 1)) %>%
   filter(YEAR < 2020 & YEAR >= 2013)
 
 dat_chile <- dat_chile %>%
@@ -126,3 +132,39 @@ p_hk <- ggplot(data = dat_hk_plot, aes(x = date, y = val)) + geom_point() + geom
   theme_classic() + facet_wrap(~ measure, scales = 'free_y', ncol = 2) +
   labs(x = 'Year', y = '')
 print(p_hk)
+
+# Normalize data (as in Yaari et al.):
+dat_hk_norm <- dat_hk %>%
+  mutate(across(temp:prcp, ~ (.x - mean(.x)) / sd(.x)))
+dat_hk_norm_CHECK <- dat_hk %>%
+  mutate(across(temp:prcp, ~ scale(.x)[,1 ]))
+expect_true(all.equal(dat_hk_norm, dat_hk_norm_CHECK))
+rm(dat_hk_norm_CHECK)
+
+# Check that means ~ 0 and sd ~ 1:
+dat_hk_norm %>%
+  summarise(across(temp:prcp, mean))
+dat_hk_norm %>%
+  summarise(across(temp:prcp, var))
+
+# Write data to file:
+write_csv(dat_hk_norm, file = 'data/formatted/clim_dat_hk_NORM.csv')
+
+# Plot data:
+dat_hk_plot <- dat_hk_norm %>%
+  select(date, temp, ah:prcp) %>%
+  rename('Temperature' = 'temp',
+         'Abs. Humidity' = 'ah',
+         'Rel. Humidity' = 'rh',
+         'Precipitation' = 'prcp') %>%
+  pivot_longer(-date, names_to = 'measure', values_to = 'val') %>%
+  mutate(measure = factor(measure))
+dat_hk_plot$measure <- factor(dat_hk_plot$measure, levels = levels(dat_hk_plot$measure)[c(4, 1, 3, 2)])
+
+p_hk_norm <- ggplot(data = dat_hk_plot, aes(x = date, y = val)) + geom_point() + geom_line() +
+  theme_classic() + facet_wrap(~ measure, scales = 'free_y', ncol = 2) +
+  labs(x = 'Year', y = '')
+print(p_hk_norm)
+
+# Clean up:
+rm(list = ls())

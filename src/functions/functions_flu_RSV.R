@@ -104,11 +104,14 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
     components_l[[nm]] <- Csnippet(text = components_l[[nm]])
   }
   
+  # Check that population size is the same at all timepoints:
+  expect_true(length(unique(dat$pop)) == 1)
+  
   # Create pomp object:
   po <- pomp(data = dat[, c('time', 'n_P1', 'n_P2')],
              times = 'time',
              t0 = 0,
-             covar = covariate_table(dat[, c('time', 'i_ARI', 'n_T')], times = 'time'),
+             covar = covariate_table(dat[, c('time', 'i_ARI', 'n_T', 'temp', 'ah')], times = 'time'),
              accumvars = c('H1_tot', 'H2_tot', 'H1', 'H2'),
              obsnames = c('n_P1', 'n_P2'),
              statenames = c('X_SS', 'X_IS', 'X_TS', 'X_RS', 
@@ -119,23 +122,29 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
                             'H1', 'H2'),
              paramnames = c('Ri1', 'Ri2', # initial effective reproductive numbers
                             'gamma1', 'gamma2', # 1 / average infectious periods
-                            'delta', # 1 / average refractory period (assume same duration for flu and RSV)
-                            # 'delta1', 'delta2', # 1 / average refractory periods
+                            # 'delta', # 1 / average refractory period (assume same duration for flu and RSV)
+                            'delta1', 'd2', #'delta2', # 1 / average refractory periods; relative length of refractory period for RSV->flu
                             'theta_lambda1', 'theta_lambda2', # interaction effects on susceptibility to infection
                             'rho1', 'rho2', # probs. infection leads to ARI consultation
+                            'alpha', 'phi', # amplitude and phase of seasonality of all-cause consultations
                             'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
-                            'sigmaSE', # extrademographic process noise
+                            'eta_temp1', 'eta_temp2', # temperature forcing on virus 1 and 2
+                            'eta_ah1', 'eta_ah2', # absolute humidity on virus 1 and 2
+                            'beta_sd1', 'beta_sd2', # extrademographic stochasticity (k-value) for virus 1 and 2
                             'N', # population size
                             'I10', 'I20', # props. infectious at outbreak start
                             'R10', 'R20', 'R120'), # props. recovered at outbreak start
              params = c(Ri1 = 1.5, Ri2 = 2,
                         gamma1 = 7 / 5, gamma2 = 7 / 10, # or 4 for flu?
-                        delta = 7 / 5,
-                        # delta1 = 7 / 5, delta2 = 7 / 5,
+                        # delta = 7 / 5,
+                        delta1 = 7 / 5, d2 = 1.0, #delta2 = 7 / 5,
                         theta_lambda1 = 1.0, theta_lambda2 = 1.0,
                         rho1 = 0.5, rho2 = 0.15,
+                        alpha = 0, phi = 0,
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
-                        sigmaSE = 0.1,
+                        eta_temp1 = 0, eta_temp2 = 0,
+                        eta_ah1 = 0, eta_ah2 = 0,
+                        beta_sd1 = 0.1, beta_sd2 = 0.1,
                         N = unique(dat$pop),
                         I10 = 1e-5, I20 = 1e-5,
                         R10 = 0, R20 = 0, R120 = 0),

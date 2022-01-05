@@ -29,6 +29,17 @@ hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')
 # Get data of interest:
 dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
   filter(season == yr)
+nrow_check <- nrow(dat_pomp)
+
+# Get climate data:
+dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
+dat_pomp <- dat_pomp %>%
+  inner_join(dat_clim,
+             by = c('Year' = 'year',
+                    'Week' = 'week')) %>%
+  select(time:season, temp, ah, rh)
+expect_true(nrow(dat_pomp) == nrow_check)
+rm(dat_clim)
 
 # # Format data:
 # formatted_dat <- prepare_data('flu_A', vir2, 2006, fr_dat, early_start = early_start_val)

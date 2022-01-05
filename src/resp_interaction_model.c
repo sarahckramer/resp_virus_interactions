@@ -35,9 +35,10 @@ T_Ri2 = logitCons(Ri2, 1.0, Ri2_max);
 T_gamma1 = log(gamma1); 
 T_gamma2 = log(gamma2);
 //T_delta = logitCons(delta, delta_min, 7 / 1);
-T_delta = log(delta);
-//T_delta1 = log(delta1);
-//T_delta2 = log(delta2); 
+//T_delta = log(delta);
+T_delta1 = log(delta1);
+//T_delta2 = log(delta2);
+T_d2 = log(d2);
 T_theta_lambda1 = logit(theta_lambda1);
 T_theta_lambda2 = logit(theta_lambda2);
 T_theta_rho1 = logit(theta_rho1);
@@ -46,8 +47,15 @@ T_rho1 = logit(rho1);
 T_rho2 = logit(rho2);
 //T_rho1 = log(rho1); 
 //T_rho2 = log(rho2);
+T_alpha = log(alpha);
+T_phi = logitCons(phi, 0.0, 52.25);
+T_eta_temp1 = eta_temp1;
+T_eta_temp2 = eta_temp2;
+T_eta_ah1 = eta_ah1;
+T_eta_ah2 = eta_ah2;
 T_N = N;
-T_sigmaSE = log(sigmaSE);
+T_beta_sd1 = log(beta_sd1);
+T_beta_sd2 = log(beta_sd2);
 
 sum_init = I10 + I20 + R10 + R20 + R120;
 //sum_init = I10 + R10 + R20 + R120;
@@ -69,9 +77,10 @@ Ri2 = expitCons(T_Ri2, 1.0, Ri2_max);
 gamma1 = exp(T_gamma1);
 gamma2 = exp(T_gamma2);
 //delta = expitCons(T_delta, delta_min, 7 / 1);
-delta = exp(T_delta);
-//delta1 = exp(T_delta1);
+//delta = exp(T_delta);
+delta1 = exp(T_delta1);
 //delta2 = exp(T_delta2);
+d2 = exp(T_d2);
 theta_lambda1 = expit(T_theta_lambda1);
 theta_lambda2 = expit(T_theta_lambda2);
 theta_rho1 = expit(T_theta_rho1);
@@ -80,8 +89,15 @@ rho1 = expit(T_rho1);
 rho2 = expit(T_rho2);
 //rho1 = exp(T_rho1);
 //rho2 = exp(T_rho2);
+alpha = exp(T_alpha);
+phi = expitCons(T_phi, 0.0, 52.25);
+eta_temp1 = T_eta_temp1;
+eta_temp2 = T_eta_temp2;
+eta_ah1 = T_eta_ah1;
+eta_ah2 = T_eta_ah2;
 N = T_N;
-sigmaSE = exp(T_sigmaSE);
+beta_sd1 = exp(T_beta_sd1);
+beta_sd2 = exp(T_beta_sd2);
 
 sum_init = exp(T_I10) + exp(T_I20) + exp(T_R10) + exp(T_R20) + exp(T_R120);
 //sum_init = exp(T_I10) + exp(T_R10) + exp(T_R20) + exp(T_R120);
@@ -97,9 +113,10 @@ R120 = exp(T_R120) / (1.0 + sum_init);
 
 //start_dmeas
 double fP1, fP2, ll;
+double omega = (2 * M_PI) / 52.25;
 
-double rho1_w = fmin2(1.0, rho1 * H1 / i_ARI); // Probability of detecting virus 1
-double rho2_w = fmin2(1.0, rho2 * H2 / i_ARI); // Probability of detecting virus 2
+double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
 
 fP1 = dbinom(n_P1, n_T, rho1_w, 1); // First likelihood component, natural scale
 fP2 = dbinom(n_P2, n_T, rho2_w, 1); // Second likelihood component, natural scale
@@ -128,8 +145,10 @@ lik = (give_log) ? ll : exp(ll);
 //end_dmeas
 
 //start_rmeas
-double rho1_w = fmin2(1.0, rho1 * H1 / i_ARI); // Probability of detecting virus 1
-double rho2_w = fmin2(1.0, rho2 * H2 / i_ARI); // Probability of detecting virus 2
+double omega = (2 * M_PI) / 52.25;
+
+double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
 
 n_P1 = rbinom(n_T, rho1_w); // Generate of tests positive to virus 1
 n_P2 = rbinom(n_T, rho2_w); // Generate of tests positive to virus 2
@@ -175,47 +194,34 @@ if(debug) {
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
-double beta1 = Ri1 / (1.0 - (R10 + R120)) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
-double beta2 = Ri2 / (1.0 - (R20 + R120)) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
+double beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+// double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
+// double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
 //double beta1 = Ri1 * gamma1; // R0 instead of initial Reff
 //double beta2 = Ri2 * gamma2; // same
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 
+double delta2 = d2 * delta1; // 1 / duration of refractory period (virus2 -> virus1)
+
 // ODEs
 DX_SS = -(lambda1 + lambda2) * X_SS; 
 DX_IS = lambda1 * X_SS - (gamma1 + theta_lambda1 * lambda2) * X_IS; 
-DX_TS = gamma1 * X_IS - (delta + theta_lambda1 * lambda2) * X_TS;
-DX_RS = delta * X_TS - lambda2 * X_RS; 
+DX_TS = gamma1 * X_IS - (delta1 + theta_lambda1 * lambda2) * X_TS;
+DX_RS = delta1 * X_TS - lambda2 * X_RS; 
 DX_SI = lambda2 * X_SS - (theta_lambda2 * lambda1 + gamma2) * X_SI;
 DX_II = theta_lambda1 * lambda2 * X_IS + theta_lambda2 * lambda1 * X_SI - (gamma1 + gamma2) * X_II; 
-DX_TI = theta_lambda1 * lambda2 * X_TS + gamma1 * X_II - (delta + gamma2) * X_TI;
-DX_RI = lambda2 * X_RS + delta * X_TI - gamma2 * X_RI; 
-DX_ST = gamma2 * X_SI - (theta_lambda2 * lambda1 + delta) * X_ST; 
-DX_IT = gamma2 * X_II + theta_lambda2 * lambda1 * X_ST - (gamma1 + delta) * X_IT; 
-DX_TT = gamma2 * X_TI + gamma1 * X_IT - (2 * delta) * X_TT;
-DX_RT = gamma2 * X_RI + delta * X_TT - delta * X_RT;
-DX_SR = delta * X_ST - lambda1 * X_SR; 
-DX_IR = delta * X_IT + lambda1 * X_SR - gamma1 * X_IR; 
-DX_TR = delta * X_TT + gamma1 * X_IR - delta * X_TR; 
-DX_RR = delta * X_RT + delta * X_TR;
-
-//DX_SS = -(lambda1 + lambda2) * X_SS; 
-//DX_IS = lambda1 * X_SS - (gamma1 + theta_lambda1 * lambda2) * X_IS; 
-//DX_TS = gamma1 * X_IS - (delta1 + theta_lambda1 * lambda2) * X_TS;
-//DX_RS = delta1 * X_TS - lambda2 * X_RS; 
-//DX_SI = lambda2 * X_SS - (theta_lambda2 * lambda1 + gamma2) * X_SI;
-//DX_II = theta_lambda1 * lambda2 * X_IS + theta_lambda2 * lambda1 * X_SI - (gamma1 + gamma2) * X_II; 
-//DX_TI = theta_lambda1 * lambda2 * X_TS + gamma1 * X_II - (delta1 + gamma2) * X_TI;
-//DX_RI = lambda2 * X_RS + delta1 * X_TI - gamma2 * X_RI; 
-//DX_ST = gamma2 * X_SI - (theta_lambda2 * lambda1 + delta2) * X_ST; 
-//DX_IT = gamma2 * X_II + theta_lambda2 * lambda1 * X_ST - (gamma1 + delta2) * X_IT; 
-//DX_TT = gamma2 * X_TI + gamma1 * X_IT - (delta1 + delta2) * X_TT;
-//DX_RT = gamma2 * X_RI + delta1 * X_TT - delta2 * X_RT;
-//DX_SR = delta2 * X_ST - lambda1 * X_SR; 
-//DX_IR = delta2 * X_IT + lambda1 * X_SR - gamma1 * X_IR; 
-//DX_TR = delta2 * X_TT + gamma1 * X_IR - delta1 * X_TR; 
-//DX_RR = delta2 * X_RT + delta1 * X_TR; 
+DX_TI = theta_lambda1 * lambda2 * X_TS + gamma1 * X_II - (delta1 + gamma2) * X_TI;
+DX_RI = lambda2 * X_RS + delta1 * X_TI - gamma2 * X_RI; 
+DX_ST = gamma2 * X_SI - (theta_lambda2 * lambda1 + delta2) * X_ST; 
+DX_IT = gamma2 * X_II + theta_lambda2 * lambda1 * X_ST - (gamma1 + delta2) * X_IT; 
+DX_TT = gamma2 * X_TI + gamma1 * X_IT - (delta1 + delta2) * X_TT;
+DX_RT = gamma2 * X_RI + delta1 * X_TT - delta2 * X_RT;
+DX_SR = delta2 * X_ST - lambda1 * X_SR; 
+DX_IR = delta2 * X_IT + lambda1 * X_SR - gamma1 * X_IR; 
+DX_TR = delta2 * X_TT + gamma1 * X_IR - delta1 * X_TR; 
+DX_RR = delta2 * X_RT + delta1 * X_TR;
 
 DH1_tot = gamma1 * p1; // Incidence rate of virus 1 infections (total)
 DH2_tot = gamma2 * p2; // Incidence rate of virus 2 infections (total)
@@ -224,70 +230,82 @@ DH2 = gamma2 * (X_SI + theta_rho1 * (X_II + X_TI) + X_RI) / N; // Incidence rate
 //end_skel
 
 //start_rsim
+
+// Calculate prevalences:
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
-double beta1 = Ri1 / (1.0 - (R10 + R120)) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
-double beta2 = Ri2 / (1.0 - (R20 + R120)) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+// Calculate R0:
+double R0_1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp); // Basic reproductive number (virus 1)
+double R0_2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp); // Basic reproductive number (virus 2)
+
+// Incorporate extrademographic stochasticity:
+double beta1, beta2;
+if (p1 > 0.0 && beta_sd1 > 0.0) {
+  beta1 = rgammawn(sqrt(R0_1 / (p1 * N * beta_sd1 * dt)), R0_1 * gamma1);
+} else {
+  beta1 = R0_1 * gamma1;
+}
+if (p2 > 0.0 && beta_sd2 > 0.0) {
+  beta2 = rgammawn(sqrt(R0_2 / (p2 * N * beta_sd2 * dt)), R0_2 * gamma2);
+} else {
+  beta2 = R0_2 * gamma2;
+}
+
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 
-// Incorporate extrademographic stochasticity:
-
-double dw = rgammawn(sigmaSE, dt); // white noise (extrademographic stochasticity)
-// this eventually gets multiplied by any rates involving lambda?
-
-lambda1 = lambda1 * (dw / dt);
-lambda2 = lambda2 * (dw / dt);
+// Calculate duration of refractory period of virus 2:
+double delta2 = d2 * delta1; // 1 / duration of refractory period (virus2 -> virus1)
 
 // Calculate transitions:
 double rates[18];
 double fromSS[2], fromIS[2], fromTS[2], fromSI[2], fromII[2], fromTI[2], fromST[2], fromIT[2], fromTT[2];
 double fromRS, fromRI, fromRT, fromSR, fromIR, fromTR;
-double reportII1, reportII2, reportIT, reportTI;
+//double reportII1, reportII2, reportIT, reportTI;
 
 rates[0] = lambda1;
 rates[1] = lambda2;
 rates[2] = gamma1;
 rates[3] = theta_lambda1 * lambda2;
-rates[4] = delta;
+rates[4] = delta1;
 rates[5] = theta_lambda1 * lambda2;
 rates[6] = theta_lambda2 * lambda1;
 rates[7] = gamma2;
 rates[8] = gamma1;
 rates[9] = gamma2;
-rates[10] = delta;
+rates[10] = delta1;
 rates[11] = gamma2;
 rates[12] = theta_lambda2 * lambda1;
-rates[13] = delta;
+rates[13] = delta2;
 rates[14] = gamma1;
-rates[15] = delta;
-rates[16] = delta;
-rates[17] = delta;
+rates[15] = delta2;
+rates[16] = delta1;
+rates[17] = delta2;
 
-reulermultinom(2, X_SS, &rates[0], dt, fromSS);
-reulermultinom(2, X_IS, &rates[2], dt, fromIS);
-reulermultinom(2, X_TS, &rates[4], dt, fromTS);
-reulermultinom(2, X_SI, &rates[6], dt, fromSI);
-reulermultinom(2, X_II, &rates[8], dt, fromII);
-reulermultinom(2, X_TI, &rates[10], dt, fromTI);
-reulermultinom(2, X_ST, &rates[12], dt, fromST);
-reulermultinom(2, X_IT, &rates[14], dt, fromIT);
-reulermultinom(2, X_TT, &rates[16], dt, fromTT);
+reulermultinom(2, X_SS, &rates[0], dt, &fromSS[0]);
+reulermultinom(2, X_IS, &rates[2], dt, &fromIS[0]);
+reulermultinom(2, X_TS, &rates[4], dt, &fromTS[0]);
+reulermultinom(2, X_SI, &rates[6], dt, &fromSI[0]);
+reulermultinom(2, X_II, &rates[8], dt, &fromII[0]);
+reulermultinom(2, X_TI, &rates[10], dt, &fromTI[0]);
+reulermultinom(2, X_ST, &rates[12], dt, &fromST[0]);
+reulermultinom(2, X_IT, &rates[14], dt, &fromIT[0]);
+reulermultinom(2, X_TT, &rates[16], dt, &fromTT[0]);
 
 // Rprintf("first=%.1f, second=%.f, first=%.1f, second=%.f\n", fromSS[0], fromSS[1], fromIS[0], fromIS[1]);
 
 fromRS = rbinom(X_RS, pTrans(lambda2, dt));
 fromRI = rbinom(X_RI, pTrans(gamma2, dt));
-fromRT = rbinom(X_RT, pTrans(delta, dt));
+fromRT = rbinom(X_RT, pTrans(delta2, dt));
 fromSR = rbinom(X_SR, pTrans(lambda1, dt));
 fromIR = rbinom(X_IR, pTrans(gamma1, dt));
-fromTR = rbinom(X_TR, pTrans(delta, dt));
+fromTR = rbinom(X_TR, pTrans(delta1, dt));
 
-reportII1 = rbinom(fromII[0], theta_rho2);
-reportIT = rbinom(fromIT[0], theta_rho2);
-reportII2 = rbinom(fromII[1], theta_rho1);
-reportTI = rbinom(fromTI[1], theta_rho1);
+//reportII1 = rbinom(fromII[0], theta_rho2);
+//reportIT = rbinom(fromIT[0], theta_rho2);
+//reportII2 = rbinom(fromII[1], theta_rho1);
+//reportTI = rbinom(fromTI[1], theta_rho1);
 
 // Balance equations:
 X_SS += -fromSS[0] - fromSS[1];
@@ -310,11 +328,11 @@ X_IR += fromIT[1] + fromSR - fromIR;
 X_TR += fromTT[1] + fromIR - fromTR;
 X_RR += fromRT + fromTR;
 
-//W += (dw - dt) / sigmaSE; // standardized i.i.d. white noise
-
 H1_tot += (fromIS[0] + fromII[0] + fromIT[0] + fromIR) / N;
 H2_tot += (fromSI[1] + fromII[1] + fromTI[1] + fromRI) / N;
-H1 += (fromIS[0] + reportII1 + reportIT + fromIR) / N;
-H2 += (fromSI[1] + reportII2 + reportTI + fromRI) / N;
+H1 += (fromIS[0] + theta_rho2 * (fromII[0] + fromIT[0]) + fromIR) / N;
+H2 += (fromSI[1] + theta_rho1 * (fromII[1] + fromTI[1]) + fromRI) / N;
+//H1 += (fromIS[0] + reportII1 + reportIT + fromIR) / N;
+//H2 += (fromSI[1] + reportII2 + reportTI + fromRI) / N;
 
 //end_rsim
