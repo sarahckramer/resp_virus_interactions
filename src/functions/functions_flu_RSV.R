@@ -73,13 +73,12 @@ prepare_data <- function(virus1_nm, virus2_nm, epiyear_val, dat, early_start = F
 }
 
 create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 7 / 60, debug_bool = F) {
-  #Args: 
-  # dat: ARI and virological data (data frame, first time point must be 1) 
-  # Ri1_max: upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
-  # Ri2_max: upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
-  # delta_min: lower bound of 1 / refractory period duration (denominator is upper bound of duration)
-  # (double, passed as global argument in the C script) 
-  # debug_bool: should debugging info be printed? (boolean)
+  # Function to create pomp object 
+  # param dat: ARI and virological data (data frame, first time point must be 1) 
+  # param Ri1_max: upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
+  # param Ri2_max: upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
+  # param delta_min: lower bound of 1 / refractory period duration (denominator is upper bound of duration) (double, passed as global argument in the C script) 
+  # param debug_bool: should debugging info be printed? (boolean)
   
   # Read model C code:
   mod_code <- readLines('src/resp_interaction_model.c')
