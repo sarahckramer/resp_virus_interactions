@@ -118,6 +118,13 @@ double omega = (2 * M_PI) / 52.25;
 double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
 double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
 
+if (rho1_w < 0) {
+  rho1_w = 0.0;
+}
+if (rho2_w < 0) {
+  rho2_w = 0.0;
+}
+
 fP1 = dbinom(n_P1, n_T, rho1_w, 1); // First likelihood component, natural scale
 fP2 = dbinom(n_P2, n_T, rho2_w, 1); // Second likelihood component, natural scale
 
