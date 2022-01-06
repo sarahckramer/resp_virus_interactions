@@ -38,7 +38,7 @@ jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 # Set parameters for run:
 vir2 <- 'rsv'
 
-time_max <- 9.75 # Maximal execution time (in hours)
+time_max <- 1.75 # Maximal execution time (in hours)
 debug_bool <- FALSE
 
 Ri_max1 <- 3.0
@@ -130,7 +130,7 @@ if (exists('resp_mod')) {
         nloptr(x0 = unname(x0_trans),
                eval_f = obj_fun,
                opts = list(algorithm = 'NLOPT_LN_SBPLX',
-                           maxtime = 60.0,
+                           maxtime = 60.0 * nmins_exec,
                            maxeval = -1, # disabled
                            xtol_rel = -1, # disabled; default: 1e-4
                            print_level = 0))
