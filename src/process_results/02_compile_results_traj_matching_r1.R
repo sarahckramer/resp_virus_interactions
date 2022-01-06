@@ -104,6 +104,44 @@ for (vir1 in unique(which_flu)) {
       print(table(pars_temp$virus1))
       print(table(pars_temp$year))
       
+      # Check that no model states go below zero:
+      source('src/resp_interaction_model.R')
+      
+      p_mat <- parmat(coef(resp_mod), nrep = nrow(pars_temp))
+      for (param in estpars) {
+        p_mat[param, ] <- pars_temp %>% pull(param)
+      }
+      
+      rows_to_remove <- trajectory(resp_mod,
+                                   params = p_mat,
+                                   format = 'data.frame') %>%
+        select(!(H1_tot:H2_tot)) %>%
+        pivot_longer(X_SS:H2,
+                     names_to = 'state') %>%
+        filter(value < 0) %>%
+        pull(.id) %>%
+        unique() %>%
+        as.integer()
+      
+      # rows_to_remove <- c()
+      # for (i in 1:nrow(pars_temp)) {
+      #   coef(resp_mod, estpars) <- pars_temp[i, estpars]
+      #   traj_temp <- trajectory(resp_mod, format = 'data.frame') %>%
+      #     select(!(H1_tot:H2_tot)) %>%
+      #     pivot_longer(X_SS:H2,
+      #                  names_to = 'state')
+      #   if (any(traj_temp$value < 0)) {
+      #     rows_to_remove <- c(rows_to_remove, i)
+      #   }
+      # }
+      
+      # Remove parameter sets that go negative:
+      nrow_check <- nrow(pars_temp) - length(rows_to_remove)
+      if (length(rows_to_remove) > 0) {
+        pars_temp <- pars_temp[-rows_to_remove, ]
+      }
+      expect_true(nrow(pars_temp) == nrow_check)
+      
       # Sort results and store:
       pars_temp <- pars_temp %>%
         arrange(desc(loglik))
