@@ -181,8 +181,7 @@ for (vir1 in flu_types) {
 dev.off()
 
 # Clean up:
-rm(vir1, cor_list, pcor_list, slice_list, slice_list_1314,
-   pars_list_temp, cor_list_temp, pcor_list_temp, slice_list_temp)
+rm(vir1, cor_list, pcor_list, slice_list, pars_list_temp, cor_list_temp, pcor_list_temp, slice_list_temp)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
