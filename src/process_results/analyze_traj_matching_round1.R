@@ -13,21 +13,30 @@ library(gridExtra)
 # Get/format date (for saving results):
 date <- format(Sys.Date(), '%d%m%y')
 
+# Were shared params also fit?:
+fit_shared <- FALSE
+
 # Specify parameters estimated:
-# estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
-estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2', 'theta_lambda1', 'delta')
+if (fit_shared) {
+  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2',
+               'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi',
+               'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+} else {
+  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+}
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Plot results by flu type/season
 
 # Read in results:
-pars_list <- read_rds('results/round1_interaction/traj_match_round1_byvirseas_TOP.rds')
-slice_list <- read_rds('results/round1_interaction/traj_match_round1_byvirseas_SLICE.rds')
-
-# Read in results (2013-14):
-pars_list_1314 <- read_rds('results/round1_interaction_leadNAs/traj_match_round1_byvirseas_TOP.rds')
-slice_list_1314 <- read_rds('results/round1_interaction_leadNAs/traj_match_round1_byvirseas_SLICE.rds')
+if (fit_shared) {
+  pars_list <- read_rds('results/round1_fitsharedTRUE/traj_match_round1_byvirseas_TOP.rds')
+  slice_list <- read_rds('results/round1_fitsharedTRUE/traj_match_round1_byvirseas_SLICE.rds')
+} else {
+  pars_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
+  slice_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_SLICE.rds')
+}
 
 # Get vectors of flu types/seasons:
 flu_types <- c('flu_h1', 'flu_b')
@@ -49,11 +58,7 @@ for (vir1 in flu_types) {
     if (vir_seas %in% names(pars_list)) {
       
       # Get results for specific vir1/yr:
-      if (yr == 's13-14') {
-        pars_temp <- pars_list_1314[[vir_seas]]
-      } else {
-        pars_temp <- pars_list[[vir_seas]]
-      }
+      pars_temp <- pars_list[[vir_seas]]
       
       # Get correlation coefficients:
       cor_mat <- pars_temp %>% dplyr::select(Ri1:loglik) %>% cor(method = 'spearman')
@@ -85,17 +90,19 @@ for (vir1 in flu_types) {
 rm(vir_seas, vir1, yr)
 
 # Output plots to file (for A and B separately):
-pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_INT.pdf'),
-    width = 15, height = 10)
+if (fit_shared) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedTRUE.pdf'),
+      width = 15, height = 10)
+} else {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE.pdf'),
+      width = 15, height = 10)
+}
 
 for (vir1 in flu_types) {
   pars_list_temp <- pars_list[str_detect(names(pars_list), vir1)]
   cor_list_temp <- cor_list[str_detect(names(cor_list), vir1)]
   pcor_list_temp <- pcor_list[str_detect(names(pcor_list), vir1)]
   slice_list_temp <- slice_list[str_detect(names(slice_list), vir1)]
-  
-  pars_list_temp[paste(vir1, 's13-14', sep = '_')] <- pars_list_1314[str_detect(names(pars_list_1314), vir1)]
-  slice_list_temp[paste(vir1, 's13-14', sep = '_')] <- slice_list_1314[str_detect(names(slice_list_1314), vir1)]
   
   # Pairs plots:
   lapply(pars_list_temp, function(ix) {
@@ -113,7 +120,13 @@ for (vir1 in flu_types) {
   
   # Plot slices:
   for (i in 1:length(slice_list_temp)) {
-    par(mfrow = c(4, 3), bty = 'l')
+    
+    if (fit_shared) {
+      par(mfrow = c(5, 4), bty = 'l')
+    } else {
+      par(mfrow = c(3, 3), bty = 'l')
+    }
+    
     for (par in estpars) {
       slices_cur <- filter(slice_list_temp[[i]], slice == par)
       plot(slices_cur[[par]], slices_cur$ll, type = 'l',
@@ -177,18 +190,11 @@ rm(vir1, cor_list, pcor_list, slice_list, slice_list_1314,
 
 # Compile all parameter estimates:
 pars_df <- bind_rows(pars_list)
-pars_df_1314 <- bind_rows(pars_list_1314)
-
-pars_df <- pars_df %>%
-  filter(year != 's13-14') %>%
-  bind_rows(pars_df_1314) %>%
-  arrange(virus1, year)
-
-rm(pars_list, pars_list_1314, pars_df_1314)
+rm(pars_list)
 
 # Format results and get MLEs:
 pars_df <- pars_df %>%
-  pivot_longer(Ri1:delta, names_to = 'param', values_to = 'value') %>%
+  pivot_longer(all_of(estpars), names_to = 'param', values_to = 'value') %>%
   group_by(virus1, year, param) %>%
   mutate(param = factor(param)) %>%
   mutate(mle = value[which.max(loglik)]) %>%
@@ -234,8 +240,13 @@ p4 <- ggplot(data = pars_mle, aes(x = virus_pair, y = mle, group = virus_pair)) 
   labs(x = 'Virus', y = 'Parameter Value', title = 'MLE Values')
 
 # Save plots to file:
-pdf(paste0('results/plots/', date, '_trajectory_matching_round1_INT.pdf'),
-    width = 15, height = 8)
+if (fit_shared) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedTRUE.pdf'),
+      width = 15, height = 8)
+} else {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE.pdf'),
+      width = 15, height = 8)
+}
 print(p1)
 print(p2)
 print(p3)
