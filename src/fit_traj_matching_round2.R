@@ -256,17 +256,21 @@ po_list <- po_list[lapply(po_list, length) > 0]
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   if (prof_lik) {
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   }
 } else {
   stop('Unrecognized int_eff value.')
@@ -284,13 +288,20 @@ true_estpars <- c(shared_estpars, unit_estpars)
 estpars <- c(shared_estpars, unit_sp_estpars)
 
 # Set upper/lower values for global params:
-start_range <- data.frame(rho1 = c(0, 1),
-                          rho2 = c(0, 1),
-                          delta = c(7 / 60, 7 / 1),
-                          theta_lambda1 = c(0, 1),
-                          theta_lambda2 = c(0, 1),
-                          theta_rho1 = c(0, 1),
-                          theta_rho2 = c(0, 1))
+start_range <- data.frame(rho1 = c(0, 1.0),
+                          rho2 = c(0, 1.0),
+                          theta_lambda1 = c(0, 1.0),
+                          theta_lambda2 = c(0, 1.0),
+                          theta_rho1 = c(0, 1.0),
+                          theta_rho2 = c(0, 1.0),
+                          delta1 = c(7 / 60, 7),
+                          d2 = c(7 / 60, 7),
+                          alpha = c(0, 0.5),
+                          phi = c(0, 52.25),
+                          eta_temp1 = c(-0.5, 0.5),
+                          eta_temp2 = c(-0.5, 0.5),
+                          eta_ah1 = c(-0.5, 0.5),
+                          eta_ah2 = c(-0.5, 0.5))
 
 # Set upper/lower values for unit params (broad):
 unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
@@ -302,7 +313,7 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R120 = c(0, 0.3))
 
 # Get 99% CI from round 1 for unit params:
-tj_res_list <- read_rds('results/round1_interaction/traj_match_round1_byvirseas_TOP.rds')
+tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
 
 tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
 # tj_res_list <- tj_res_list[!str_detect(names(tj_res_list), '2010')]
