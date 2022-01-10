@@ -5,8 +5,8 @@
 # Setup
 
 # # Save as pdf:
-# pdf('results/plots/041021_trajectory_matching_round2.pdf',
-#     width = 18, height = 10)
+pdf('results/plots/100122_trajectory_matching_round2_fluA_FR.pdf',
+    width = 18, height = 10)
 
 # Load libraries:
 library(tidyverse)
@@ -19,7 +19,7 @@ vir1 <- 'flu_A'
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Function to read in and format results:
-load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars, res_comp, run_name) {
+load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars, run_name) {
   
   # Compile estpars:
   true_estpars <- c(shared_estpars, unit_estpars)
@@ -59,8 +59,7 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
     mutate(method = run_name)
   
   # Get combined data frame:
-  res_df <- res_comp %>%
-    bind_rows(res_glob)
+  res_df <- bind_rows(res_glob)
   
   # Explore correlations:
   pars_corr <- pars_top %>%
@@ -77,35 +76,35 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Get results from fitting individual seasons
-
-# Read in results:
-res_ind <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
-
-# Compile to data frame:
-res_ind <- bind_rows(res_ind)
-
-# Keep flu_A only:
-res_ind <- res_ind %>%
-  filter(virus1 == 'flu_A') %>%
-  select(year:R120) %>%
-  pivot_longer(-year, names_to = 'param') %>%
-  mutate(method = 'Seasonal')
+# # Get results from fitting individual seasons
+# 
+# # Read in results:
+# res_ind <- read_rds('results/traj_match_round1_byvirseas_TOP.rds')
+# 
+# # Compile to data frame:
+# res_ind <- bind_rows(res_ind)
+# 
+# # Keep flu_A only:
+# res_ind <- res_ind %>%
+#   filter(virus1 == 'flu_A') %>%
+#   select(year:R120) %>%
+#   pivot_longer(-year, names_to = 'param') %>%
+#   mutate(method = 'Seasonal')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Compile results of trajectory matching for theta_lambda1
 
 # Set shared and unit parameters:
-shared_estpars <- c('theta_lambda1')
+shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
 # Read in and format results:
-res_temp <- load_and_format_mega_results(filepath = 'results/160921_fluA_thetalambda1_round1ci_fitR_rho2=15/',
+res_temp <- load_and_format_mega_results(filepath = 'results/FR_round2_broad_NEW/A/',
                                          shared_estpars = shared_estpars,
                                          unit_estpars = unit_estpars,
-                                         res_comp = res_ind,
-                                         run_name = 'Global_CI')
+                                         # res_comp = res_ind,
+                                         run_name = 'Global_broad')
 pars_top <- res_temp[[1]]
 res_df <- res_temp[[2]]
 pars_corr <- res_temp[[3]]
@@ -115,23 +114,29 @@ pairs(pars_corr, pch = 20, main = 'theta_lambda1_CI')
 # Best estimates are at 1.0, but estimates at 0.0 are within 2-3 ll points
 
 # # Zoom in on theta_lambda1 and likelihood:
-# ggplot(data = pars_top, aes(x = theta_lambda1, y = loglik)) + geom_point() + theme_classic()
+ggplot(data = pars_top, aes(x = theta_lambda1, y = loglik)) + geom_point() + theme_classic()
+ggplot(data = pars_top, aes(x = theta_lambda2, y = loglik)) + geom_point() + theme_classic()
+ggplot(data = pars_top, aes(x = delta, y = loglik)) + geom_point() + theme_classic()
 
 # Slice over theta_lambda1 for top 5 parameter sets:
-estpars <- names(pars_top)[1:64]
+estpars <- names(pars_top)[1:68]#[1:40]
 true_estpars <- c(shared_estpars, unit_estpars)
 source('src/functions/setup_global_likelilhood.R')
 
-par(mfrow = c(2, 3), bty = 'l')
+par(mfrow = c(6, 5), bty = 'l')
 for (i in 1:6) {
-  mle <- setNames(object = as.numeric(pars_top[i, 1:64]),
+  mle <- setNames(object = as.numeric(pars_top[i, 1:68]),#[i, 1:40]),
                   nm = estpars)
   slices <- slice_design(center = mle,
-                         theta_lambda1 = seq(from = 0, to = 1.0, by = 0.05)) %>%
+                         rho1 = seq(from = 0, to = 1.0, by = 0.05),
+                         rho2 = seq(from = 0, to = 1.0, by = 0.05),
+                         delta = seq(from = 0, to = 2.0, by = 0.05),
+                         theta_lambda1 = seq(from = 0, to = 1.0, by = 0.05),
+                         theta_lambda2 = seq(from = 0, to = 1.0, by = 0.05)) %>%
     mutate(ll = NA)
   
   for (j in 1:nrow(slices)) {
-    x0 <- slices[j, 1:66]
+    x0 <- slices[j, 1:68]#[j, 1:40]
     x0_trans <- transform_params(x0, resp_mod, seasons, estpars, shared_estpars)
     slices$ll[j] <- -1 * calculate_global_loglik(x0_trans)
   }
@@ -177,6 +182,8 @@ for (i in 1:6) {
 #   select(theta_lambda1, contains('R120'))
 # plot(pars_comp, pch = 20)
 # # A bit of a relationship with Ri2/I20, but nothing terribly strong
+
+dev.off()
 
 # ---------------------------------------------------------------------------------------------------------------------
 
