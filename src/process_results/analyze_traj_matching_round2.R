@@ -263,6 +263,7 @@ for (i in 1:length(pars_top_LIST)) {
     
     for (k in 1:nrow(slices)) {
       x0 <- slices[k, 1:(length(shared_estpars) + length(unit_estpars) * 5)]
+      expect_true(all(names(x0) == estpars))
       x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
       slices$ll[k] <- -1 * calculate_global_loglik(x0_trans)
     }
