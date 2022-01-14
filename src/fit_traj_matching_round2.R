@@ -260,12 +260,10 @@ if (int_eff == 'susc') {
                         'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
-    # shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-    #                     'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                        'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     # shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-    #                     'alpha', 'phi')
+    #                     'alpha', 'phi', 'eta_temp1', 'eta_temp2')
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
