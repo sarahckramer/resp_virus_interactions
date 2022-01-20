@@ -49,7 +49,7 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = (dim(pars_df)[2] - 1))))
   print(no_best)
-  no_best <- max(no_best, 50)
+  no_best <- max(no_best, 20)
   
   pars_top <- pars_df[1:no_best, ]
   
