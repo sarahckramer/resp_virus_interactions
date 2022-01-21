@@ -39,7 +39,7 @@ time_max <- 14.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
-delta_min <- 7 / 30.0
+d2_max <- 10.0
 
 if (prof_lik) {
   prof_param <- 'theta_lambda1'

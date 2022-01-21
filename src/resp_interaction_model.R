@@ -98,7 +98,7 @@ if (nrow(dat_pomp) > 0) {
   resp_mod <- create_SITRxSITR_mod(dat = dat_pomp,
                                    Ri1_max = Ri_max1,
                                    Ri2_max = Ri_max2,
-                                   delta_min = delta_min,
+                                   d2_max = d2_max,
                                    debug_bool = debug_bool)
   
   # Check transformations:
