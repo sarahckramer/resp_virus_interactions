@@ -254,7 +254,7 @@ for (i in 1:length(pars_top_LIST)) {
                            delta1 = seq(from = 0.9 * mle['delta1'], to = 1.1 * mle['delta1'], length.out = 20),
                            d2 = seq(from = 0.9 * mle['d2'], to = 1.1 * mle['d2'], length.out = 20),
                            alpha = seq(from = 0.9 * mle['alpha'], to = 1.1 * mle['alpha'], length.out = 20),
-                           phi = seq(from = 0.9 * mle['phi'], to = 1.1 * mle['phi'], length.out = 20),
+                           phi = seq(from = 0, to = 52, length.out = 20),#seq(from = 0.9 * mle['phi'], to = 1.1 * mle['phi'], length.out = 20),
                            eta_temp1 = seq(from = 0.9 * mle['eta_temp1'], to = 1.1 * mle['eta_temp1'], length.out = 20),
                            eta_temp2 = seq(from = 0.9 * mle['eta_temp2'], to = 1.1 * mle['eta_temp2'], length.out = 20),
                            eta_ah1 = seq(from = 0.9 * mle['eta_ah1'], to = 1.1 * mle['eta_ah2'], length.out = 20),
