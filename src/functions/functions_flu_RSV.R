@@ -72,12 +72,12 @@ prepare_data <- function(virus1_nm, virus2_nm, epiyear_val, dat, early_start = F
   return(out)
 }
 
-create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 7 / 60, debug_bool = F) {
+create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.0, debug_bool = F) {
   # Function to create pomp object 
   # param dat: ARI and virological data (data frame, first time point must be 1) 
   # param Ri1_max: upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
   # param Ri2_max: upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
-  # param delta_min: lower bound of 1 / refractory period duration (denominator is upper bound of duration) (double, passed as global argument in the C script) 
+  # param d2_max: upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
   # param debug_bool: should debugging info be printed? (boolean)
   
   # Read model C code:
@@ -92,11 +92,11 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, delta_min = 
     
     if(nm == 'globs') {
       components_l[[nm]] <- paste(components_l[[nm]], 
-                                  sprintf('static int debug = %d; \nstatic double Ri1_max = %f; \nstatic double Ri2_max = %f; \nstatic double delta_min = %f;', 
+                                  sprintf('static int debug = %d; \nstatic double Ri1_max = %f; \nstatic double Ri2_max = %f; \nstatic double d2_max = %f;', 
                                           as.integer(debug_bool),
                                           as.numeric(Ri1_max),
                                           as.numeric(Ri2_max),
-                                          as.numeric(delta_min)), 
+                                          as.numeric(d2_max)), 
                                   sep = '\n')
     }
     
