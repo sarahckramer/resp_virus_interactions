@@ -203,6 +203,16 @@ for (i in 1:length(pars_top_LIST)) {
 }
 rm(i)
 
+# And calculate correlation between estimates of eta_temp and eta_ah:
+par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.5))
+for (i in 1:length(pars_top_LIST)) {
+  pars_temp <- pars_top_LIST[[i]] %>% select(eta_temp1:eta_ah2)
+  plot(pars_temp$eta_temp1, pars_temp$eta_ah1, pch = 20)
+  plot(pars_temp$eta_temp2, pars_temp$eta_ah2, pch = 20)
+  cor.test(pars_temp$eta_temp1, pars_temp$eta_ah1) %>% print()
+  cor.test(pars_temp$eta_temp2, pars_temp$eta_ah2) %>% print()
+}
+
 dev.off()
 
 # Plot slices:
