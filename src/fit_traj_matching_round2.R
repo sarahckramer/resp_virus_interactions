@@ -402,6 +402,11 @@ start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), name
                              upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
                              nseq = sobol_size)
 
+if (search_type == 'round2_CIs') {
+  start_values <- start_values %>%
+    mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+}
+
 print(start_range)
 print(summary(start_values))
 print(estpars)
