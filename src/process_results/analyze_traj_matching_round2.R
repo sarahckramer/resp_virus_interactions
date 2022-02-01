@@ -212,7 +212,6 @@ for (i in 1:length(pars_top_LIST)) {
   cor.test(pars_temp$eta_temp1, pars_temp$eta_ah1) %>% print()
   cor.test(pars_temp$eta_temp2, pars_temp$eta_ah2) %>% print()
 }
-
 dev.off()
 
 # Plot slices:
