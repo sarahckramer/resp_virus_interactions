@@ -18,6 +18,12 @@ if (!exists('early_start_val')) {
   early_start_val <- FALSE
 }
 
+# Set lag_val if it doesn't exist:
+if (!exists('lag_val')) {
+  lag_val <- 0
+}
+print(lag_val)
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load and format data
@@ -33,10 +39,10 @@ nrow_check <- nrow(dat_pomp)
 
 # Get climate data:
 dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
-if (lag > 0) {
+if (lag_val > 0) {
   dat_clim <- dat_clim %>%
-    mutate(temp = lag(temp, n = lag),
-           ah = lag(ah, n = lag))
+    mutate(temp = lag(temp, n = lag_val),
+           ah = lag(ah, n = lag_val))
 }
 dat_pomp <- dat_pomp %>%
   inner_join(dat_clim,
