@@ -41,6 +41,8 @@ Ri_max1 <- 2.0
 Ri_max2 <- 3.0
 d2_max <- 10.0
 
+lag <- 1.0
+
 if (prof_lik) {
   prof_param <- 'theta_lambda1'
   # prof_param <- 'theta_lambda2'

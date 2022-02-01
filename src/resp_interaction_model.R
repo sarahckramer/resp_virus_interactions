@@ -33,6 +33,11 @@ nrow_check <- nrow(dat_pomp)
 
 # Get climate data:
 dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
+if (lag > 0) {
+  dat_clim <- dat_clim %>%
+    mutate(temp = lag(temp, n = lag),
+           ah = lag(ah, n = lag))
+}
 dat_pomp <- dat_pomp %>%
   inner_join(dat_clim,
              by = c('Year' = 'year',
