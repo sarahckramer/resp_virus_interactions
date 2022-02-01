@@ -411,6 +411,13 @@ print(start_range)
 print(summary(start_values))
 print(estpars)
 
+# # Remove eta_ah1, eta_ah2 from consideration:
+# estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
+# true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
+# shared_estpars <- shared_estpars[!(shared_estpars %in% c('eta_ah1', 'eta_ah2'))]
+# 
+# start_values <- start_values[!(names(start_values) %in% c('eta_ah1', 'eta_ah2'))]
+
 # Get list of season-specific objective functions:
 obj_fun_list <- lapply(po_list, function(ix) {
   create_obj_fxn(ix, estpars = true_estpars)
