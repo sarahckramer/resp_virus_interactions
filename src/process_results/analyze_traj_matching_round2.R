@@ -220,6 +220,7 @@ pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices.pdf'),
 
 true_estpars <- c(shared_estpars, unit_estpars)
 prof_lik <- FALSE
+lag_val <- 0
 
 for (i in 1:length(pars_top_LIST)) {
   

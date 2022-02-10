@@ -44,6 +44,7 @@ shared_estpars <- pars_top %>% select(!contains(unit_estpars) & !'loglik') %>% n
 true_estpars <- c(shared_estpars, unit_estpars)
 
 prof_lik <- FALSE
+lag_val <- 0
 
 # Load pomp objects:
 source('src/functions/setup_global_likelilhood.R')
