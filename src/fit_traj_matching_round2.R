@@ -22,13 +22,13 @@ prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 
 # # Set parameters for local run:
 # jobid <- 1
-# no_jobs <- 100
+# no_jobs <- 1
 # vir1 <- 'flu_h1' # 'flu_A', 'flu_B'
 # 
-# sobol_size <- 500
-# search_type <- 'round1_CIs'
+# sobol_size <- 10
+# search_type <- 'round2_CIs'
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
-# prof_lik <- FALSE
+# prof_lik <- TRUE
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -47,10 +47,14 @@ if (prof_lik) {
   prof_param <- 'theta_lambda1'
   # prof_param <- 'theta_lambda2'
   # prof_param <- 'delta'
+  # prof_param <- 'd2'
   
   if (prof_param == 'delta') {
     prof_val <- (7 / seq(5, 255, by = 5))[jobid]
-  } else {
+  } else if (prof_param == 'd2') {
+    prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid]
+  }
+  else {
     prof_val <- seq(0.0, 1.0, by = 0.02)[jobid]
   }
   print(prof_val)
@@ -366,9 +370,9 @@ rm(i)
 if (search_type == 'round2_CIs') {
   
   if (vir1 == 'flu_h1') {
-    start_range <- read_rds('results/round2_cis/round2CI_startvals_H1.rds')
+    start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_H1.rds')
   } else if (vir1 == 'flu_b') {
-    start_range <- read_rds('results/round2_cis/round2CI_startvals_B.rds')
+    start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_B.rds')
   } else {
     stop('Unknown vir1!')
   }
