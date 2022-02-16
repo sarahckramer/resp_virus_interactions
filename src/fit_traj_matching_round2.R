@@ -46,10 +46,10 @@ lag_val <- 0
 if (prof_lik) {
   prof_param <- 'theta_lambda1'
   # prof_param <- 'theta_lambda2'
-  # prof_param <- 'delta'
+  # prof_param <- 'delta1'
   # prof_param <- 'd2'
   
-  if (prof_param == 'delta') {
+  if (prof_param == 'delta1') {
     prof_val <- (7 / seq(5, 255, by = 5))[jobid]
   } else if (prof_param == 'd2') {
     prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid]
