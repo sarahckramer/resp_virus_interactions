@@ -37,9 +37,9 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
     bind_cols(map_chr(str_split(res_files, '_'), 5),
               map_chr(str_split(res_files, '_'), 7),
               map_chr(str_split(map_chr(str_split(res_files, '_'), 8), fixed('.')), 1)) %>%
-    rename(vir1 = '...6',
-           profpar = '...7',
-           run = '...8') %>%
+    rename(vir1 = '...13',
+           profpar = '...14',
+           run = '...15') %>%
     mutate(profpar = as.numeric(profpar),
            run = as.numeric(run),
            vir1 = if_else(vir1 == 'b', 'B', 'H1'),
@@ -50,10 +50,13 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
   expect_true(all(is.finite(res_temp$loglik)))
   
   # Set profpar to correct values:
-  if (prof_par == 'delta') {
+  if (prof_par == 'delta1') {
     res_temp <- res_temp %>%
       mutate(profpar = (7 / seq(5, 255, by = 5))[profpar]) %>%
       mutate(profpar = 7 / profpar)
+  } else if (prof_par == 'd2') {
+    res_temp <- res_temp %>%
+      mutate(profpar = c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[profpar])
   } else {
     res_temp <- res_temp %>%
       mutate(profpar = seq(0.0, 1.0, by = 0.02)[profpar])
@@ -73,7 +76,8 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
 # Read in and format results for all runs
 
 # Set shared estimated parameters:
-shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                    'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 
 # Read in and format results:
 res_thetalambda1 <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda1/',
@@ -82,14 +86,17 @@ res_thetalambda1 <- load_and_format_proflik_results(filepath = 'results/prof_lik
 res_thetalambda2 <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda2/',
                                                     prof_par = 'theta_lambda2',
                                                     shared_estpars = shared_estpars)
-res_delta <- load_and_format_proflik_results(filepath = 'results/prof_lik_delta/',
-                                             prof_par = 'delta',
+res_delta1 <- load_and_format_proflik_results(filepath = 'results/prof_lik_delta1/',
+                                             prof_par = 'delta1',
                                              shared_estpars = shared_estpars)
+res_d2 <- load_and_format_proflik_results(filepath = 'results/prof_lik_d2/',
+                                          prof_par = 'd2',
+                                          shared_estpars = shared_estpars)
 
 # Combine all results?:
-res_list <- list(res_thetalambda1, res_thetalambda2, res_delta)
-names(res_list) <- c('theta_lambda1', 'theta_lambda2', 'delta')
-rm(res_thetalambda1, res_thetalambda2, res_delta)
+res_list <- list(res_thetalambda1, res_thetalambda2, res_delta1, res_d2)
+names(res_list) <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
+rm(res_thetalambda1, res_thetalambda2, res_delta1, res_d2)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -111,7 +118,7 @@ ci_cutoff <- lapply(maxloglik, function(ix) {
 res_list <- lapply(1:length(res_list), function(ix) {
   res_list[[ix]] %>% mutate(ci = if_else(vir1 == 'B', ci_cutoff[[ix]][2], ci_cutoff[[ix]][1]))
 })
-names(res_list) <- c('theta_lambda1', 'theta_lambda2', 'delta')
+names(res_list) <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
 
 # Get top estimate for each value of profpar:
 res_list_top <- lapply(res_list, function(ix) {
@@ -120,7 +127,7 @@ res_list_top <- lapply(res_list, function(ix) {
     filter(rank(-loglik) == 1) %>%
     ungroup()
 })
-names(res_list_top) <- c('theta_lambda1', 'theta_lambda2', 'delta')
+names(res_list_top) <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
 
 # Plot profile likelihoods with cutoff for 99% CI:
 plot_list <- lapply(1:length(res_list_top), function(ix) {
@@ -128,6 +135,19 @@ plot_list <- lapply(1:length(res_list_top), function(ix) {
     geom_point() + theme_classic() +
     facet_wrap(~ vir1, scales = 'free_y') +
     geom_smooth(method = 'loess', span = 0.25) +
+    geom_hline(color = 'red', aes(yintercept = ci)) +
+    labs(x = names(res_list_top)[ix], y = 'Log Likelihood')
+})
+
+plot_list_zoom <- lapply(1:length(res_list_top), function(ix) {
+  ggplot(res_list_top[[ix]] %>%
+           group_by(vir1) %>%
+           filter(loglik > (max(loglik) - 100)) %>%
+           ungroup(),
+         aes(x = profpar, y = loglik)) +
+    geom_point() + theme_classic() +
+    facet_wrap(~ vir1, scales = 'free_y') +
+    geom_smooth(method = 'loess', span = 0.75) +
     geom_hline(color = 'red', aes(yintercept = ci)) +
     labs(x = names(res_list_top)[ix], y = 'Log Likelihood')
 })
@@ -153,6 +173,10 @@ for (i in 1:length(res_list)) {
 # Save plots to file:
 pdf(paste0('results/plots/', date, '_prof_lik_tj.pdf'), width = 10, height = 4.5)
 print(plot_list)
+dev.off()
+
+pdf(paste0('results/plots/', date, '_prof_lik_tj_ZOOM.pdf'), width = 10, height = 4.5)
+print(plot_list_zoom)
 dev.off()
 
 # ---------------------------------------------------------------------------------------------------------------------
