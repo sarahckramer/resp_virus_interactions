@@ -34,11 +34,11 @@ T_Ri1 = logitCons(Ri1, 1.0, Ri1_max);
 T_Ri2 = logitCons(Ri2, 1.0, Ri2_max); 
 T_gamma1 = log(gamma1); 
 T_gamma2 = log(gamma2);
-//T_delta = logitCons(delta, delta_min, 7 / 1);
 //T_delta = log(delta);
 T_delta1 = log(delta1);
 //T_delta2 = log(delta2);
 T_d2 = log(d2);
+//T_d2 = logitCons(d2, 0.0, d2_max);
 T_theta_lambda1 = logit(theta_lambda1);
 T_theta_lambda2 = logit(theta_lambda2);
 T_theta_rho1 = logit(theta_rho1);
@@ -47,7 +47,7 @@ T_rho1 = logit(rho1);
 T_rho2 = logit(rho2);
 //T_rho1 = log(rho1); 
 //T_rho2 = log(rho2);
-T_alpha = log(alpha);
+T_alpha = logit(alpha);
 T_phi = logitCons(phi, 0.0, 52.25);
 T_eta_temp1 = eta_temp1;
 T_eta_temp2 = eta_temp2;
@@ -76,11 +76,11 @@ Ri1 = expitCons(T_Ri1, 1.0, Ri1_max);
 Ri2 = expitCons(T_Ri2, 1.0, Ri2_max);
 gamma1 = exp(T_gamma1);
 gamma2 = exp(T_gamma2);
-//delta = expitCons(T_delta, delta_min, 7 / 1);
 //delta = exp(T_delta);
 delta1 = exp(T_delta1);
 //delta2 = exp(T_delta2);
 d2 = exp(T_d2);
+//d2 = expitCons(T_d2, 0.0, d2_max);
 theta_lambda1 = expit(T_theta_lambda1);
 theta_lambda2 = expit(T_theta_lambda2);
 theta_rho1 = expit(T_theta_rho1);
@@ -89,7 +89,7 @@ rho1 = expit(T_rho1);
 rho2 = expit(T_rho2);
 //rho1 = exp(T_rho1);
 //rho2 = exp(T_rho2);
-alpha = exp(T_alpha);
+alpha = expit(T_alpha);
 phi = expitCons(T_phi, 0.0, 52.25);
 eta_temp1 = T_eta_temp1;
 eta_temp2 = T_eta_temp2;
@@ -117,6 +117,13 @@ double omega = (2 * M_PI) / 52.25;
 
 double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ARI); // Probability of detecting virus 1
 double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ARI); // Probability of detecting virus 2
+
+if (rho1_w < 0) {
+  rho1_w = 0.0;
+}
+if (rho2_w < 0) {
+  rho2_w = 0.0;
+}
 
 fP1 = dbinom(n_P1, n_T, rho1_w, 1); // First likelihood component, natural scale
 fP2 = dbinom(n_P2, n_T, rho2_w, 1); // Second likelihood component, natural scale

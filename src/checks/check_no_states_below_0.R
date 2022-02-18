@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Specify location of results to check:
-res_loc <- 'results/round2_flu_h1_round1ci/'
+res_loc <- 'results/round2_fluH1_FULL/'
 
 # Read in and compile all results:
 res_files <- list.files(path = res_loc, full.names = TRUE)
@@ -33,7 +33,7 @@ no_best <- max(no_best, 50)
 pars_top <- pars_df[1:no_best, ]
 
 # Get/set relevant model parameters:
-if (str_detect(res_loc, 'h1')) {
+if (str_detect(res_loc, 'H1')) {
   vir1 <- 'flu_h1'
 } else {
   vir1 <- 'flu_b'
@@ -44,6 +44,7 @@ shared_estpars <- pars_top %>% select(!contains(unit_estpars) & !'loglik') %>% n
 true_estpars <- c(shared_estpars, unit_estpars)
 
 prof_lik <- FALSE
+lag_val <- 0
 
 # Load pomp objects:
 source('src/functions/setup_global_likelilhood.R')

@@ -16,6 +16,7 @@ jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
 no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
+fit_shared <- as.logical(Sys.getenv("FITSHARED")); print(fit_shared)
 
 # yr <- c(2006:2014)[(ceiling(jobid / no_jobs) - 1) %% 9 + 1]; print(yr)
 # vir1 <- c('flu_A', 'flu_B')[ceiling(jobid / (no_jobs * 9))]; print(vir1)
@@ -32,16 +33,17 @@ jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 # 
 # sobol_size <- 500
 # search_type <- 'broad'
+# fit_shared <- FALSE
 
 # Set parameters for run:
 vir2 <- 'rsv'
 
-time_max <- 9.75 # Maximal execution time (in hours)
+time_max <- 1.75 # Maximal execution time (in hours)
 debug_bool <- FALSE
 
 Ri_max1 <- 3.0
 Ri_max2 <- 3.0
-delta_min <- 7 / 60.0
+d2_max <- 10.0
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -56,8 +58,13 @@ if (exists('resp_mod')) {
   if (sum(resp_mod@data[1, ], na.rm = TRUE) > 100 & sum(resp_mod@data[2, ], na.rm = TRUE) > 100) {
     
     # Set start ranges for estimated parameters:
-    # estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
-    estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2', 'theta_lambda1', 'delta')
+    if (fit_shared) {
+      estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2',
+                   'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi',
+                   'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+    } else {
+      estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+    }
     
     start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                               Ri2 = c(1.0, Ri_max2),
@@ -69,7 +76,17 @@ if (exists('resp_mod')) {
                               rho1 = c(0, 1.0),
                               rho2 = c(0, 1.0),
                               theta_lambda1 = c(0, 1.0),
-                              delta = c(7 / 60, 7))
+                              theta_lambda2 = c(0, 1.0),
+                              theta_rho1 = c(0, 1.0),
+                              theta_rho2 = c(0, 1.0),
+                              delta1 = c(7 / 60, 7),
+                              d2 = c(7 / 60, 7),
+                              alpha = c(0, 0.5),
+                              phi = c(0, 52.25),
+                              eta_temp1 = c(-0.5, 0.5),
+                              eta_temp2 = c(-0.5, 0.5),
+                              eta_ah1 = c(-0.5, 0.5),
+                              eta_ah2 = c(-0.5, 0.5))
     start_range <- start_range[, estpars]
     
     if (search_type == 'broad') {
@@ -113,7 +130,7 @@ if (exists('resp_mod')) {
         nloptr(x0 = unname(x0_trans),
                eval_f = obj_fun,
                opts = list(algorithm = 'NLOPT_LN_SBPLX',
-                           maxtime = 60.0,
+                           maxtime = 60.0 * nmins_exec,
                            maxeval = -1, # disabled
                            xtol_rel = -1, # disabled; default: 1e-4
                            print_level = 0))

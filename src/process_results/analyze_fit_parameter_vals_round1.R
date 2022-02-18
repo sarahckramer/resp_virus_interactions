@@ -8,8 +8,17 @@
 library(tidyverse)
 library(gridExtra)
 
+# Were shared params also fit?:
+fit_shared <- FALSE
+
 # Specify parameters estimated:
-estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2', 'theta_lambda1', 'delta')
+if (fit_shared) {
+  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2',
+               'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi',
+               'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+} else {
+  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+}
 
 # Get vectors of flu types/seasons:
 flu_types <- c('flu_h1', 'flu_b')
@@ -20,11 +29,11 @@ seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 # Read in and format results
 
 # Read in full results:
-pars_list <- read_rds('results/round1_interaction/traj_match_round1_byvirseas_FULL.rds')
-pars_list_1314 <- read_rds('results/round1_interaction_leadNAs/traj_match_round1_byvirseas_FULL.rds')
-
-pars_list[names(pars_list) %in% names(pars_list_1314)] <- pars_list_1314
-rm(pars_list_1314)
+if (fit_shared) {
+  pars_list <- read_rds('results/round1_fitsharedTRUE/traj_match_round1_byvirseas_FULL.rds')
+} else {
+  pars_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_FULL.rds')
+}
 
 # Get best-fit values and values within 95% CI:
 pars_top <- vector('list', length = length(pars_list))
@@ -68,7 +77,11 @@ p3 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, ymin = min, ymax = max
 grid.arrange(p2, p3, ncol = 2)
 
 # Output plots to file:
-pdf('results/plots/param_est_single_seasons.pdf', width = 9.5, height = 11)
+if (fit_shared) {
+  pdf('results/plots/param_est_single_seasons_fitsharedTRUE.pdf', width = 9.5, height = 11)
+} else {
+  pdf('results/plots/param_est_single_seasons_fitsharedFALSE.pdf', width = 9.5, height = 11)
+}
 # print(p1)
 grid.arrange(p2, p3, ncol = 2)
 dev.off()

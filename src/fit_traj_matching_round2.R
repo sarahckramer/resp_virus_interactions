@@ -22,33 +22,39 @@ prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 
 # # Set parameters for local run:
 # jobid <- 1
-# no_jobs <- 100
+# no_jobs <- 1
 # vir1 <- 'flu_h1' # 'flu_A', 'flu_B'
 # 
-# sobol_size <- 500
-# search_type <- 'round1_CIs'
+# sobol_size <- 10
+# search_type <- 'round2_CIs'
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
-# prof_lik <- FALSE
+# prof_lik <- TRUE
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 # seasons <- 2006:2014
-time_max <- 11.75 # Maximal execution time (in hours)
+time_max <- 14.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
-delta_min <- 7 / 30.0
+d2_max <- 10.0
+
+lag_val <- 0
 
 if (prof_lik) {
   prof_param <- 'theta_lambda1'
   # prof_param <- 'theta_lambda2'
-  # prof_param <- 'delta'
+  # prof_param <- 'delta1'
+  # prof_param <- 'd2'
   
-  if (prof_param == 'delta') {
+  if (prof_param == 'delta1') {
     prof_val <- (7 / seq(5, 255, by = 5))[jobid]
-  } else {
+  } else if (prof_param == 'd2') {
+    prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid]
+  }
+  else {
     prof_val <- seq(0.0, 1.0, by = 0.02)[jobid]
   }
   print(prof_val)
@@ -256,17 +262,23 @@ po_list <- po_list[lapply(po_list, length) > 0]
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   if (prof_lik) {
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+    # shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+    #                     'alpha', 'phi', 'eta_temp1', 'eta_temp2')
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
-    shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   }
 } else {
   stop('Unrecognized int_eff value.')
@@ -284,13 +296,21 @@ true_estpars <- c(shared_estpars, unit_estpars)
 estpars <- c(shared_estpars, unit_sp_estpars)
 
 # Set upper/lower values for global params:
-start_range <- data.frame(rho1 = c(0, 1),
-                          rho2 = c(0, 1),
-                          delta = c(7 / 60, 7 / 1),
-                          theta_lambda1 = c(0, 1),
-                          theta_lambda2 = c(0, 1),
-                          theta_rho1 = c(0, 1),
-                          theta_rho2 = c(0, 1))
+start_range <- data.frame(rho1 = c(0, 1.0),
+                          rho2 = c(0, 1.0),
+                          theta_lambda1 = c(0, 1.0),
+                          theta_lambda2 = c(0, 1.0),
+                          theta_rho1 = c(0, 1.0),
+                          theta_rho2 = c(0, 1.0),
+                          delta1 = c(7 / 60, 7),
+                          # d2 = c(7 / 60, 7),
+                          d2 = c(0, 10),
+                          alpha = c(0, 0.5),
+                          phi = c(0, 52.25),
+                          eta_temp1 = c(-0.5, 0.5),
+                          eta_temp2 = c(-0.5, 0.5),
+                          eta_ah1 = c(-0.5, 0.5),
+                          eta_ah2 = c(-0.5, 0.5))
 
 # Set upper/lower values for unit params (broad):
 unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
@@ -302,7 +322,7 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R120 = c(0, 0.3))
 
 # Get 99% CI from round 1 for unit params:
-tj_res_list <- read_rds('results/round1_interaction/traj_match_round1_byvirseas_TOP.rds')
+tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
 
 tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
 # tj_res_list <- tj_res_list[!str_detect(names(tj_res_list), '2010')]
@@ -350,9 +370,9 @@ rm(i)
 if (search_type == 'round2_CIs') {
   
   if (vir1 == 'flu_h1') {
-    start_range <- read_rds('results/round2_cis/round2CI_startvals_H1.rds')
+    start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_H1.rds')
   } else if (vir1 == 'flu_b') {
-    start_range <- read_rds('results/round2_cis/round2CI_startvals_B.rds')
+    start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_B.rds')
   } else {
     stop('Unknown vir1!')
   }
@@ -388,9 +408,21 @@ start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), name
                              upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
                              nseq = sobol_size)
 
+if (search_type == 'round2_CIs') {
+  start_values <- start_values %>%
+    mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+}
+
 print(start_range)
 print(summary(start_values))
 print(estpars)
+
+# # Remove eta_ah1, eta_ah2 from consideration:
+# estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
+# true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
+# shared_estpars <- shared_estpars[!(shared_estpars %in% c('eta_ah1', 'eta_ah2'))]
+# 
+# start_values <- start_values[!(names(start_values) %in% c('eta_ah1', 'eta_ah2'))]
 
 # Get list of season-specific objective functions:
 obj_fun_list <- lapply(po_list, function(ix) {
