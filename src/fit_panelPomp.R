@@ -44,16 +44,22 @@ seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
-delta_min <- 7 / 30.0
+d2_max <- 10.0
+
+lag_val <- 0
 
 # if (prof_lik) {
 #   prof_param <- 'theta_lambda1'
 #   # prof_param <- 'theta_lambda2'
-#   # prof_param <- 'delta'
+#   # prof_param <- 'delta1'
+#   # prof_param <- 'd2'
 #   
-#   if (prof_param == 'delta') {
+#   if (prof_param == 'delta1') {
 #     prof_val <- (7 / seq(5, 255, by = 5))[jobid]
-#   } else {
+#   } else if (prof_param == 'd2') {
+#     prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid]
+#   }
+#   else {
 #     prof_val <- seq(0.0, 1.0, by = 0.02)[jobid]
 #   }
 #   print(prof_val)
@@ -113,9 +119,10 @@ names(po_list) <- seasons
 #   ggplot(aes(x = time, y = cases, col = vir, group = paste(vir, .id))) + geom_line() + theme_classic() + labs(title = sigma_val)
 
 # Construct panelPomp object:
-shared_param_vals <- c(7 / 5, 1.0, 1.0, 0.5, 0.15, 1.0, 1.0, 0.1, 7 / 5, 7 / 10)
-names(shared_param_vals) <- c('delta', 'theta_lambda1', 'theta_lambda2', 'rho1', 'rho2', 'theta_rho1', 'theta_rho2',
-                              'sigmaSE', 'gamma1', 'gamma2')
+shared_param_vals <- c(7 / 5, 1.0, 1.0, 1.0, 0.5, 0.15, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7 / 5, 7 / 10)
+names(shared_param_vals) <- c('delta1', 'd2', 'theta_lambda1', 'theta_lambda2', 'rho1', 'rho2', 'alpha', 'phi',
+                              'theta_rho1', 'theta_rho2', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+                              'beta_sd1', 'beta_sd2', 'gamma1', 'gamma2')
 
 resp_mod <- panelPomp(po_list,
                       shared = shared_param_vals)
@@ -127,17 +134,23 @@ resp_mod <- panelPomp(po_list,
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   if (prof_lik) {
-    estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2', 'sigmaSE')
+    estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     estpars <- estpars[estpars != prof_param]
   } else {
-    estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2', 'sigmaSE')
+    estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+    # estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+    #                     'alpha', 'phi', 'eta_temp1', 'eta_temp2')
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
-    estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2', 'sigmaSE')
+    estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
+                 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     estpars <- estpars[estpars != prof_param]
   } else {
-    estpars <- c('rho1', 'rho2', 'delta', 'theta_rho1', 'theta_rho2', 'sigmaSE')
+    estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
+                 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   }
 } else {
   stop('Unrecognized int_eff value.')
@@ -151,14 +164,22 @@ for (i in 1:length(seasons)) {
 rm(i)
 
 # Set upper/lower values for global params:
-start_range <- data.frame(rho1 = c(0, 1),
-                          rho2 = c(0, 1),
-                          delta = c(7 / 60, 7 / 1),
-                          theta_lambda1 = c(0, 1),
-                          theta_lambda2 = c(0, 1),
-                          theta_rho1 = c(0, 1),
-                          theta_rho2 = c(0, 1),
-                          sigmaSE = c(0, 0.5))
+start_range <- data.frame(rho1 = c(0, 1.0),
+                          rho2 = c(0, 1.0),
+                          theta_lambda1 = c(0, 1.0),
+                          theta_lambda2 = c(0, 1.0),
+                          theta_rho1 = c(0, 1.0),
+                          theta_rho2 = c(0, 1.0),
+                          delta1 = c(7 / 60, 7),
+                          d2 = c(0, 10),
+                          alpha = c(0, 0.5),
+                          phi = c(0, 52.25),
+                          eta_temp1 = c(-0.5, 0.5),
+                          eta_temp2 = c(-0.5, 0.5),
+                          eta_ah1 = c(-0.5, 0.5),
+                          eta_ah2 = c(-0.5, 0.5),
+                          beta_sd1 = c(0, 0.5),
+                          beta_sd2 = c(0., 0.5))
 
 # Set upper/lower values for unit params (broad):
 unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
@@ -175,7 +196,7 @@ if (search_type == 'round2_CIs') {
   if (vir1 == 'flu_h1') {
     
     if (int_eff == 'susc') {
-      start_range <- read_rds('results/round2_cis/round2CI_startvals_H1.rds')
+      start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_H1.rds')
     } else if (int_eff == 'sev') {
       stop('SEV not yet implemented!')
     } else {
@@ -186,12 +207,12 @@ if (search_type == 'round2_CIs') {
       names(start_range)[str_detect(names(start_range), season)] <- paste0(str_remove(names(start_range)[str_detect(names(start_range), season)],
                                                                                       paste0(season, '_')), '[', season, ']')
     }
-    start_range <- cbind(start_range, sigmaSE = c(0.01, 0.5))
+    start_range <- cbind(start_range, beta_sd1 = c(0.01, 0.5), beta_sd2 = c(0.01, 0.5))
     
   } else if (vir1 == 'flu_b') {
     
     if (int_eff == 'susc') {
-      start_range <- read_rds('results/round2_cis/round2CI_startvals_B.rds')
+      start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_B.rds')
     } else if (int_eff == 'sev') {
       stop('SEV not yet implemented!')
     } else {
@@ -202,7 +223,7 @@ if (search_type == 'round2_CIs') {
       names(start_range)[str_detect(names(start_range), season)] <- paste0(str_remove(names(start_range)[str_detect(names(start_range), season)],
                                                                                       paste0(season, '_')), '[', season, ']')
     }
-    start_range <- cbind(start_range, sigmaSE = c(0.01, 0.5))
+    start_range <- cbind(start_range, beta_sd1 = c(0.01, 0.5), beta_sd2 = c(0.01, 0.5))
     
   } else {
     stop('Unknown vir1!')
@@ -263,9 +284,9 @@ for (i in seq_along(sub_start)) {
   tic <- Sys.time()
   
   if (int_eff == 'susc') {
-    
+
     mf <- try (
-      
+
       mif2(resp_mod,
            Np = mif_particles_number,
            Nmif = filtering_number,
@@ -273,10 +294,18 @@ for (i in seq_along(sub_start)) {
            cooling.fraction.50 = 0.5,
            rw.sd = rw.sd(rho1 = 0.02,
                          rho2 = 0.02,
-                         delta = 0.02,
+                         delta1 = 0.02,
+                         d2 = 0.02,
                          theta_lambda1 = 0.02,
                          theta_lambda2 = 0.02,
-                         sigmaSE = 0.02,
+                         alpha = 0.02,
+                         phi = 0.02,
+                         eta_temp1 = 0.02,
+                         eta_temp2 = 0.02,
+                         eta_ah1 = 0.02,
+                         eta_ah2 = 0.02,
+                         # beta_sd1 = 0.02,
+                         # beta_sd2 = 0.02,
                          Ri1 = 0.02,
                          Ri2 = 0.02,
                          I10 = ivp(0.1),
@@ -286,13 +315,13 @@ for (i in seq_along(sub_start)) {
                          R120 = ivp(0.1))) %>%
         mif2(Nmif = filtering_number,
              cooling.fraction.50 = 0.25)
-      
+
     )
-    
+
   } else if (int_eff == 'sev') {
-    
+
     mf <- try (
-      
+
       mif2(resp_mod,
            Np = mif_particles_number,
            Nmif = filtering_number,
@@ -300,10 +329,18 @@ for (i in seq_along(sub_start)) {
            cooling.fraction.50 = 0.5,
            rw.sd = rw.sd(rho1 = 0.02,
                          rho2 = 0.02,
-                         delta = 0.02,
+                         delta1 = 0.02,
+                         d2 = 0.02,
                          theta_rho1 = 0.02,
                          theta_rho2 = 0.02,
-                         sigmaSE = 0.02,
+                         alpha = 0.02,
+                         phi = 0.02,
+                         eta_temp1 = 0.02,
+                         eta_temp2 = 0.02,
+                         eta_ah1 = 0.02,
+                         eta_ah2 = 0.02,
+                         # beta_sd1 = 0.02,
+                         # beta_sd1 = 0.02,
                          Ri1 = 0.02,
                          Ri2 = 0.02,
                          I10 = ivp(0.1),
@@ -313,30 +350,34 @@ for (i in seq_along(sub_start)) {
                          R120 = ivp(0.1))) %>%
         mif2(Nmif = filtering_number,
              cooling.fraction.50 = 0.25)
-      
+
     )
-    
+
   } else {
     stop('Unrecognized int_eff!')
   }
-  
+
   toc <- Sys.time()
   etime <- toc - tic
   units(etime) <- 'mins'
   print(etime)
-  
+
   # If estimation is successful, save results:
   if (!inherits(mf, 'try-error')) {
     tic <- Sys.time()
+
+    # ll <- replicate(10, mf %>% pfilter(Np = pf_particles_number) %>% logLik()) %>%
+    #   logmeanexp(se = TRUE)
+    ll <- replicate(10, mf %>% pfilter(Np = pf_particles_number) %>% unitlogLik()) %>%
+      panel_logmeanexp(MARGIN = 1, se = TRUE)
     
-    ll <- replicate(10, mf %>% pfilter(Np = pf_particles_number) %>% logLik()) %>%
-      logmeanexp(se = TRUE)
-    
+    print(ll)
+
     toc <- Sys.time()
     etime <- toc - tic
     units(etime) <- 'mins'
     print(etime)
-    
+
     mf.ll <- mf %>%
       coef() %>%
       bind_rows() %>%
@@ -344,13 +385,13 @@ for (i in seq_along(sub_start)) {
                 loglik.se = ll[2]) %>%
       select(all_of(estpars),
              loglik, loglik.se)
-    
+
     out <- list(mf = mf,
-                res = mf.ll,
+                # res = mf.ll,
                 Nf = filtering_number,
                 Np_mif = mif_particles_number,
                 Np_pf = pf_particles_number)
-    
+
     # Write to file:
     saveRDS(out,
             file = sprintf('results/mif_res_%s_%s_%s.rds',
@@ -358,13 +399,13 @@ for (i in seq_along(sub_start)) {
                            int_eff,
                            sub_start[i])
     )
-    
+
     # Print results:
     print(out$res %>%
             select(shared_estpars,
                    loglik,
                    loglik.se))
-    
+
   }
   
 }
