@@ -143,7 +143,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
                         eta_temp1 = 0, eta_temp2 = 0,
                         eta_ah1 = 0, eta_ah2 = 0,
-                        beta_sd1 = 0.1, beta_sd2 = 0.1,
+                        beta_sd1 = 0, beta_sd2 = 0,
                         N = unique(dat$pop),
                         I10 = 1e-5, I20 = 1e-5,
                         R10 = 0, R20 = 0, R120 = 0),
