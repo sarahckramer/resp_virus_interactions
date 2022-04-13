@@ -237,25 +237,13 @@ for (i in 1:length(pars_top_LIST)) {
   # Read in pomp models:
   source('src/functions/setup_global_likelilhood.R')
   
-  # Loop through top 5 parameter sets and calculate/plot slices over global params:
+  # Loop through top parameter sets and calculate/plot slices over global params:
   par(mfrow = c(10, 6), bty = 'l')
   
-  for (j in 1:5) {
+  for (j in 1:nrow(pars_top_LIST[[i]])) {
     mle <- setNames(object = as.numeric(pars_top_LIST[[i]][j, 1:(length(shared_estpars) + length(unit_estpars) * 5)]),
                     nm = estpars)
-    # # slices <- slice_design(center = mle,
-    # #                        rho1 = seq(from = 0, to = 1.0, by = 0.05),
-    # #                        rho2 = seq(from = 0, to = 1.0, by = 0.05),
-    # #                        theta_lambda1 = seq(from = 0, to = 1.0, by = 0.05),
-    # #                        delta = 7 / seq(from = 1, to = 365, by = 30)) %>%
-    # #   mutate(ll = NA)
-    # slices <- slice_design(center = mle,
-    #                        rho1 = seq(from = 0.01, to = 0.2, by = 0.01),
-    #                        rho2 = seq(from = 0.01, to = 0.2, by = 0.01),
-    #                        theta_lambda1 = seq(from = 0, to = 0.2, by = 0.01),
-    #                        theta_lambda2 = seq(from = 0, to = 0.2, by = 0.01),
-    #                        delta = seq(from = 0.01, to = 0.3, by = 0.01)) %>%
-    #   mutate(ll = NA)
+    
     slices <- slice_design(center = mle,
                            rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
                            rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20),
@@ -271,6 +259,138 @@ for (i in 1:length(pars_top_LIST)) {
                            eta_ah2 = seq(from = 0.9 * mle['eta_ah2'], to = 1.1 * mle['eta_ah2'], length.out = 20)) %>%
       mutate(ll = NA)
     
+    if (vir1 == 'flu_h1') {
+      slices_unit <- slice_design(center = mle,
+                                  `s13-14_Ri1` = seq(from = 0.9 * mle['s13-14_Ri1'], to = 1.1 * mle['s13-14_Ri1'], length.out = 20),
+                                  `s13-14_Ri2` = seq(from = 0.9 * mle['s13-14_Ri2'], to = 1.1 * mle['s13-14_Ri2'], length.out = 20),
+                                  `s13-14_I10` = seq(from = 0.9 * mle['s13-14_I10'], to = 1.1 * mle['s13-14_I10'], length.out = 20),
+                                  `s13-14_I20` = seq(from = 0.9 * mle['s13-14_I20'], to = 1.1 * mle['s13-14_I20'], length.out = 20),
+                                  `s13-14_R10` = seq(from = 0.9 * mle['s13-14_R10'], to = 1.1 * mle['s13-14_R10'], length.out = 20),
+                                  `s13-14_R20` = seq(from = 0.9 * mle['s13-14_R20'], to = 1.1 * mle['s13-14_R20'], length.out = 20),
+                                  `s13-14_R120` = seq(from = 0.9 * mle['s13-14_R120'], to = 1.1 * mle['s13-14_R120'], length.out = 20),
+                                  `s15-16_Ri1` = seq(from = 0.9 * mle['s15-16_Ri1'], to = 1.1 * mle['s15-16_Ri1'], length.out = 20),
+                                  `s15-16_Ri2` = seq(from = 0.9 * mle['s15-16_Ri2'], to = 1.1 * mle['s15-16_Ri2'], length.out = 20),
+                                  `s15-16_I10` = seq(from = 0.9 * mle['s15-16_I10'], to = 1.1 * mle['s15-16_I10'], length.out = 20),
+                                  `s15-16_I20` = seq(from = 0.9 * mle['s15-16_I20'], to = 1.1 * mle['s15-16_I20'], length.out = 20),
+                                  `s15-16_R10` = seq(from = 0.9 * mle['s15-16_R10'], to = 1.1 * mle['s15-16_R10'], length.out = 20),
+                                  `s15-16_R20` = seq(from = 0.9 * mle['s15-16_R20'], to = 1.1 * mle['s15-16_R20'], length.out = 20),
+                                  `s15-16_R120` = seq(from = 0.9 * mle['s15-16_R120'], to = 1.1 * mle['s15-16_R120'], length.out = 20),
+                                  `s16-17_Ri1` = seq(from = 0.9 * mle['s16-17_Ri1'], to = 1.1 * mle['s16-17_Ri1'], length.out = 20),
+                                  `s16-17_Ri2` = seq(from = 0.9 * mle['s16-17_Ri2'], to = 1.1 * mle['s16-17_Ri2'], length.out = 20),
+                                  `s16-17_I10` = seq(from = 0.9 * mle['s16-17_I10'], to = 1.1 * mle['s16-17_I10'], length.out = 20),
+                                  `s16-17_I20` = seq(from = 0.9 * mle['s16-17_I20'], to = 1.1 * mle['s16-17_I20'], length.out = 20),
+                                  `s16-17_R10` = seq(from = 0.9 * mle['s16-17_R10'], to = 1.1 * mle['s16-17_R10'], length.out = 20),
+                                  `s16-17_R20` = seq(from = 0.9 * mle['s16-17_R20'], to = 1.1 * mle['s16-17_R20'], length.out = 20),
+                                  `s16-17_R120` = seq(from = 0.9 * mle['s16-17_R120'], to = 1.1 * mle['s16-17_R120'], length.out = 20),
+                                  `s17-18_Ri1` = seq(from = 0.9 * mle['s17-18_Ri1'], to = 1.1 * mle['s17-18_Ri1'], length.out = 20),
+                                  `s17-18_Ri2` = seq(from = 0.9 * mle['s17-18_Ri2'], to = 1.1 * mle['s17-18_Ri2'], length.out = 20),
+                                  `s17-18_I10` = seq(from = 0.9 * mle['s17-18_I10'], to = 1.1 * mle['s17-18_I10'], length.out = 20),
+                                  `s17-18_I20` = seq(from = 0.9 * mle['s17-18_I20'], to = 1.1 * mle['s17-18_I20'], length.out = 20),
+                                  `s17-18_R10` = seq(from = 0.9 * mle['s17-18_R10'], to = 1.1 * mle['s17-18_R10'], length.out = 20),
+                                  `s17-18_R20` = seq(from = 0.9 * mle['s17-18_R20'], to = 1.1 * mle['s17-18_R20'], length.out = 20),
+                                  `s17-18_R120` = seq(from = 0.9 * mle['s17-18_R120'], to = 1.1 * mle['s17-18_R120'], length.out = 20),
+                                  `s18-19_Ri1` = seq(from = 0.9 * mle['s18-19_Ri1'], to = 1.1 * mle['s18-19_Ri1'], length.out = 20),
+                                  `s18-19_Ri2` = seq(from = 0.9 * mle['s18-19_Ri2'], to = 1.1 * mle['s18-19_Ri2'], length.out = 20),
+                                  `s18-19_I10` = seq(from = 0.9 * mle['s18-19_I10'], to = 1.1 * mle['s18-19_I10'], length.out = 20),
+                                  `s18-19_I20` = seq(from = 0.9 * mle['s18-19_I20'], to = 1.1 * mle['s18-19_I20'], length.out = 20),
+                                  `s18-19_R10` = seq(from = 0.9 * mle['s18-19_R10'], to = 1.1 * mle['s18-19_R10'], length.out = 20),
+                                  `s18-19_R20` = seq(from = 0.9 * mle['s18-19_R20'], to = 1.1 * mle['s18-19_R20'], length.out = 20),
+                                  `s18-19_R120` = seq(from = 0.9 * mle['s18-19_R120'], to = 1.1 * mle['s18-19_R120'], length.out = 20)) %>%
+        mutate(ll = NA)
+      # slices_unit <- slice_design(center = mle,
+      #                             `s13-14_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s13-14_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s13-14_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s13-14_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s13-14_R120` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s15-16_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s15-16_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s15-16_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s15-16_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s15-16_R120` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s16-17_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s16-17_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s16-17_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s16-17_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s16-17_R120` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s17-18_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s17-18_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s17-18_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s17-18_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s17-18_R120` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s18-19_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s18-19_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s18-19_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s18-19_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s18-19_R120` = seq(from = 0.0, to = 1.0, length.out = 20)) %>%
+      #   mutate(ll = NA)
+    } else if (vir1 == 'flu_b') {
+      slices_unit <- slice_design(center = mle,
+                                  `s13-14_Ri1` = seq(from = 0.9 * mle['s13-14_Ri1'], to = 1.1 * mle['s13-14_Ri1'], length.out = 20),
+                                  `s13-14_Ri2` = seq(from = 0.9 * mle['s13-14_Ri2'], to = 1.1 * mle['s13-14_Ri2'], length.out = 20),
+                                  `s13-14_I10` = seq(from = 0.9 * mle['s13-14_I10'], to = 1.1 * mle['s13-14_I10'], length.out = 20),
+                                  `s13-14_I20` = seq(from = 0.9 * mle['s13-14_I20'], to = 1.1 * mle['s13-14_I20'], length.out = 20),
+                                  `s13-14_R10` = seq(from = 0.9 * mle['s13-14_R10'], to = 1.1 * mle['s13-14_R10'], length.out = 20),
+                                  `s13-14_R20` = seq(from = 0.9 * mle['s13-14_R20'], to = 1.1 * mle['s13-14_R20'], length.out = 20),
+                                  `s13-14_R120` = seq(from = 0.9 * mle['s13-14_R120'], to = 1.1 * mle['s13-14_R120'], length.out = 20),
+                                  `s15-16_Ri1` = seq(from = 0.9 * mle['s15-16_Ri1'], to = 1.1 * mle['s15-16_Ri1'], length.out = 20),
+                                  `s15-16_Ri2` = seq(from = 0.9 * mle['s15-16_Ri2'], to = 1.1 * mle['s15-16_Ri2'], length.out = 20),
+                                  `s15-16_I10` = seq(from = 0.9 * mle['s15-16_I10'], to = 1.1 * mle['s15-16_I10'], length.out = 20),
+                                  `s15-16_I20` = seq(from = 0.9 * mle['s15-16_I20'], to = 1.1 * mle['s15-16_I20'], length.out = 20),
+                                  `s15-16_R10` = seq(from = 0.9 * mle['s15-16_R10'], to = 1.1 * mle['s15-16_R10'], length.out = 20),
+                                  `s15-16_R20` = seq(from = 0.9 * mle['s15-16_R20'], to = 1.1 * mle['s15-16_R20'], length.out = 20),
+                                  `s15-16_R120` = seq(from = 0.9 * mle['s15-16_R120'], to = 1.1 * mle['s15-16_R120'], length.out = 20),
+                                  `s14-15_Ri1` = seq(from = 0.9 * mle['s14-15_Ri1'], to = 1.1 * mle['s14-15_Ri1'], length.out = 20),
+                                  `s14-15_Ri2` = seq(from = 0.9 * mle['s14-15_Ri2'], to = 1.1 * mle['s14-15_Ri2'], length.out = 20),
+                                  `s14-15_I10` = seq(from = 0.9 * mle['s14-15_I10'], to = 1.1 * mle['s14-15_I10'], length.out = 20),
+                                  `s14-15_I20` = seq(from = 0.9 * mle['s14-15_I20'], to = 1.1 * mle['s14-15_I20'], length.out = 20),
+                                  `s14-15_R10` = seq(from = 0.9 * mle['s14-15_R10'], to = 1.1 * mle['s14-15_R10'], length.out = 20),
+                                  `s14-15_R20` = seq(from = 0.9 * mle['s14-15_R20'], to = 1.1 * mle['s14-15_R20'], length.out = 20),
+                                  `s14-15_R120` = seq(from = 0.9 * mle['s14-15_R120'], to = 1.1 * mle['s14-15_R120'], length.out = 20),
+                                  `s17-18_Ri1` = seq(from = 0.9 * mle['s17-18_Ri1'], to = 1.1 * mle['s17-18_Ri1'], length.out = 20),
+                                  `s17-18_Ri2` = seq(from = 0.9 * mle['s17-18_Ri2'], to = 1.1 * mle['s17-18_Ri2'], length.out = 20),
+                                  `s17-18_I10` = seq(from = 0.9 * mle['s17-18_I10'], to = 1.1 * mle['s17-18_I10'], length.out = 20),
+                                  `s17-18_I20` = seq(from = 0.9 * mle['s17-18_I20'], to = 1.1 * mle['s17-18_I20'], length.out = 20),
+                                  `s17-18_R10` = seq(from = 0.9 * mle['s17-18_R10'], to = 1.1 * mle['s17-18_R10'], length.out = 20),
+                                  `s17-18_R20` = seq(from = 0.9 * mle['s17-18_R20'], to = 1.1 * mle['s17-18_R20'], length.out = 20),
+                                  `s17-18_R120` = seq(from = 0.9 * mle['s17-18_R120'], to = 1.1 * mle['s17-18_R120'], length.out = 20),
+                                  `s18-19_Ri1` = seq(from = 0.9 * mle['s18-19_Ri1'], to = 1.1 * mle['s18-19_Ri1'], length.out = 20),
+                                  `s18-19_Ri2` = seq(from = 0.9 * mle['s18-19_Ri2'], to = 1.1 * mle['s18-19_Ri2'], length.out = 20),
+                                  `s18-19_I10` = seq(from = 0.9 * mle['s18-19_I10'], to = 1.1 * mle['s18-19_I10'], length.out = 20),
+                                  `s18-19_I20` = seq(from = 0.9 * mle['s18-19_I20'], to = 1.1 * mle['s18-19_I20'], length.out = 20),
+                                  `s18-19_R10` = seq(from = 0.9 * mle['s18-19_R10'], to = 1.1 * mle['s18-19_R10'], length.out = 20),
+                                  `s18-19_R20` = seq(from = 0.9 * mle['s18-19_R20'], to = 1.1 * mle['s18-19_R20'], length.out = 20),
+                                  `s18-19_R120` = seq(from = 0.9 * mle['s18-19_R120'], to = 1.1 * mle['s18-19_R120'], length.out = 20)) %>%
+        mutate(ll = NA)
+      # slices_unit <- slice_design(center = mle,
+      #                             `s13-14_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s13-14_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s13-14_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s13-14_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s13-14_R120` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s15-16_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s15-16_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s15-16_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s15-16_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s15-16_R120` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s14-15_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s14-15_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s14-15_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s14-15_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s14-15_R120` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s17-18_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s17-18_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s17-18_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s17-18_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s17-18_R120` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s18-19_I10` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s18-19_I20` = seq(from = 0.0, to = 0.2, length.out = 20),
+      #                             `s18-19_R10` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s18-19_R20` = seq(from = 0.0, to = 1.0, length.out = 20),
+      #                             `s18-19_R120` = seq(from = 0.0, to = 1.0, length.out = 20)) %>%
+      #   mutate(ll = NA)
+    }
+    
     for (k in 1:nrow(slices)) {
       x0 <- slices[k, 1:(length(shared_estpars) + length(unit_estpars) * 5)]
       expect_true(all(names(x0) == estpars))
@@ -279,14 +399,32 @@ for (i in 1:length(pars_top_LIST)) {
     }
     rm(k, x0, x0_trans)
     
+    # for (k in 1:nrow(slices_unit)) {
+    #   x0 <- slices_unit[k, 1:(length(shared_estpars) + length(unit_estpars) * 5)]
+    #   expect_true(all(names(x0) == estpars))
+    #   x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
+    #   slices_unit$ll[k] <- -1 * calculate_global_loglik(x0_trans)
+    # }
+    # rm(k, x0, x0_trans)
+    
     for (par in shared_estpars) {
       slices_cur <- filter(slices, slice == par)
       plot(slices_cur[[par]], slices_cur$ll, type = 'l',
            xlab = par, ylab = 'Log-Likelihood',
            main = par)
-      
+
     }
     rm(par, slices_cur)
+    
+    # for (par in estpars[!(estpars %in% shared_estpars)]) {
+    #   slices_cur <- filter(slices_unit, slice == par)
+    #   if (nrow(slices_cur) > 0) {
+    #     plot(slices_cur[[par]], slices_cur$ll, type = 'l',
+    #          xlab = par, ylab = 'Log-Likelihood',
+    #          main = par)
+    #   }
+    # }
+    # rm(par, slices_cur)
     
   }
   rm(j, mle, slices)
@@ -330,8 +468,8 @@ for (i in 1:length(pars_top_LIST)) {
              contains(yr))
     names(pars_temp)[(length(names(pars_temp)) - 6):length(names(pars_temp))] <- unit_estpars
     
-    # Plot top 5 parameter sets:
-    for (k in 1:5) {
+    # Plot top parameter sets:
+    for (k in 1:nrow(pars_top_LIST[[i]])) {
       coef(resp_mod, c(shared_estpars, unit_estpars)) <- pars_temp[k, ]
       
       sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
@@ -349,13 +487,13 @@ for (i in 1:length(pars_top_LIST)) {
         geom_point(aes(x = time, y = obs1, group = .id)) + geom_point(aes(x = time, y = obs2, group = .id), col = 'coral') +
         theme_classic() +
         labs(x = 'Time', y = '# Positive Tests', title = paste(unique(pars_top_long_LIST[[i]]$method), k, sep = '_'))
-      plot_list[[j * 5 - 4 + k - 1]] <- p_temp
+      plot_list[[j * nrow(pars_top_LIST[[i]]) - (nrow(pars_top_LIST[[i]]) - 1) + k - 1]] <- p_temp
       
     }
   }
   
   # Print plots:
-  do.call('grid.arrange', c(plot_list, ncol = 5))
+  do.call('grid.arrange', c(plot_list, ncol = nrow(pars_top_LIST[[i]])))
 }
 
 dev.off()
