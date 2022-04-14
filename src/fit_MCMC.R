@@ -396,6 +396,24 @@ for (i in seq_along(sub_start)) {
   units(etime) <- 'hours'
   print(etime)
   
+  # Try fmcmc package:
+  tic <- Sys.time()
+  m <- MCMC(initial = x0_trans,
+            fun = calculate_global_loglik,
+            nsteps = mcmc_val,
+            x0_trans_names = x0_trans_names,
+            seasons = seasons,
+            obj_fun_list = obj_fun_list,
+            burnin = burnin_val,
+            thin = thin_val,
+            # kernel = kernel_normal(scale = 0.01),
+            kernel = kernel_ram())#,
+            # conv_checker = convergence_gelman(5000))
+  toc <- Sys.time()
+  etime <- toc - tic
+  units(etime) <- 'hours'
+  print(etime)
+  
   # Save results to file:
   saveRDS(m, file = sprintf('results/res_mcmc_%s_%s_%d_%d_%d_%d_%d.rds',
                             vir1,
