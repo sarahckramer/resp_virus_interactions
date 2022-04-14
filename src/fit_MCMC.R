@@ -9,6 +9,7 @@ set.seed(749501349)
 
 # Load libraries:
 library(MCMCpack)
+library(matrixcalc)
 
 # Get cluster environmental variables:
 jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
@@ -301,7 +302,34 @@ fit_w_hessian <- optim(par = mle_trans,
 H_mat <- fit_w_hessian$hessian
 is.negative.definite(H_mat)
 
-hess.alt <- (nearPD(-1 * H_mat)$mat * -1) %>% as.matrix() %>% is.negative.definite()
+# Try different methods for calculating Hessian:
+library(numDeriv)
+H_mat2 <- numDeriv::hessian(func = calculate_global_loglik,
+                            x0_trans_names = mle_trans_names,
+                            seasons = seasons,
+                            obj_fun_list = obj_fun_list,
+                            x = mle_trans,
+                            method = 'Richardson')
+is.negative.definite(H_mat2)
+
+library(pracma)
+H_mat3 <- pracma::hessian(f = calculate_global_loglik,
+                          x0_trans_names = mle_trans_names,
+                          seasons = seasons,
+                          obj_fun_list = obj_fun_list,
+                          x0 = mle_trans)
+is.negative.definite(H_mat3)
+
+# Get alternative estimate:
+library(Matrix)
+hess.alt <- (nearPD(-1 * H_mat)$mat * -1) %>% as.matrix()
+is.negative.definite(hess.alt)
+
+hess.alt2 <- (nearPD(-1 * H_mat2)$mat * -1) %>% as.matrix()
+is.negative.definite(hess.alt2)
+
+hess.alt3 <- (nearPD(-1 * H_mat3)$mat * -1) %>% as.matrix()
+is.negative.definite(hess.alt3)
 
 # Get variance-covariance matrix:
 T_mat <- diag(tune_val, nrow = nrow(H_mat))
@@ -321,7 +349,7 @@ while (is.null(CC)) {
   try(CC <- chol(-1 * hess.new), silent = TRUE)
 }
 rm(i)
-V_mat <- T_mat %*% solve(-1 * hess.new) %*% T_mat
+V_mat <- T_mat %*% solve(-1 * hess.alt2) %*% T_mat
 
 # V = T (-1 x H)^(-1) T
 # T is the diagonal positive definite matrix formed from "tune"
