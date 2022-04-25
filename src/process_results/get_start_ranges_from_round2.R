@@ -181,5 +181,54 @@ if (any(sums_b %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
 write_rds(ci_start_h1, file = 'results/round2_cis/round2CI_startvals_PROF_H1.rds')
 write_rds(ci_start_b, file = 'results/round2_cis/round2CI_startvals_PROF_B.rds')
 
+# Also get top 5 parameter sets for MCMC runs:
+for (vir1 in c('flu_h1', 'flu_b')) {
+  
+  # Get filepath:
+  if (vir1 == 'flu_h1') {
+    filepath <- 'results/round2_2_fluH1_FULL/'
+    
+  } else if (vir1 == 'flu_b') {
+    filepath <- 'results/round2_2_fluB_FULL/'
+    
+  } else {
+    stop('Unknown vir1!')
+  }
+  
+  # Read in all results files:
+  res_files <- list.files(path = filepath, full.names = TRUE)
+  
+  res_full <- list()
+  for (i in seq_along(res_files)) {
+    res_full[[i]] <- read_rds(res_files[[i]])
+  }
+  rm(i)
+  
+  # Compile into data frame and sort:
+  pars_top <- lapply(res_full, getElement, 'estpars') %>%
+    bind_rows() %>%
+    bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                unlist()) %>%
+    arrange(desc(loglik))
+  expect_true(nrow(pars_top) == length(res_files))
+  expect_true(all(is.finite(pars_top$loglik)))
+  
+  # Get top 5:
+  pars_top <- pars_top[1:5, ]
+  
+  # Edit any unrealistic values:
+  set.seed(480278)
+  for (i in 1:nrow(pars_top)) {
+    if (pars_top$d2[i] > 10.0) {
+      pars_top$d2[i] <- runif(1, min = 1.0, max = 10.0)
+    }
+  }
+  rm(i)
+  
+  # Write to file:
+  write_rds(pars_top, file = paste0('results/round2_cis/round2_topfits_', vir1, '.rds'))
+  
+}
+
 # Clean up:
 rm(list = ls())

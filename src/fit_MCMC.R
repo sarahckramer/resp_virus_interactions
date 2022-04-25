@@ -229,26 +229,17 @@ rm(i)
 true_estpars <- c(shared_estpars, unit_estpars)
 estpars <- c(shared_estpars, unit_sp_estpars)
 
-# Get data frame of parameter ranges:
+# Get starting parameter sets (top 5 fits from trajectory matching):
 if (vir1 == 'flu_h1') {
-  start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_H1.rds')
+  start_values <- read_rds('results/round2_cis/round2_topfits_flu_h1.rds')
 } else if (vir1 == 'flu_b') {
-  start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_B.rds')
+  start_values <- read_rds('results/round2_cis/round2_topfits_flu_b.rds')
 } else {
   stop('Unknown vir1!')
 }
 
-start_range <- start_range[, estpars]
+start_values <- start_values[, estpars]
 
-# Get starting values for each parameter:
-start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
-                             upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
-                             nseq = sobol_size)
-
-start_values <- start_values %>%
-  mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
-
-print(start_range)
 print(summary(start_values))
 print(estpars)
 
