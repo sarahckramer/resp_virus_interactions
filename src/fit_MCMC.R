@@ -10,7 +10,7 @@ set.seed(749501349)
 # Load libraries:
 # library(MCMCpack)
 library(fmcmc)
-library(matrixcalc)
+# library(matrixcalc)
 
 # Get cluster environmental variables:
 # jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
@@ -18,11 +18,11 @@ library(matrixcalc)
 # sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
-num_chains <- as.character(Sys.getenv("CHAINS")); print(num_chains)
-burnin_val <- as.character(Sys.getenv("BURNIN")); print(burnin_val)
-mcmc_val <- as.character(Sys.getenv("MCMC")); print(mcmc_val)
-thin_val <- as.character(Sys.getenv("THIN")); print(thin_val)
-# tune_val <- as.character(Sys.getenv("TUNE")); print(tune_val)
+num_chains <- as.integer(Sys.getenv("CHAINS")); print(num_chains)
+burnin_val <- as.integer(Sys.getenv("BURNIN")); print(burnin_val)
+mcmc_val <- as.integer(Sys.getenv("MCMC")); print(mcmc_val)
+thin_val <- as.integer(Sys.getenv("THIN")); print(thin_val)
+# tune_val <- as.numeric(Sys.getenv("TUNE")); print(tune_val)
 
 # # Set parameters for local run:
 # # jobid <- 1
@@ -470,10 +470,5 @@ for (i in 1:num_chains) {
   print(back_transform_params(colMeans(m[[i]]), po_list[[1]], seasons, estpars, shared_estpars))
 }
 rm(i)
-
----------------------------------------------------------------------------------------------------------------------
-
-# Clean up:
-rm(list = ls())
 
 print('Done!')
