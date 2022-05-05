@@ -243,6 +243,38 @@ if (vir1 == 'flu_h1') {
 
 start_values <- start_values[, estpars]
 
+# Where start values are very close to 0, bump higher to allow better mixing:
+for (i in 1:ncol(start_values)) {
+  
+  if (abs(mean(unlist(start_values[, i]))) < 0.05 & !str_detect(names(start_values)[i], 'I')) {
+    
+    print(names(start_values)[i])
+    print(mean(unlist(start_values[, i])))
+    
+    start_values[, i] <- runif(n = nrow(start_values), min = 0.05, max = 0.10)
+    
+    if (str_detect(names(start_values)[i], 'R')) {
+      
+      current_season <- seasons[which(str_detect(names(start_values)[i], seasons))]
+      vals_temp <- start_values[, str_detect(names(start_values), current_season) &
+                                  str_detect(names(start_values), 'R') &
+                                  str_detect(names(start_values), '0')]
+      
+      while (any(rowSums(vals_temp) > 0.99)) {
+        
+        start_values[, i] <- runif(n = nrow(start_values), min = 0.05, max = 0.10)
+        vals_temp <- start_values[, str_detect(names(start_values), current_season) &
+                                    str_detect(names(start_values), 'R') &
+                                    str_detect(names(start_values), '0')]
+        
+      }
+      
+    }
+    
+  }
+  
+}
+
 print(summary(start_values))
 print(estpars)
 
@@ -262,6 +294,15 @@ obj_fun_list <- lapply(po_list, function(ix) {
 
 # Set priors on interaction parameters
 
+# Function for PDF of log(exp) distribution:
+log_exp <- function(x, lambda = 5) {
+  lambda * exp(x - lambda * exp(x))
+}
+
+dist_log_exp <- AbscontDistribution(d = log_exp, withStand = TRUE)
+# rdist_log_exp <- r(dist_log_exp)
+ddist_log_exp <- d(dist_log_exp)
+
 # Get prior likelihood:
 prior_like <- function(trans_vals) {
   str1 <- trans_vals['theta_lambda1']
@@ -271,7 +312,7 @@ prior_like <- function(trans_vals) {
   
   prior_thetalambda1 <- dnorm(str1, mean = 0, sd = 1.6, log = TRUE)
   prior_thetalambda2 <- dnorm(str2, mean = 0, sd = 1.6, log = TRUE)
-  prior_delta1 <- dnorm(dur1, mean = 0, sd = 1.5, log = TRUE)
+  prior_delta1 <- ddist_log_exp(dur1) %>% log()
   prior_d2 <- dnorm(dur2, mean = 0, sd = 1.5, log = TRUE)
   
   ll <- prior_thetalambda1 + prior_thetalambda2 + prior_delta1 + prior_d2
@@ -371,7 +412,7 @@ posterior_like <- function(trans_vals, x0_trans_names = x0_trans_names, seasons 
 #   
 #   # Fit models:
 #   tic <- Sys.time()
-#   m <- MCMCmetrop1R(fun = calculate_global_loglik,
+#   m <- MCMCmetrop1R(fun = posterior_like,
 #                     x0_trans_names = x0_trans_names,
 #                     seasons = seasons,
 #                     obj_fun_list = obj_fun_list,
