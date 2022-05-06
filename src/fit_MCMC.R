@@ -11,6 +11,7 @@ set.seed(749501349)
 # library(MCMCpack)
 library(fmcmc)
 # library(matrixcalc)
+library(distr)
 
 # Get cluster environmental variables:
 # jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
