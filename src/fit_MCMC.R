@@ -305,7 +305,9 @@ dist_log_exp <- AbscontDistribution(d = log_exp, withStand = TRUE)
 ddist_log_exp <- d(dist_log_exp)
 
 # Get prior likelihood:
-prior_like <- function(trans_vals) {
+prior_like <- function(trans_vals, x0_trans_names = x0_trans_names) {
+  names(trans_vals) <- x0_trans_names
+  
   str1 <- trans_vals['theta_lambda1']
   str2 <- trans_vals['theta_lambda2']
   dur1 <- trans_vals['delta1']
@@ -323,7 +325,7 @@ prior_like <- function(trans_vals) {
 # Get posterior likelihood:
 posterior_like <- function(trans_vals, x0_trans_names = x0_trans_names, seasons = seasons, obj_fun_list = obj_fun_list) {
   
-  return(calculate_global_loglik(trans_vals, x0_trans_names, seasons, obj_fun_list) + prior_like(trans_vals))
+  return(calculate_global_loglik(trans_vals, x0_trans_names, seasons, obj_fun_list) + prior_like(trans_vals, x0_trans_names))
   
 }
 
