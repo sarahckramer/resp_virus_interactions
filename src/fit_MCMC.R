@@ -8,9 +8,9 @@
 set.seed(749501349)
 
 # Load libraries:
-# library(MCMCpack)
+library(MCMCpack)
 library(fmcmc)
-# library(matrixcalc)
+library(matrixcalc)
 library(distr)
 
 # Get cluster environmental variables:
@@ -23,7 +23,7 @@ num_chains <- as.integer(Sys.getenv("CHAINS")); print(num_chains)
 burnin_val <- as.integer(Sys.getenv("BURNIN")); print(burnin_val)
 mcmc_val <- as.integer(Sys.getenv("MCMC")); print(mcmc_val)
 thin_val <- as.integer(Sys.getenv("THIN")); print(thin_val)
-# tune_val <- as.numeric(Sys.getenv("TUNE")); print(tune_val)
+tune_val <- as.numeric(Sys.getenv("TUNE")); print(tune_val)
 
 # # Set parameters for local run:
 # # jobid <- 1
@@ -37,7 +37,7 @@ thin_val <- as.integer(Sys.getenv("THIN")); print(thin_val)
 # burnin_val <- 1000
 # mcmc_val <- 10000
 # thin_val <- 10
-# # tune_val <- 1.0
+# tune_val <- 1.0
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -244,37 +244,37 @@ if (vir1 == 'flu_h1') {
 
 start_values <- start_values[, estpars]
 
-# Where start values are very close to 0, bump higher to allow better mixing:
-for (i in 1:ncol(start_values)) {
-  
-  if (abs(mean(unlist(start_values[, i]))) < 0.05 & !str_detect(names(start_values)[i], 'I')) {
-    
-    print(names(start_values)[i])
-    print(mean(unlist(start_values[, i])))
-    
-    start_values[, i] <- runif(n = nrow(start_values), min = 0.05, max = 0.10)
-    
-    if (str_detect(names(start_values)[i], 'R')) {
-      
-      current_season <- seasons[which(str_detect(names(start_values)[i], seasons))]
-      vals_temp <- start_values[, str_detect(names(start_values), current_season) &
-                                  str_detect(names(start_values), 'R') &
-                                  str_detect(names(start_values), '0')]
-      
-      while (any(rowSums(vals_temp) > 0.99)) {
-        
-        start_values[, i] <- runif(n = nrow(start_values), min = 0.05, max = 0.10)
-        vals_temp <- start_values[, str_detect(names(start_values), current_season) &
-                                    str_detect(names(start_values), 'R') &
-                                    str_detect(names(start_values), '0')]
-        
-      }
-      
-    }
-    
-  }
-  
-}
+# # Where start values are very close to 0, bump higher to allow better mixing:
+# for (i in 1:ncol(start_values)) {
+#   
+#   if (abs(mean(unlist(start_values[, i]))) < 0.05 & !str_detect(names(start_values)[i], 'I')) {
+#     
+#     print(names(start_values)[i])
+#     print(mean(unlist(start_values[, i])))
+#     
+#     start_values[, i] <- runif(n = nrow(start_values), min = 0.05, max = 0.10)
+#     
+#     if (str_detect(names(start_values)[i], 'R')) {
+#       
+#       current_season <- seasons[which(str_detect(names(start_values)[i], seasons))]
+#       vals_temp <- start_values[, str_detect(names(start_values), current_season) &
+#                                   str_detect(names(start_values), 'R') &
+#                                   str_detect(names(start_values), '0')]
+#       
+#       while (any(rowSums(vals_temp) > 0.99)) {
+#         
+#         start_values[, i] <- runif(n = nrow(start_values), min = 0.05, max = 0.10)
+#         vals_temp <- start_values[, str_detect(names(start_values), current_season) &
+#                                     str_detect(names(start_values), 'R') &
+#                                     str_detect(names(start_values), '0')]
+#         
+#       }
+#       
+#     }
+#     
+#   }
+#   
+# }
 
 print(summary(start_values))
 print(estpars)
@@ -331,188 +331,189 @@ posterior_like <- function(trans_vals, x0_trans_names = x0_trans_names, seasons 
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# # Calculate variance-covariance matrix for MCMC proposals
-# 
-# # Get maximum likelihood estimate:
-# mle <- start_values[1, ]
-# expect_true(all(names(mle) == names(start_values)))
-# 
-# # Get estimate of Hessian matrix:
-# mle_trans <- transform_params(as.numeric(mle), po_list[[1]], seasons, estpars, shared_estpars)
-# mle_orig <- back_transform_params(mle_trans, po_list[[1]], seasons, estpars, shared_estpars)
-# expect_equal(as.numeric(mle), unname(mle_orig))
-# rm(mle_orig)
-# 
-# mle_trans_names <- names(mle_trans)
-# print(calculate_global_loglik(mle_trans, mle_trans_names, seasons, obj_fun_list))
-# 
-# fit_w_hessian <- optim(par = mle_trans,
-#                        fn = calculate_global_loglik,
-#                        x0_trans_names = mle_trans_names,
-#                        seasons = seasons,
-#                        obj_fun_list = obj_fun_list,
-#                        method = 'BFGS',
-#                        hessian = TRUE,
-#                        control = list(maxit = 0))
-# H_mat <- fit_w_hessian$hessian
-# is.negative.definite(H_mat)
-# 
-# # # Try different methods for calculating Hessian:
-# # library(numDeriv)
-# # H_mat2 <- numDeriv::hessian(func = calculate_global_loglik,
-# #                             x0_trans_names = mle_trans_names,
-# #                             seasons = seasons,
-# #                             obj_fun_list = obj_fun_list,
-# #                             x = mle_trans,
-# #                             method = 'Richardson')
-# # is.negative.definite(H_mat2)
-# 
-# # Get variance-covariance matrix:
-# T_mat <- diag(tune_val, nrow = nrow(H_mat))
-# 
-# hess.new <- H_mat
-# CC <- NULL
-# if (max(diag(hess.new) == 0)) {
-#   for (i in 1:nrow(hess.new)) {
-#     if (hess.new[i, i] == 0) {
-#       hess.new[i, i] <- -1e-06
-#     }
-#   }
-# }
-# while (is.null(CC)) {
-#   hess.flag <- 1
-#   hess.new <- hess.new - diag(diag(0.01 * abs(H_mat)))
-#   try(CC <- chol(-1 * hess.new), silent = TRUE)
-# }
-# rm(i)
-# V_mat <- T_mat %*% solve(-1 * hess.new) %*% T_mat
-# 
-# # V = T (-1 x H)^(-1) T
-# # T is the diagonal positive definite matrix formed from "tune"
-# # H is the approximate Hessian of "fun" evaluated at its mode
+# Calculate variance-covariance matrix for MCMC proposals
+
+# Get maximum likelihood estimate:
+mle <- start_values[1, ]
+expect_true(all(names(mle) == names(start_values)))
+
+# Get estimate of Hessian matrix:
+mle_trans <- transform_params(as.numeric(mle), po_list[[1]], seasons, estpars, shared_estpars)
+mle_orig <- back_transform_params(mle_trans, po_list[[1]], seasons, estpars, shared_estpars)
+expect_equal(as.numeric(mle), unname(mle_orig))
+rm(mle_orig)
+
+mle_trans_names <- names(mle_trans)
+print(calculate_global_loglik(mle_trans, mle_trans_names, seasons, obj_fun_list))
+
+fit_w_hessian <- optim(par = mle_trans,
+                       fn = calculate_global_loglik,
+                       x0_trans_names = mle_trans_names,
+                       seasons = seasons,
+                       obj_fun_list = obj_fun_list,
+                       method = 'BFGS',
+                       hessian = TRUE,
+                       control = list(maxit = 0))
+H_mat <- fit_w_hessian$hessian
+is.negative.definite(H_mat)
+
+# # Try different methods for calculating Hessian:
+# library(numDeriv)
+# H_mat2 <- numDeriv::hessian(func = calculate_global_loglik,
+#                             x0_trans_names = mle_trans_names,
+#                             seasons = seasons,
+#                             obj_fun_list = obj_fun_list,
+#                             x = mle_trans,
+#                             method = 'Richardson')
+# is.negative.definite(H_mat2)
+
+# Get variance-covariance matrix:
+hess.new <- H_mat
+CC <- NULL
+if (max(diag(hess.new) == 0)) {
+  for (i in 1:nrow(hess.new)) {
+    if (hess.new[i, i] == 0) {
+      hess.new[i, i] <- -1e-06
+    }
+  }
+}
+while (is.null(CC)) {
+  hess.flag <- 1
+  hess.new <- hess.new - diag(diag(0.01 * abs(H_mat)))
+  try(CC <- chol(-1 * hess.new), silent = TRUE)
+}
+rm(i)
+is.negative.definite(hess.new)
+
+T_mat <- diag(tune_val, nrow = nrow(H_mat))
+V_mat <- T_mat %*% solve(-1 * hess.new) %*% T_mat
+
+# V = T (-1 x H)^(-1) T
+# T is the diagonal positive definite matrix formed from "tune"
+# H is the approximate Hessian of "fun" evaluated at its mode
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# # Fit using MCMC
+# Fit using MCMC
+
+# Loop through start sets and fit:
+for (i in 1:num_chains) {
+
+  print(paste0('Estimation: ', i))
+
+  # Get start values:
+  x0 <- as.numeric(start_values[i, ])
+  x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
+  x0_trans_names <- names(x0_trans)
+
+  # Check that parameter transformations correct:
+  x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
+  expect_equal(x0, unname(x0_orig))
+  rm(x0_orig)
+
+  # Calculate initial log-likelihood:
+  print(calculate_global_loglik(x0_trans, x0_trans_names, seasons, obj_fun_list))
+  
+  # Fit models:
+  tic <- Sys.time()
+  m <- MCMCmetrop1R(fun = posterior_like,
+                    x0_trans_names = x0_trans_names,
+                    seasons = seasons,
+                    obj_fun_list = obj_fun_list,
+                    theta.init = x0_trans,
+                    burnin = burnin_val,
+                    mcmc = mcmc_val,
+                    thin = thin_val,
+                    tune = tune_val,
+                    verbose = round(mcmc_val / 4),
+                    logfun = TRUE,
+                    # force.samp = TRUE,
+                    # optim.method = 'BFGS',
+                    # optim.control = list(maxit = 0),
+                    V = V_mat)
+  toc <- Sys.time()
+  etime <- toc - tic
+  units(etime) <- 'hours'
+  print(etime)
+
+  # Save results to file:
+  saveRDS(m, file = sprintf('results/res_mcmc_%s_%s_%d_%d_%d_%d_%f.rds',
+                            vir1,
+                            int_eff,
+                            i,
+                            mcmc_val,
+                            burnin_val,
+                            thin_val,
+                            tune_val))
+
+  # Print results:
+  print(calculate_global_loglik(m[nrow(m), ], x0_trans_names, seasons, obj_fun_list))
+  print(back_transform_params(colMeans(m), po_list[[1]], seasons, estpars, shared_estpars))
+
+}
+rm(i)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# # Fit using fmcmc package
 # 
-# # Loop through start sets and fit:
-# for (i in seq_along(sub_start)) {
-#   
-#   print(paste0('Estimation: ', sub_start[i]))
-#   
-#   # Get start values:
-#   x0 <- as.numeric(start_values[sub_start[i], ])
+# # Set up matrix of initial values:
+# init_trans <- matrix(NA, nrow = num_chains, ncol = length(estpars))
+# 
+# for (i in 1:num_chains) {
+#   x0 <- as.numeric(start_values[i, ])
 #   x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
 #   x0_trans_names <- names(x0_trans)
 #   
-#   # Check that parameter transformations correct:
 #   x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
 #   expect_equal(x0, unname(x0_orig))
 #   rm(x0_orig)
 #   
-#   # Calculate initial log-likelihood:
 #   print(calculate_global_loglik(x0_trans, x0_trans_names, seasons, obj_fun_list))
 #   
-#   # Fit models:
-#   tic <- Sys.time()
-#   m <- MCMCmetrop1R(fun = posterior_like,
-#                     x0_trans_names = x0_trans_names,
-#                     seasons = seasons,
-#                     obj_fun_list = obj_fun_list,
-#                     theta.init = x0_trans,
-#                     burnin = burnin_val,
-#                     mcmc = mcmc_val,
-#                     thin = thin_val,
-#                     tune = tune_val,
-#                     verbose = round(mcmc_val / 4),
-#                     logfun = TRUE,
-#                     # force.samp = TRUE,
-#                     # optim.method = 'BFGS',
-#                     # optim.control = list(maxit = 0),
-#                     V = V_mat)
-#   toc <- Sys.time()
-#   etime <- toc - tic
-#   units(etime) <- 'hours'
-#   print(etime)
-#   
-#   # Save results to file:
-#   saveRDS(m, file = sprintf('results/res_mcmc_%s_%s_%d_%d_%d_%d_%d.rds',
-#                             vir1,
-#                             int_eff,
-#                             jobid,
-#                             sub_start[i],
-#                             mcmc_val,
-#                             thin_val,
-#                             tune_val))
-#   
-#   # Print results:
-#   print(calculate_global_loglik(m[mcmc_val, ], x0_trans_names, seasons, obj_fun_list))
-#   print(back_transform_params(colMeans(m), po_list[[1]], seasons, estpars, shared_estpars))
-#   
+#   init_trans[i, ] <- x0_trans
 # }
 # rm(i)
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# Fit using fmcmc package
-
-# Set up matrix of initial values:
-init_trans <- matrix(NA, nrow = num_chains, ncol = length(estpars))
-
-for (i in 1:num_chains) {
-  x0 <- as.numeric(start_values[i, ])
-  x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
-  x0_trans_names <- names(x0_trans)
-  
-  x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
-  expect_equal(x0, unname(x0_orig))
-  rm(x0_orig)
-  
-  print(calculate_global_loglik(x0_trans, x0_trans_names, seasons, obj_fun_list))
-  
-  init_trans[i, ] <- x0_trans
-}
-rm(i)
-
-# Add column names:
-colnames(init_trans) <- x0_trans_names
-
-# Fit model:
-tic <- Sys.time()
-m <- MCMC(initial = init_trans,
-          fun = posterior_like,
-          # fun = calculate_global_loglik,
-          nsteps = mcmc_val + burnin_val,
-          x0_trans_names = x0_trans_names,
-          seasons = seasons,
-          obj_fun_list = obj_fun_list,
-          nchains = num_chains,
-          burnin = burnin_val,
-          thin = thin_val,
-          # kernel = kernel_normal(scale = 0.01),
-          kernel = kernel_ram(),
-          multicore = FALSE,
-          conv_checker = convergence_gelman(10000))
-toc <- Sys.time()
-etime <- toc - tic
-units(etime) <- 'hours'
-print(etime)
-
-# Save results to file:
-saveRDS(m, file = sprintf('results/res_mcmc_%s_%s_%d_%d_%d.rds',
-                          vir1,
-                          int_eff,
-                          mcmc_val,
-                          burnin_val,
-                          thin_val))
-
-# Print results:
-for (i in 1:num_chains) {
-  print(calculate_global_loglik(m[[i]][nrow(m[[i]]), ], x0_trans_names, seasons, obj_fun_list))
-}
-for (i in 1:num_chains) {
-  print(back_transform_params(colMeans(m[[i]]), po_list[[1]], seasons, estpars, shared_estpars))
-}
-rm(i)
+# 
+# # Add column names:
+# colnames(init_trans) <- x0_trans_names
+# 
+# # Fit model:
+# tic <- Sys.time()
+# m <- MCMC(initial = init_trans,
+#           fun = posterior_like,
+#           # fun = calculate_global_loglik,
+#           nsteps = mcmc_val + burnin_val,
+#           x0_trans_names = x0_trans_names,
+#           seasons = seasons,
+#           obj_fun_list = obj_fun_list,
+#           nchains = num_chains,
+#           burnin = burnin_val,
+#           thin = thin_val,
+#           # kernel = kernel_normal(scale = 0.01),
+#           kernel = kernel_ram(),
+#           multicore = FALSE,
+#           conv_checker = convergence_gelman(10000))
+# toc <- Sys.time()
+# etime <- toc - tic
+# units(etime) <- 'hours'
+# print(etime)
+# 
+# # Save results to file:
+# saveRDS(m, file = sprintf('results/res_mcmc_%s_%s_%d_%d_%d.rds',
+#                           vir1,
+#                           int_eff,
+#                           mcmc_val,
+#                           burnin_val,
+#                           thin_val))
+# 
+# # Print results:
+# for (i in 1:num_chains) {
+#   print(calculate_global_loglik(m[[i]][nrow(m[[i]]), ], x0_trans_names, seasons, obj_fun_list))
+# }
+# for (i in 1:num_chains) {
+#   print(back_transform_params(colMeans(m[[i]]), po_list[[1]], seasons, estpars, shared_estpars))
+# }
+# rm(i)
 
 print('Done!')
