@@ -285,41 +285,41 @@ obj_fun_list <- lapply(po_list, function(ix) {
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Set priors on interaction parameters
-
-# Function for PDF of log(exp) distribution:
-log_exp <- function(x, lambda = 5) {
-  lambda * exp(x - lambda * exp(x))
-}
-
-dist_log_exp <- AbscontDistribution(d = log_exp, withStand = TRUE)
-# rdist_log_exp <- r(dist_log_exp)
-ddist_log_exp <- d(dist_log_exp)
-
-# Get prior likelihood:
-prior_like <- function(trans_vals, x0_trans_names = x0_trans_names) {
-  names(trans_vals) <- x0_trans_names
-  
-  str1 <- trans_vals['theta_lambda1']
-  str2 <- trans_vals['theta_lambda2']
-  dur1 <- trans_vals['delta1']
-  dur2 <- trans_vals['d2']
-  
-  prior_thetalambda1 <- dnorm(str1, mean = 0, sd = 1.6, log = TRUE)
-  prior_thetalambda2 <- dnorm(str2, mean = 0, sd = 1.6, log = TRUE)
-  prior_delta1 <- ddist_log_exp(dur1) %>% log()
-  prior_d2 <- dnorm(dur2, mean = 0, sd = 1.5, log = TRUE)
-  
-  ll <- prior_thetalambda1 + prior_thetalambda2 + prior_delta1 + prior_d2
-  return(unname(ll))
-}
-
-# Get posterior likelihood:
-posterior_like <- function(trans_vals, x0_trans_names = x0_trans_names, seasons = seasons, obj_fun_list = obj_fun_list) {
-  
-  return(calculate_global_loglik(trans_vals, x0_trans_names, seasons, obj_fun_list) + prior_like(trans_vals, x0_trans_names))
-  
-}
+# # Set priors on interaction parameters
+# 
+# # Function for PDF of log(exp) distribution:
+# log_exp <- function(x, lambda = 5) {
+#   lambda * exp(x - lambda * exp(x))
+# }
+# 
+# dist_log_exp <- AbscontDistribution(d = log_exp, withStand = TRUE)
+# # rdist_log_exp <- r(dist_log_exp)
+# ddist_log_exp <- d(dist_log_exp)
+# 
+# # Get prior likelihood:
+# prior_like <- function(trans_vals, x0_trans_names = x0_trans_names) {
+#   names(trans_vals) <- x0_trans_names
+#   
+#   str1 <- trans_vals['theta_lambda1']
+#   str2 <- trans_vals['theta_lambda2']
+#   dur1 <- trans_vals['delta1']
+#   dur2 <- trans_vals['d2']
+#   
+#   prior_thetalambda1 <- dnorm(str1, mean = 0, sd = 1.6, log = TRUE)
+#   prior_thetalambda2 <- dnorm(str2, mean = 0, sd = 1.6, log = TRUE)
+#   prior_delta1 <- ddist_log_exp(dur1) %>% log()
+#   prior_d2 <- dnorm(dur2, mean = 0, sd = 1.5, log = TRUE)
+#   
+#   ll <- prior_thetalambda1 + prior_thetalambda2 + prior_delta1 + prior_d2
+#   return(unname(ll))
+# }
+# 
+# # Get posterior likelihood:
+# posterior_like <- function(trans_vals, x0_trans_names = x0_trans_names, seasons = seasons, obj_fun_list = obj_fun_list) {
+#   
+#   return(calculate_global_loglik(trans_vals, x0_trans_names, seasons, obj_fun_list) + prior_like(trans_vals, x0_trans_names))
+#   
+# }
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -408,7 +408,7 @@ for (i in 1:num_chains) {
   
   # Fit models:
   tic <- Sys.time()
-  m <- MCMCmetrop1R(fun = posterior_like,
+  m <- MCMCmetrop1R(fun = calculate_global_loglik,
                     x0_trans_names = x0_trans_names,
                     seasons = seasons,
                     obj_fun_list = obj_fun_list,
@@ -462,6 +462,7 @@ rm(i)
 #   rm(x0_orig)
 #   
 #   print(calculate_global_loglik(x0_trans, x0_trans_names, seasons, obj_fun_list))
+#   # print(posterior_like(x0_trans, x0_trans_names, seasons, obj_fun_list))
 #   
 #   init_trans[i, ] <- x0_trans
 # }
@@ -473,8 +474,7 @@ rm(i)
 # # Fit model:
 # tic <- Sys.time()
 # m <- MCMC(initial = init_trans,
-#           fun = posterior_like,
-#           # fun = calculate_global_loglik,
+#           fun = calculate_global_loglik,
 #           nsteps = mcmc_val + burnin_val,
 #           x0_trans_names = x0_trans_names,
 #           seasons = seasons,
