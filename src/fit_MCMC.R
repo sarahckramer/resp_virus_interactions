@@ -43,7 +43,6 @@ tune_val <- as.numeric(Sys.getenv("TUNE")); print(tune_val)
 debug_bool <- FALSE
 vir2 <- 'rsv'
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
-time_max <- 14.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
@@ -283,13 +282,6 @@ print(estpars)
 obj_fun_list <- lapply(po_list, function(ix) {
   create_obj_fxn(ix, estpars = true_estpars)
 }) # equivalent to Libbie's GlobalOfun fxn
-
-# # Set maximal execution time for each estimation:
-# nmins_exec <- time_max * 60 / (sobol_size / no_jobs)
-# print(sprintf("Max estimation time=%.1f min", nmins_exec))
-# 
-# # Get unique identifiers:
-# sub_start <- (1 + (jobid - 1) * sobol_size / no_jobs) : (jobid * sobol_size / no_jobs)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
