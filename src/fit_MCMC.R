@@ -495,7 +495,7 @@ rm(i)
 # 
 # # Fit model:
 # tic <- Sys.time()
-# m <- MCMC(initial = init_trans,
+# m <- MCMC(initial = init_trans[1, ],
 #           fun = calculate_global_loglik,
 #           nsteps = mcmc_val + burnin_val,
 #           x0_trans_names = x0_trans_names,
