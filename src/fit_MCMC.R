@@ -248,59 +248,59 @@ obj_fun_list <- lapply(po_list, function(ix) {
   create_obj_fxn(ix, estpars = true_estpars)
 }) # equivalent to Libbie's GlobalOfun fxn
 
-# Where start values are very low, set to higher value to allow better mixing:
-for (i in 1:nrow(start_values)) {
-  
-  x0 <- as.numeric(start_values[i, ])
-  x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
-  x0_trans_names <- names(x0_trans)
-  
-  x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
-  expect_equal(x0, unname(x0_orig))
-  rm(x0_orig)
-  
-  start_values[i, ][abs(x0) < 0.005 &
-                      (str_detect(x0_trans_names, 'theta') |
-                         (str_detect(x0_trans_names, 'R') & str_detect(x0_trans_names, '0')))] <- 0.005
-  
-  # Check that this does not result in total initial conditions > 1:
-  for (season in seasons) {
-    
-    vals_temp <- start_values[i, str_detect(names(start_values), season) &
-                                str_detect(names(start_values), '0')]
-    
-    if (sum(vals_temp) > 0.99) {
-      print(paste0('Initial conditions in season ', season, ' greater than 1!'))
-    }
-    
-  }
-  
-  # # Determine a good cutoff value where likelihoods begin to change:
-  # par(mfrow = c(3, 2))
-  # 
-  # low_params <- names(start_values[i, ][abs(x0) < 0.005 &
-  #                                         (str_detect(x0_trans_names, 'theta') |
-  #                                            (str_detect(x0_trans_names, 'R') & str_detect(x0_trans_names, '0')))])
-  # test_vals <- c(1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, seq(0.01, 0.05, by = 0.01))
-  # 
-  # for (param in low_params) {
-  #   
-  #   ll <- c()
-  #   
-  #   for (val in test_vals) {
-  #     x0_temp <- x0
-  #     x0_temp[which(x0_trans_names == param)] <- val
-  #     
-  #     x0_trans_temp <- transform_params(x0_temp, po_list[[1]], seasons, estpars, shared_estpars)
-  #     
-  #     ll <- c(ll, calculate_global_loglik(x0_trans_temp, x0_trans_names, seasons, obj_fun_list))
-  #   }
-  #   
-  #   plot(test_vals, ll, type = 'b', pch = 20, main = param)
-  #   
-  # }
-  
-}
+# # Where start values are very low, set to higher value to allow better mixing:
+# for (i in 1:nrow(start_values)) {
+#   
+#   x0 <- as.numeric(start_values[i, ])
+#   x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
+#   x0_trans_names <- names(x0_trans)
+#   
+#   x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
+#   expect_equal(x0, unname(x0_orig))
+#   rm(x0_orig)
+#   
+#   start_values[i, ][abs(x0) < 0.005 &
+#                       (str_detect(x0_trans_names, 'theta') |
+#                          (str_detect(x0_trans_names, 'R') & str_detect(x0_trans_names, '0')))] <- 0.005
+#   
+#   # Check that this does not result in total initial conditions > 1:
+#   for (season in seasons) {
+#     
+#     vals_temp <- start_values[i, str_detect(names(start_values), season) &
+#                                 str_detect(names(start_values), '0')]
+#     
+#     if (sum(vals_temp) > 0.99) {
+#       print(paste0('Initial conditions in season ', season, ' greater than 1!'))
+#     }
+#     
+#   }
+#   
+#   # # Determine a good cutoff value where likelihoods begin to change:
+#   # par(mfrow = c(3, 2))
+#   # 
+#   # low_params <- names(start_values[i, ][abs(x0) < 0.005 &
+#   #                                         (str_detect(x0_trans_names, 'theta') |
+#   #                                            (str_detect(x0_trans_names, 'R') & str_detect(x0_trans_names, '0')))])
+#   # test_vals <- c(1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 5e-6, 1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, seq(0.01, 0.05, by = 0.01))
+#   # 
+#   # for (param in low_params) {
+#   #   
+#   #   ll <- c()
+#   #   
+#   #   for (val in test_vals) {
+#   #     x0_temp <- x0
+#   #     x0_temp[which(x0_trans_names == param)] <- val
+#   #     
+#   #     x0_trans_temp <- transform_params(x0_temp, po_list[[1]], seasons, estpars, shared_estpars)
+#   #     
+#   #     ll <- c(ll, calculate_global_loglik(x0_trans_temp, x0_trans_names, seasons, obj_fun_list))
+#   #   }
+#   #   
+#   #   plot(test_vals, ll, type = 'b', pch = 20, main = param)
+#   #   
+#   # }
+#   
+# }
 
 print(summary(start_values))
 print(estpars)
