@@ -399,7 +399,7 @@ print(estpars)
 # rm(i)
 # is.negative.definite(hess.new)
 # 
-# T_mat <- diag(tune_val, nrow = nrow(H_mat))
+# T_mat <- diag(1.0, nrow = nrow(H_mat))
 # V_mat <- T_mat %*% solve(-1 * hess.new) %*% T_mat
 # 
 # # V = T (-1 x H)^(-1) T
