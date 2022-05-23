@@ -219,21 +219,13 @@ po_list <- po_list[lapply(po_list, length) > 0]
 
 # Load results
 
-# Read in MCMCpack results:
-res_mcmc1 = res_mcmc2 = res_mcmc3 = vector('list', length = 4)
-for (i in 1:length(res_mcmc1)) {
-  res_mcmc1[[i]] <- read_rds(paste0('results/mcmc/res_mcmc_flu_h1_susc_350000_50000_10_0.050000/res_mcmc_flu_h1_susc_', i, '_350000_50000_10_0.050000.rds'))
-  res_mcmc2[[i]] <- read_rds(paste0('results/mcmc/res_mcmc_flu_h1_susc_500000_100000_10_0.02/res_mcmc_flu_h1_susc_', i, '_500000_100000_10_0.020000.rds'))
-  res_mcmc3[[i]] <- read_rds(paste0('results/mcmc/res_mcmc_flu_h1_susc_500000_100000_10_0.5/res_mcmc_flu_h1_susc_', i, '_500000_100000_10_0.500000.rds'))
-}
-
-res_mcmc1 <- as.mcmc.list(res_mcmc1)
-res_mcmc2 <- as.mcmc.list(res_mcmc2)
-res_mcmc3 <- as.mcmc.list(res_mcmc3)
-
 # Read in fmcmc results:
 res_fmcmc <- read_rds('results/mcmc/res_mcmc_flu_h1_susc_350000_100000_10.rds')
 res_fmcmc_old <- read_rds('results/mcmc/res_mcmc_flu_h1_susc_300000_10000_10.rds')
+res_fmcmc_mle <- read_rds('results/mcmc/res_mcmc_flu_h1_susc_400000_50000_10.rds')
+res_fmcmc_mle_005 <- read_rds('results/mcmc/res_mcmc_flu_h1_susc_400000_50000_10_SET005.rds')
+res_fmcmc_random <- read_rds('results/mcmc/res_mcmc_flu_h1_susc_400000_50000_10_RANDOM.rds')
+res_fmcmc_random2 <- read_rds('results/mcmc/res_mcmc_flu_h1_susc_400000_50000_10_RANDOM2.rds')
 
 # Get names of estimated parameters:
 estpars <- colnames(res_fmcmc[[1]])
@@ -251,7 +243,7 @@ obj_fun_list <- lapply(po_list, function(ix) {
 # Assess fit
 
 # Get list of all results:
-res_list <- list(res_mcmc1, res_mcmc2, res_mcmc3, res_fmcmc, res_fmcmc_old)
+res_list <- list(res_fmcmc, res_fmcmc_old, res_fmcmc_mle, res_fmcmc_mle_005, res_fmcmc_random, res_fmcmc_random2)
 
 # Visualize log-likelihood over time for each chain:
 logliks_fxn_list = logliks_post_list = vector('list', length = length(res_list))
@@ -294,6 +286,7 @@ rm(i)
 # Un-transform fit parameter values:
 res_list_untransformed <- vector('list', length = length(res_list))
 for (i in 1:length(res_list)) {
+  print(i)
   
   res_list_untransformed_temp <- res_list[[i]]
   
@@ -349,46 +342,53 @@ rm(i)
 # Assess convergence
 
 # Plot trace plots of transformed parameter values:
-pdf('results/mcmc/traceplots_flu_h1_susc_mcmc1.pdf', width = 10, height = 10)
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc.pdf', width = 10, height = 10)
 plot(res_list[[1]])
 dev.off()
 
-pdf('results/mcmc/traceplots_flu_h1_susc_mcmc2.pdf', width = 10, height = 10)
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_old.pdf', width = 10, height = 10)
 plot(res_list[[2]])
 dev.off()
 
-pdf('results/mcmc/traceplots_flu_h1_susc_mcmc3.pdf', width = 10, height = 10)
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_allMLE.pdf', width = 10, height = 10)
 plot(res_list[[3]])
 dev.off()
 
-# pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc.pdf', width = 10, height = 10)
-# plot(res_list[[4]])
-# dev.off()
-# 
-# pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_old.pdf', width = 10, height = 10)
-# plot(res_list[[5]])
-# dev.off()
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_allMLE_SET005.pdf', width = 10, height = 10)
+plot(res_list[[4]])
+dev.off()
+
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_RANDOM.pdf', width = 10, height = 10)
+plot(res_list[[5]])
+dev.off()
+
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_RANDOM2.pdf', width = 10, height = 10)
+plot(res_list[[6]])
+dev.off()
 
 # Plot trace plots of un-transformed parameter values:
-
-pdf('results/mcmc/traceplots_flu_h1_susc_mcmc1_UNTRANSFORMED.pdf', width = 10, height = 10)
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_UNTRANSFORMED.pdf', width = 10, height = 10)
 plot(res_list_untransformed[[1]])
 dev.off()
 
-pdf('results/mcmc/traceplots_flu_h1_susc_mcmc2_UNTRANSFORMED.pdf', width = 10, height = 10)
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_old_UNTRANSFORMED.pdf', width = 10, height = 10)
 plot(res_list_untransformed[[2]])
 dev.off()
 
-pdf('results/mcmc/traceplots_flu_h1_susc_mcmc3_UNTRANSFORMED.pdf', width = 10, height = 10)
-plot(res_list_untransformed[[3]])
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_allMLE_UNTRANSFORMED.pdf', width = 10, height = 10)
+plot(res_list[[3]])
 dev.off()
 
-pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_UNTRANSFORMED.pdf', width = 10, height = 10)
-plot(res_list_untransformed[[4]])
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_allMLE_SET005_UNTRANSFORMED.pdf', width = 10, height = 10)
+plot(res_list[[4]])
 dev.off()
 
-pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_old_UNTRANSFORMED.pdf', width = 10, height = 10)
-plot(res_list_untransformed[[5]])
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_RANDOM_UNTRANSFORMED.pdf', width = 10, height = 10)
+plot(res_list[[5]])
+dev.off()
+
+pdf('results/mcmc/traceplots_flu_h1_susc_fmcmc_RANDOM2_UNTRANSFORMED.pdf', width = 10, height = 10)
+plot(res_list[[6]])
 dev.off()
 
 # Calculate Gelman-Rubin diagnostic to check for convergence:
