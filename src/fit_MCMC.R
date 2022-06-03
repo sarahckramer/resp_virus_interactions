@@ -495,6 +495,32 @@ rm(i)
 colnames(init_trans) <- x0_trans_names
 
 # Fit model:
+# scale_vector <- c(0.08, 0.08, 0.2, 0.2, 0.06, 0.06, 0.08, 0.08, 0.01, 0.01, 0.01, 0.01,
+#                   0.08, 0.2, 0.06, 0.1, 0.1, 0.08, 0.06,
+#                   0.06, 0.08, 0.06, 0.08, 0.08, 0.06, 0.2,
+#                   0.05, 0.08, 0.06, 0.08, 0.08, 0.2, 0.06,
+#                   0.2, 0.2, 0.08, 0.1, 0.08, 0.2, 0.06,
+#                   0.2, 0.2, 0.1, 0.1, 0.08, 0.08, 0.06)
+# scale_vector <- c(0.01, 0.01, 0.01, 0.01, 0.05, 0.05, 0.05, 0.05, 0.005, 0.005, 0.005, 0.005,
+#                   0.01, 0.01, 0.05, 0.01, 0.01, 0.05, 0.05,
+#                   0.01, 0.01, 0.06, 0.01, 0.01, 0.05, 0.01,
+#                   0.05, 0.01, 0.05, 0.01, 0.01, 0.01, 0.05,
+#                   0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.05,
+#                   0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.05)
+# scale_vector <- c(0.01, 0.01, 50, 50, 0.05, 0.05, 0.05, 0.05, 0.001, 0.001, 0.001, 0.001,
+#                   0.01, 0.01, 0.05, 0.01, 0.01, 0.05, 0.05,
+#                   0.01, 0.01, 0.06, 0.01, 0.01, 0.05, 0.01,
+#                   0.05, 0.01, 0.05, 0.01, 0.01, 0.01, 0.05,
+#                   0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.05,
+#                   0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.05)
+scale_vector <- c(0.01, 0.01, 20, 20, 0.05, 0.05, 0.05, 0.05, 0.001, 0.001, 0.001, 0.001,
+                  0.01, 0.01, 0.05, 0.01, 0.01, 0.05, 0.05,
+                  0.01, 0.01, 0.06, 0.01, 0.01, 0.05, 0.01,
+                  0.05, 0.01, 0.05, 0.01, 0.01, 0.01, 0.05,
+                  0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.05,
+                  0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.05)
+
+# Update one parameter at a time:
 tic <- Sys.time()
 m <- MCMC(initial = init_trans[1, ],
           fun = calculate_global_loglik,
@@ -505,8 +531,9 @@ m <- MCMC(initial = init_trans[1, ],
           nchains = num_chains,
           burnin = burnin_val,
           thin = thin_val,
-          # kernel = kernel_normal(scale = 0.01),
-          kernel = kernel_ram(),
+          kernel = kernel_normal_reflective(scale = scale_vector, scheme = 'random', lb = c(-1.797693e+308, -1.797693e+308, -100, -100, rep(-1.797693e+308, 43))),
+          # kernel = kernel_ram(lb = c(-1.797693e+308, -1.797693e+308, -100, -100, rep(-1.797693e+308, 43))),
+          # kernel = kernel_new,
           multicore = FALSE,
           conv_checker = convergence_gelman(10000))
 toc <- Sys.time()
@@ -578,14 +605,14 @@ saveRDS(m, file = sprintf('results/res_mcmc_%s_%s_%d_%d_%d.rds',
                           burnin_val,
                           thin_val))
 
-# Save resulting kernel:
-kernel_store <- get_kernel()
-saveRDS(kernel_store, file = sprintf('results/kernel_ram_%s_%s_%d_%d_%d.rds',
-                                     vir1,
-                                     int_eff,
-                                     mcmc_val,
-                                     burnin_val,
-                                     thin_val))
+# # Save resulting kernel:
+# kernel_store <- get_kernel()
+# saveRDS(kernel_store, file = sprintf('results/kernel_ram_%s_%s_%d_%d_%d.rds',
+#                                      vir1,
+#                                      int_eff,
+#                                      mcmc_val,
+#                                      burnin_val,
+#                                      thin_val))
 
 # Print results:
 for (i in 1:num_chains) {
