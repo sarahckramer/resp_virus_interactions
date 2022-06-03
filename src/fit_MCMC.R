@@ -411,13 +411,23 @@ print(estpars)
 
 # # Fit using MCMC
 # 
+# # Get covariance matrix from previous runs of fmcmc:
+# kernel_new <- read_rds('results/mcmc/kernel_ram_flu_h1_susc_400000_50000_10.rds')
+# # kernel_new <- read_rds('results/mcmc/kernel_ram_flu_h1_susc_400000_50000_10_SET005.rds')
+# 
+# diag(kernel_new[[1]]$Sigma)[c(3:4, 22, 32, 39, 42, 45)] <- 10 * diag(kernel_new[[1]]$Sigma)[c(3:4, 22, 32, 39, 42, 45)]
+# diag(kernel_new[[2]]$Sigma)[c(3:4, 22, 32, 39, 42, 45)] <- 10 * diag(kernel_new[[2]]$Sigma)[c(3:4, 22, 32, 39, 42, 45)]
+# diag(kernel_new[[3]]$Sigma)[c(3:4, 22, 32, 39, 42, 45)] <- 10 * diag(kernel_new[[3]]$Sigma)[c(3:4, 22, 32, 39, 42, 45)]
+# diag(kernel_new[[4]]$Sigma)[c(3:4, 22, 32, 39, 42, 45)] <- 10 * diag(kernel_new[[4]]$Sigma)[c(3:4, 22, 32, 39, 42, 45)]
+# 
 # # Loop through start sets and fit:
 # for (i in 1:num_chains) {
 # 
 #   print(paste0('Estimation: ', i))
 # 
 #   # Get start values:
-#   x0 <- as.numeric(start_values[i, ])
+#   x0 <- as.numeric(start_values[1, ])
+#   # x0 <- as.numeric(start_values[i, ])
 #   x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
 #   x0_trans_names <- names(x0_trans)
 # 
@@ -445,7 +455,8 @@ print(estpars)
 #                     # force.samp = TRUE,
 #                     # optim.method = 'BFGS',
 #                     # optim.control = list(maxit = 0),
-#                     V = V_mat)
+#                     V = V_mat)#,
+#   #V = kernel_new[[i]]$Sigma)
 #   toc <- Sys.time()
 #   etime <- toc - tic
 #   units(etime) <- 'hours'
