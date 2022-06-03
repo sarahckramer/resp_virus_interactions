@@ -514,6 +514,62 @@ etime <- toc - tic
 units(etime) <- 'hours'
 print(etime)
 
+# # Initial run to get first kernel estimates:
+# tic <- Sys.time()
+# m <- MCMC(initial = init_trans[1, ],
+#           fun = calculate_global_loglik,
+#           nsteps = 11000,
+#           x0_trans_names = x0_trans_names,
+#           seasons = seasons,
+#           obj_fun_list = obj_fun_list,
+#           nchains = num_chains,
+#           burnin = 1000,
+#           thin = thin_val,
+#           # kernel = kernel_normal(scale = scale_vector, scheme = 'random', fixed = c(rep(FALSE, 12), rep(TRUE, 35))),
+#           kernel = kernel_ram(lb = c(-1.797693e+308, -1.797693e+308, -100, -100, rep(-1.797693e+308, 43))),
+#           # kernel = kernel_new,
+#           multicore = FALSE,
+#           conv_checker = convergence_gelman(10000))
+# toc <- Sys.time()
+# etime <- toc - tic
+# units(etime) <- 'hours'
+# print(etime)
+# write_rds(m, 'results/m_TEMP.rds')
+# 
+# # Update kernels for variables that aren't mixing well:
+# kernel_temp <- get_kernel()
+# diag(kernel_temp[[1]]$Sigma)[c(3:4, 32, 39, 45)] <- c(5, 5, 1, 1, 1)
+# diag(kernel_temp[[2]]$Sigma)[c(3:4, 32, 39, 45)] <- c(5, 5, 1, 1, 1)
+# diag(kernel_temp[[3]]$Sigma)[c(3:4, 32, 39, 45)] <- c(5, 5, 1, 1, 1)
+# diag(kernel_temp[[4]]$Sigma)[c(3:4, 32, 39, 45)] <- c(5, 5, 1, 1, 1)
+# write_rds(kernel_temp, 'results/kernel_TEMP.rds')
+
+# # Continue running:
+# m <- read_rds('results/m_TEMP.rds')
+# kernel_temp <- read_rds('results/kernel_TEMP.rds')
+# 
+# print(diag(kernel_temp[[1]]$Sigma))
+#
+# tic <- Sys.time()
+# m <- MCMC(initial = m,#init_trans[1, ],
+#           fun = calculate_global_loglik,
+#           nsteps = mcmc_val + burnin_val,
+#           x0_trans_names = x0_trans_names,
+#           seasons = seasons,
+#           obj_fun_list = obj_fun_list,
+#           nchains = num_chains,
+#           burnin = burnin_val,
+#           thin = thin_val,
+#           # kernel = kernel_normal(scale = scale_vector, scheme = 'random', fixed = c(rep(FALSE, 12), rep(TRUE, 35))),
+#           # kernel = kernel_ram(lb = c(-1.797693e+308, -1.797693e+308, -100, -100, rep(-1.797693e+308, 43))),
+#           kernel = kernel_temp,
+#           multicore = FALSE,
+#           conv_checker = convergence_gelman(10000))
+# toc <- Sys.time()
+# etime <- toc - tic
+# units(etime) <- 'hours'
+# print(etime)
+
 # Save results to file:
 saveRDS(m, file = sprintf('results/res_mcmc_%s_%s_%d_%d_%d.rds',
                           vir1,
