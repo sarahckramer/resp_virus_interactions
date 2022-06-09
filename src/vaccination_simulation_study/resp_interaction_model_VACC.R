@@ -102,6 +102,18 @@ if (nrow(dat_pomp) > 0) {
                                         t0_eff = 0,
                                         debug_bool = debug_bool)
   
+  # If parameter information available, update model parameters:
+  if (exists('mle')) {
+    
+    model_params <- mle %>%
+      dplyr::select(rho1:eta_ah2, contains(yr)) %>%
+      rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
+      unlist()
+    
+    resp_mod <- set_model_parameters(resp_mod, model_params, vaccinate = FALSE)
+    
+  }
+  
   # Check transformations:
   check_transformations(resp_mod)
   
@@ -129,8 +141,10 @@ if (nrow(dat_pomp) > 0) {
   if (debug_bool) print(ll)
   
   # Check that dynamics are independent when there is no interaction:
-  p4 <- check_independent_dynamics(resp_mod)
-  if (debug_bool) print(p4)
+  if (!exists('mle')) {
+    p4 <- check_independent_dynamics(resp_mod)
+    if (debug_bool) print(p4)
+  }
   
   # Check that all vaccination compartments are always 0:
   sim_determ <- trajectory(object = resp_mod, format = 'data.frame') %>%
@@ -144,8 +158,17 @@ if (nrow(dat_pomp) > 0) {
   # First, vaccinate at the beginning of the season:
   t_vacc <- 0
   
-  model_params <- c(0.1, 0.6, 0.2)
-  names(model_params) <- c('theta_lambda_vacc', 'vacc_eff', 'p_vacc')
+  if (exists('model_params')) {
+    
+    model_params <- c(model_params, 0.1, 0.6, 0.2)
+    names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'vacc_eff', 'p_vacc')
+    
+  } else {
+    
+    model_params <- c(0.1, 0.6, 0.2)
+    names(model_params) <- c('theta_lambda_vacc', 'vacc_eff', 'p_vacc')
+    
+  }
   
   sim_determ <- run_simulation_with_vaccination(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   
@@ -188,17 +211,21 @@ if (nrow(dat_pomp) > 0) {
   # print(all(sim_determ %>% dplyr::select(X_SS:H2) >= 0))
   
   # Check that dynamics remain independent, so long as vaccine has no effect on either virus:
-  t_vacc <- 0
-  model_params <- parmat(params = coef(resp_mod), nrep = 3)
-  model_params['p_vacc', ] <- 0.2
-  model_params['I10', ] <- c(1e-5, 1e-5, 0)
-  model_params['I20', ] <- c(1e-5, 0, 1e-5)
-  p5 <- check_independent_dynamics_VACC(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
-  if (debug_bool) print(p5)
-  
-  t_vacc <- 10
-  p6 <- check_independent_dynamics_VACC(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
-  if (debug_bool) print(p6)
+  if (!exists('mle')) {
+    
+    t_vacc <- 0
+    model_params <- parmat(params = coef(resp_mod), nrep = 3)
+    model_params['p_vacc', ] <- 0.2
+    model_params['I10', ] <- c(1e-5, 1e-5, 0)
+    model_params['I20', ] <- c(1e-5, 0, 1e-5)
+    p5 <- check_independent_dynamics_VACC(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+    if (debug_bool) print(p5)
+    
+    t_vacc <- 10
+    p6 <- check_independent_dynamics_VACC(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+    if (debug_bool) print(p6)
+    
+  }
   
   # # Vaccine affects flu, but not RSV:
   # model_params['vacc_eff', ] <- 0.6
@@ -233,6 +260,8 @@ if (nrow(dat_pomp) > 0) {
   model_params <- parmat(params = coef(resp_mod), nrep = 2)
   model_params['vacc_eff', ] <- 0.6
   model_params['p_vacc', ] <- c(0.0, 0.2)
+  model_params['theta_lambda1', ] <- 1.0
+  model_params['theta_lambda2', ] <- 1.0
   
   p7 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   if (debug_bool) print(p7)
@@ -246,6 +275,8 @@ if (nrow(dat_pomp) > 0) {
   model_params <- parmat(params = coef(resp_mod), nrep = 2)
   model_params['theta_lambda_vacc', ] <- 0.1
   model_params['p_vacc', ] <- c(0.0, 0.2)
+  model_params['theta_lambda1', ] <- 1.0
+  model_params['theta_lambda2', ] <- 1.0
   
   p9 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   if (debug_bool) print(p9)
@@ -255,7 +286,11 @@ if (nrow(dat_pomp) > 0) {
   if (debug_bool) print(p10)
   
   # Clean up:
-  rm(sim_determ, p3, p4, p5, p6, p7, p8, p9, p10, ll, resp_mod, t_vacc, model_params)
+  rm(sim_determ, p3, p7, p8, p9, p10, ll, resp_mod, t_vacc, model_params)
+  
+  if (!exists('mle')) {
+    rm(p4, p5, p6)
+  }
   
 }
 
