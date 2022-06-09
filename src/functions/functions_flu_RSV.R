@@ -227,8 +227,8 @@ create_SITRxSITR_mod_VACC <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max 
                             't_vacc', # time (week) at which vaccination occurs
                             'I10', 'I20', # props. infectious at outbreak start
                             'R10', 'R20', 'R120', # props. recovered at outbreak start
-                            'xss0', 'xis0', 'xts0', 'xrs0', 'xsi0', 'xii0', 'xti0', 'xri0',
-                            'xst0', 'xit0', 'xtt0', 'xrt0', 'xsr0', 'xir0', 'xtr0', 'xrr0'), # NUMBER in each compartment at the time of vaccination
+                            'xss0', 'xis0', 'xts0', 'xrs0', 'xsi0', 'xii0', 'xti0', 'xri0',# NUMBER in each compartment at the time of vaccination
+                            'xst0', 'xit0', 'xtt0', 'xrt0', 'xsr0', 'xir0', 'xtr0', 'xrr0'), # Note: Set to <0 to base initial conditions off proportions instead
              params = c(Ri1 = 1.5, Ri2 = 2,
                         gamma1 = 7 / 5, gamma2 = 7 / 10, # or 4 for flu?
                         # delta = 7 / 5,
