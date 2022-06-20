@@ -30,7 +30,7 @@ CreateInteractionMod <- function(dat, nA = 5, debug_bool = F) {
     components_l[[nm]] <- Csnippet(text = components_l[[nm]])
   }
   
-  po <- pomp(data = data.frame(time = seq(from = 0.1, to = 52, by = 0.1), X = NA),
+  po <- pomp(data = data.frame(time = seq(from = 1, to = 52, by = 1), X = NA),
              times = "time",
              t0 = 0,
              covar = covariate_table(dat[, c('time', 'temp', 'ah')], times = 'time'),
@@ -81,7 +81,7 @@ CreateInteractionMod <- function(dat, nA = 5, debug_bool = F) {
                         b1 = 6.152, b2 = 3.823,
                         gamma1 = 7 / 5, gamma2 = 7 / 10, # or 4 for flu?
                         delta1 = 0.065, d2 = 2.1, 
-                        theta_lambda1 = 1.0, theta_lambda2 = 1.0,
+                        theta_lambda1 = 0, theta_lambda2 = 0,
                         theta_rho1 = 1.0, theta_rho2 = 1.0,
                         eta_temp1 = -0.288, eta_temp2 = -0.287,
                         eta_ah1 = 0.456, eta_ah2 = 0.342,

@@ -151,12 +151,16 @@ for(i = 0; i < nA; i++) {
     }
 }
 
-// Calculate prevalence and force of infection
+// Calculate prevalence of infection
+for(i = 0; i < nA; i++) {
+    p1_vec[i] = (X_IS_vec[i] + X_II_vec[i] + X_IT_vec[i] + X_IR_vec[i]) / N_vec[i];
+    p2_vec[i] = (X_SI_vec[i] + X_II_vec[i] + X_TI_vec[i] + X_RI_vec[i]) / N_vec[i];
+}
+
+// Calculate force of infection
 for(i = 0; i < nA; i++) {
     lambda1_vec[i] = 0.0;
     lambda2_vec[i] = 0.0;
-    p1_vec[i] = (X_IS_vec[i] + X_II_vec[i] + X_IT_vec[i] + X_IR_vec[i]) / N_vec[i];
-    p2_vec[i] = (X_SI_vec[i] + X_II_vec[i] + X_TI_vec[i] + X_RI_vec[i]) / N_vec[i];
     for(j = 0; j < nA; j++) {
         lambda1_vec[i] += CM_mat[i][j] * p1_vec[j];
         lambda2_vec[i] += CM_mat[i][j] * p2_vec[j];
