@@ -196,8 +196,8 @@ if (nrow(dat_pomp) > 0) {
   check_correct_N_CONST_VACC(sim_determ, unique(dat_pomp$pop))
   
   # Check that no compartments go negative:
-  # expect_true(all(sim_determ %>% dplyr::select(X_SS:H2) >= 0))
-  print(all(sim_determ %>% dplyr::select(X_SS:H2) >= 0))
+  expect_true(all(sim_determ %>% dplyr::select(X_SS:H2) >= 0))
+  # print(all(sim_determ %>% dplyr::select(X_SS:H2) >= 0))
   
   # Check for t_vacc == 1:
   t_vacc = 1
@@ -277,6 +277,10 @@ if (nrow(dat_pomp) > 0) {
   model_params['p_vacc', ] <- c(0.0, 0.2)
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
+  
+  if (exists('mle') & yr == 's16-17') {
+    model_params['R10', ] <- round(mle$`s16-17_R10`, 7)
+  }
   
   p9 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   if (debug_bool) print(p9)

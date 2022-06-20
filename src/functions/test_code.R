@@ -122,7 +122,7 @@ check_independent_dynamics <- function(pomp_object) {
                         sim_determ$val[sim_determ$.id == 2 & sim_determ$var_nm == 'H1']))
   expect_true(all.equal(sim_determ$val[sim_determ$.id == 1 & sim_determ$var_nm == 'H2'],
                         sim_determ$val[sim_determ$.id == 3 & sim_determ$var_nm == 'H2']))
-
+  
   p_temp <- ggplot(data = sim_determ %>% filter(.id == 1), aes(x = time, y = 100 * val)) +
     geom_point(aes(color = var_nm)) +
     geom_line(data = sim_determ %>% filter(.id == 2, var_nm == 'H1'), color = 'pink') +
@@ -243,24 +243,24 @@ check_single_virus_impact <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, 
   # param debug_bool: Should debugging info be printed? (boolean)
   # returns: Plot of flu and RSV in populations with and without vaccination
   
-  sim_determ <- run_simulation_with_vaccination(dat_pomp, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
+  sim_determ <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
     pivot_longer(cols = -c('time', '.id'), names_to = 'var_nm', values_to = 'val') %>%
     mutate(var_type = if_else(str_detect(var_nm, 'X_'), 'state', 'accum')) %>%
     filter(var_nm %in% c('H1', 'H2'))
   
   if (unique(mod_parms['vacc_eff', ]) > 0) {
     
-    print(all.equal(sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 1],
-                    sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 2]))
-    print(all.equal(sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 1],
-                    sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 2]))
+    expect_true(!all(sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 1] ==
+                       sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 2]))
+    expect_true(all.equal(sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 1],
+                          sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 2]))
     
   } else {
     
-    print(all.equal(sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 1],
-                    sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 2]))
-    print(all.equal(sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 1],
-                    sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 2]))
+    expect_true(all.equal(sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 1],
+                          sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 2]))
+    expect_true(!all(sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 1] ==
+                       sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 2]))
     
   }
   
