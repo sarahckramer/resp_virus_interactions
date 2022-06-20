@@ -224,7 +224,6 @@ create_SITRxSITR_mod_VACC <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max 
                             'delta_vacc', # 1 / average duration of indirect vaccine protection against virus 2
                             'vacc_eff', # vaccine efficacy against virus 1
                             'p_vacc', # prop. vaccination against virus 1
-                            't_vacc', # time (week) at which vaccination occurs
                             'I10', 'I20', # props. infectious at outbreak start
                             'R10', 'R20', 'R120', # props. recovered at outbreak start
                             'xss0', 'xis0', 'xts0', 'xrs0', 'xsi0', 'xii0', 'xti0', 'xri0',# NUMBER in each compartment at the time of vaccination
@@ -245,7 +244,6 @@ create_SITRxSITR_mod_VACC <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max 
                         delta_vacc = 7 / 5,
                         vacc_eff = 0,
                         p_vacc = 0,
-                        t_vacc = 0,
                         I10 = 1e-5, I20 = 1e-5,
                         R10 = 0, R20 = 0, R120 = 0,
                         xss0 = -1, xis0 = -1, xts0 = -1, xrs0 = -1, xsi0 = -1, xii0 = -1, xti0 = -1, xri0 = -1,
