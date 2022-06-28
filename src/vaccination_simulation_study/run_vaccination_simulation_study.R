@@ -28,61 +28,7 @@ debug_bool <- FALSE
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Functions
-
-get_outbreak_concentration <- function(dat, perc) {
-  # Function to determine how "concentrated" an outbreak is (how many weeks contain the top x% of cases)
-  # param dat: Numeric vector of case counts
-  # param perc: What percentage of the outbreak do we want to capture? (numeric; decimal between 0 and 1)
-  # returns: The number of weeks containing the top perc% of cases
-  
-  pt <- which.max(dat)
-  ar_target <- perc * sum(dat)
-  
-  timepoints_included <- pt
-  ar_curr <- dat[pt]
-  
-  while (ar_curr < ar_target) {
-    
-    if (length(dat[min(timepoints_included) - 1]) < 1) {
-      
-      ar_curr <- ar_curr + dat[max(timepoints_included) + 1]
-      timepoints_included <- c(timepoints_included, max(timepoints_included) + 1)
-      
-    }
-    
-    if (is.na(dat[max(timepoints_included) + 1])) {
-      
-      ar_curr <- ar_curr + dat[min(timepoints_included) - 1]
-      timepoints_included <- c(timepoints_included, min(timepoints_included) - 1)
-      
-    }
-    
-    if (length(dat[min(timepoints_included) - 1]) == 1 & !is.na(dat[max(timepoints_included) + 1])) {
-      
-      if (dat[min(timepoints_included) - 1] > dat[max(timepoints_included) + 1]) {
-        
-        ar_curr <- ar_curr + dat[min(timepoints_included) - 1]
-        timepoints_included <- c(timepoints_included, min(timepoints_included) - 1)
-        
-      } else {
-        
-        ar_curr <- ar_curr + dat[max(timepoints_included) + 1]
-        timepoints_included <- c(timepoints_included, max(timepoints_included) + 1)
-        
-      }
-      
-    }
-    
-  }
-  
-  return(length(timepoints_included))
-  
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# Run main simulation study code
+# Run main simulation study code (Hong Kong / "subtropical" scenario)
 
 # Get MLEs for each season:
 mle <- read_rds('results/MLEs_flu_h1.rds')[1, ]
@@ -166,11 +112,11 @@ for (yr_index in 1:length(seasons)) {
 }
 
 # Read in all simulation results:
-file_list <- list.files('results/vaccine_simulation_study/simulations/', pattern = 'sim', full.names = TRUE)
+file_list <- list.files('results/vaccine_simulation_study/simulations/run_initial_hk/', pattern = 'sim', full.names = TRUE)
 
 res_list <- vector('list', length(file_list))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 57, 62))
+  res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 72, 77))
 }
 rm(i)
 
@@ -181,18 +127,11 @@ res <- bind_rows(res_list) %>%
 # Calculate measures of vaccine impact from simulation results:
 res_metrics <- res %>%
   group_by(season, vacc_cov, vacc_time, .id) %>%
-  summarise(ar1 = sum(H1), ar2 = sum(H2),
-            pt1 = which.max(H1), pt2 = which.max(H2),
-            conc1 = get_outbreak_concentration(H1, perc = 0.8),
-            conc2 = get_outbreak_concentration(H2, perc = 0.8)) %>%
+  summarise(ar1 = sum(H1), ar2 = sum(H2)) %>%
   ungroup() %>%
   group_by(season, vacc_cov, vacc_time) %>%
   summarise(ar1_impact = ar1[.id == 2] / ar1[.id == 1],
-            ar2_impact = ar2[.id == 2] / ar2[.id == 1],
-            pt1_impact = pt1[.id == 2] - pt1[.id == 1],
-            pt2_impact = pt2[.id == 2] - pt2[.id == 1],
-            conc1_impact = conc1[.id == 2] / conc1[.id == 1],
-            conc2_impact = conc2[.id == 2] / conc2[.id == 1]) %>%
+            ar2_impact = ar2[.id == 2] / ar2[.id == 1]) %>%
   ungroup()
 
 # Want vacc_time relative to timing of flu/RSV peak?
@@ -217,28 +156,23 @@ res_metrics <- res_metrics %>%
 
 # Plot results:
 res_metrics <- res_metrics %>%
-  pivot_longer(ar1_impact:conc2_impact, names_to = 'metric', values_to = 'val')
+  pivot_longer(ar1_impact:ar2_impact, names_to = 'metric', values_to = 'val')
 
 res_metrics_AVG <- res_metrics %>%
   group_by(vacc_cov, vacc_time, metric) %>%
   summarise(val = median(val))
 
 upper_bound_ar <- ceiling(max(res_metrics_AVG$val[res_metrics_AVG$metric %in% c('ar1_impact', 'ar2_impact')]) * 10) / 10
-lower_bound_pt <- floor(min(res_metrics_AVG$val[res_metrics_AVG$metric %in% c('pt1_impact', 'pt2_impact')]))
-upper_bound_pt <- ceiling(max(res_metrics_AVG$val[res_metrics_AVG$metric %in% c('pt1_impact', 'pt2_impact')]))
-upper_bound_conc <- ceiling(max(res_metrics_AVG$val[res_metrics_AVG$metric %in% c('conc1_impact', 'conc2_impact')]) * 10) / 10
 
 facet_labs <- c('Influenza', 'RSV')
 names(facet_labs) <- c('ar1_impact', 'ar2_impact')
 
-p_lines_ar <- ggplot(data = res_metrics_AVG %>% filter(str_detect(metric, 'ar')),
-                     aes(x = vacc_time, y = val, col = vacc_cov, group = vacc_cov)) +
+p_lines_ar <- ggplot(data = res_metrics_AVG, aes(x = vacc_time, y = val, col = vacc_cov, group = vacc_cov)) +
   geom_line() + facet_wrap(~ metric, scales = 'free_y', ncol = 2, labeller = labeller(metric = facet_labs)) +
   theme_classic() + scale_color_viridis() + scale_y_continuous(limits = c(0, upper_bound_ar)) +
   labs(x = 'Week of Instantaneous Vaccination', y = 'AR_Vacc / AR_NoVacc', col = 'Vacc. Cov.')
 
-p_heat_ar <- ggplot(data = res_metrics_AVG %>% filter(str_detect(metric, 'ar')),
-                    aes(x = vacc_time, y = vacc_cov, fill = val)) +
+p_heat_ar <- ggplot(data = res_metrics_AVG, aes(x = vacc_time, y = vacc_cov, fill = val)) +
   geom_tile() + facet_wrap(~ metric, scales = 'free', ncol = 2, labeller = labeller(metric = facet_labs)) +
   theme_classic() + #theme(axis.ticks = element_blank()) +
   scale_fill_distiller(palette = 'RdBu', values = c(0, 1 / upper_bound_ar, 1), limits = c(0, upper_bound_ar),
@@ -246,25 +180,6 @@ p_heat_ar <- ggplot(data = res_metrics_AVG %>% filter(str_detect(metric, 'ar')),
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
   labs(x = 'Week of Instantaneous Vaccination', y = 'Vaccine Coverage (%)',
        fill = 'Impact')
-
-# p_heat_pt <- ggplot(data = res_metrics_AVG %>% filter(str_detect(metric, 'pt')),
-#                     aes(x = vacc_time, y = vacc_cov, fill = val)) +
-#   geom_tile() + facet_wrap(~ metric, scales = 'free', ncol = 2) +
-#   theme_classic() +
-#   scale_fill_distiller(palette = 'RdBu', values = c(0, (-1 * lower_bound_pt) / (upper_bound_pt - lower_bound_pt + 1), 1),
-#                        limits = c(lower_bound_pt, upper_bound_pt), direction = 1) +
-#   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
-#   labs(x = 'Week of Instantaneous Vaccination', y = 'Vaccine Coverage (% of Susceptibles)',
-#        fill = 'Impact')
-# 
-# p_heat_conc <- ggplot(data = res_metrics_AVG %>% filter(str_detect(metric, 'conc')),
-#                       aes(x = vacc_time, y = vacc_cov, fill = val)) +
-#   geom_tile() + facet_wrap(~ metric, scales = 'free', ncol = 2) +
-#   theme_classic() +
-#   scale_fill_distiller(palette = 'RdBu', values = c(0, 1 / upper_bound_conc, 1), limits = c(0, upper_bound_conc)) +
-#   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
-#   labs(x = 'Week of Instantaneous Vaccination', y = 'Vaccine Coverage (% of Susceptibles)',
-#        fill = 'Impact')
 
 print(p_lines_ar / p_heat_ar)
 
@@ -288,21 +203,16 @@ for (seas in seasons) {
     labs(x = 'Time (Weeks)', y = 'Incidence (%)', title = seas)
   
   upper_bound_ar <- ceiling(max(res_temp$val[res_temp$metric %in% c('ar1_impact', 'ar2_impact')]) * 10) / 10
-  lower_bound_pt <- floor(min(res_temp$val[res_temp$metric %in% c('pt1_impact', 'pt2_impact')]))
-  upper_bound_pt <- ceiling(max(res_temp$val[res_temp$metric %in% c('pt1_impact', 'pt2_impact')]))
-  upper_bound_conc <- ceiling(max(res_temp$val[res_temp$metric %in% c('conc1_impact', 'conc2_impact')]) * 10) / 10
   
   # facet_labs <- c('Influenza', 'RSV')
   # names(facet_labs) <- c('ar1_impact', 'ar2_impact')
   
-  p_lines_ar <- ggplot(data = res_temp %>% filter(str_detect(metric, 'ar')),
-                       aes(x = vacc_time, y = val, col = vacc_cov, group = vacc_cov)) +
+  p_lines_ar <- ggplot(data = res_temp, aes(x = vacc_time, y = val, col = vacc_cov, group = vacc_cov)) +
     geom_line() + facet_wrap(~ metric, scales = 'free_y', ncol = 2, labeller = labeller(metric = facet_labs)) +
     theme_classic() + scale_color_viridis() + scale_y_continuous(limits = c(0, upper_bound_ar)) +
     labs(x = 'Week of Instantaneous Vaccination', y = 'AR_Vacc / AR_NoVacc', title = seas, col = 'Vacc. Cov.')
   
-  p_heat_ar <- ggplot(data = res_temp %>% filter(str_detect(metric, 'ar')),
-                      aes(x = vacc_time, y = vacc_cov, fill = val)) +
+  p_heat_ar <- ggplot(data = res_temp, aes(x = vacc_time, y = vacc_cov, fill = val)) +
     geom_tile() + facet_wrap(~ metric, scales = 'free', ncol = 2, labeller = labeller(metric = facet_labs)) +
     theme_classic() + #theme(axis.ticks = element_blank()) +
     scale_fill_distiller(palette = 'RdBu', values = c(0, 1 / upper_bound_ar, 1), limits = c(0, upper_bound_ar),
@@ -310,25 +220,6 @@ for (seas in seasons) {
     scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
     labs(x = 'Week of Instantaneous Vaccination', y = 'Vaccine Coverage (%)',
          title = seas, fill = 'Impact')
-  
-  # p_heat_pt <- ggplot(data = res_temp %>% filter(str_detect(metric, 'pt')),
-  #                     aes(x = vacc_time, y = vacc_cov, fill = val)) +
-  #   geom_tile() + facet_wrap(~ metric, scales = 'free', ncol = 2) +
-  #   theme_classic() +
-  #   scale_fill_distiller(palette = 'RdBu', values = c(0, (-1 * lower_bound_pt) / (upper_bound_pt - lower_bound_pt + 1), 1),
-  #                        limits = c(lower_bound_pt, upper_bound_pt), direction = 1) +
-  #   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
-  #   labs(x = 'Week of Instantaneous Vaccination', y = 'Vaccine Coverage (% of Susceptibles)',
-  #        title = seas, fill = 'Impact')
-  # 
-  # p_heat_conc <- ggplot(data = res_temp %>% filter(str_detect(metric, 'conc')),
-  #                       aes(x = vacc_time, y = vacc_cov, fill = val)) +
-  #   geom_tile() + facet_wrap(~ metric, scales = 'free', ncol = 2) +
-  #   theme_classic() +
-  #   scale_fill_distiller(palette = 'RdBu', values = c(0, 1 / upper_bound_conc, 1), limits = c(0, upper_bound_conc)) +
-  #   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
-  #   labs(x = 'Week of Instantaneous Vaccination', y = 'Vaccine Coverage (% of Susceptibles)',
-  #        title = seas, fill = 'Impact')
   
   print(p_outbreak | (p_lines_ar / p_heat_ar))
   
