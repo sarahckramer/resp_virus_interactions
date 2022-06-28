@@ -77,8 +77,8 @@ hk_dat <- hk_dat %>%
 # mutate(i_ARI = i_ARI / 1000)
 
 # Get climate data:
-dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
-# dat_clim <- read_csv('data/formatted/clim_dat_fr_NORM.csv')
+# dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
+dat_clim <- read_csv('data/formatted/clim_dat_fr_NORM.csv')
 hk_dat <- hk_dat %>%
   inner_join(dat_clim,
              by = c('Year' = 'year',
@@ -196,7 +196,7 @@ for (yr_index in 1:length(seasons)) {
   sims_select <- metrics_temp %>%
     filter(ar1 > 1e-4 & ar2 > 1e-4) %>%
     filter(pt_diff >= -2 & pt_diff <= 10) %>%
-    filter(pt1 >= 14 & pt1 <= 21) %>%
+    # filter(pt1 >= 14 & pt1 <= 21) %>%
     filter(pt2 >= 7 & pt2 <= 16) %>%
     pull(.id)
   print(length(sims_select))
@@ -219,63 +219,35 @@ for (yr_index in 1:length(seasons)) {
   
 }
 
-print(p_list)
-
-# Explore individual seasons:
-yr <- 's18-19'
-dat_temp <- hk_dat %>% filter(season == yr)
-
-model_params <- mle %>%
-  dplyr::select(rho1:eta_ah2, contains(yr)) %>%
-  rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
-  unlist()
-
-resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_temp,
-                                      Ri1_max = Ri_max1,
-                                      Ri2_max = Ri_max2,
-                                      d2_max = d2_max,
-                                      t0_eff = 0,
-                                      debug_bool = debug_bool)
-resp_mod <- set_model_parameters(resp_mod, model_params, vaccinate = FALSE)
-
-sim_temp <- trajectory(resp_mod, format = 'data.frame') %>%
-  select(time, H1:H2)
-
-p1 <- ggplot(data = sim_temp %>%
-               pivot_longer(H1:H2,
-                            names_to = 'virus',
-                            values_to = 'val'),
-             aes(x = time, y = val, color = virus)) +
-  geom_line() + theme_classic()
-# print(p1)
-
-# coef(resp_mod, c('I10', 'I20')) <- c(9e-6, 2e-3)
-# coef(resp_mod, c('Ri1', 'Ri2')) <- c(1.9, 1.7)
-
-# coef(resp_mod, c('Ri2', 'I20')) <- c(1.45, 8e-3)
-
-# coef(resp_mod, c('I10', 'I20')) <- c(1e-5, 1e-2)
-# coef(resp_mod, c('Ri1', 'Ri2')) <- c(1.6, 1.7)
-
-# coef(resp_mod, c('I10', 'I20')) <- c(1e-6, 1e-3)
-# coef(resp_mod, c('Ri1', 'Ri2')) <- c(1.7, 1.7)
-
-# coef(resp_mod, c('I10', 'I20')) <- c(5e-6, 1e-3)
-
-sim_temp <- trajectory(resp_mod, format = 'data.frame') %>%
-  select(time, H1:H2)
-
-p2 <- ggplot(data = sim_temp %>%
-               pivot_longer(H1:H2,
-                            names_to = 'virus',
-                            values_to = 'val'),
-             aes(x = time, y = val, color = virus)) +
-  geom_line() + theme_classic()
-p1 / p2
-
-sim_temp %>%
-  summarise(pt1 = which.max(H1),
-            pt2 = which.max(H2)) %>%
-  mutate(pt_diff = pt1 - pt2)
+# print(p_list)
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+# Choose "temperate" parameter sets
+
+# Select parameter sets to use (FR climate data):
+res_to_use <- res_list[[3]] %>%
+  filter(.id == 988) %>%
+  mutate(season = seasons[3])
+
+res_to_use <- res_to_use %>%
+  bind_rows(res_list[[1]] %>% filter(.id == 291) %>% mutate(season = seasons[1]),
+            res_list[[2]] %>% filter(.id == 509) %>% mutate(season = seasons[2]),
+            res_list[[4]] %>% filter(.id == 291) %>% mutate(season = seasons[4]), # or 520 - smaller RSV outbreak, but only difference of 5 vs. 7 weeks
+            res_list[[5]] %>% filter(.id == 846) %>% mutate(season = seasons[5])) %>%
+  arrange(season)
+
+write_csv(res_to_use, file = 'results/vaccine_simulation_study/temperate_params_to_use.csv')
+
+# # Select parameter sets to use (HK climate data):
+# res_to_use <- res_list[[3]] %>%
+#   mutate(season = seasons[3])
+# 
+# res_to_use <- res_to_use %>%
+#   bind_rows(res_list[[1]] %>% filter(.id == 782) %>% mutate(season = seasons[1]),
+#             res_list[[2]] %>% filter(.id == 267) %>% mutate(season = seasons[2]),
+#             res_list[[4]] %>% filter(.id == 868) %>% mutate(season = seasons[4]),
+#             res_list[[5]] %>% filter(.id == 482) %>% mutate(season = seasons[5])) %>%
+#   arrange(season)
+# 
+# write_csv(res_to_use, file = 'results/vaccine_simulation_study/temperate_params_to_use.csv')
