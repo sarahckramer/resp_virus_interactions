@@ -3,8 +3,8 @@
 #######################################################################################################
 
 rm(list = ls())
-source("s-base_packages.R")
-source("f-CreateInteractionMod.R")
+source("src/age_structured_SA/s-base_packages.R")
+source("src/age_structured_SA/f-CreateInteractionMod.R")
 library(socialmixr)
 library(rootSolve)
 debug_bool <- T
@@ -16,14 +16,13 @@ print(packageVersion("pomp"))
 # Contact data from Hong-Kong: https://zenodo.org/record/3874808
 # 2021 mid-year population estimates from Hong-Kong: https://www.censtatd.gov.hk/en/web_table.html?id=1A
 # Could not find pop <1 yr, assume it represents one fifth of the population aged 0-4 yr 
-# Take POLYMOD matrix from the UK, corrected for reciprocity 
 age_limits <- c(0, 1, 5, 16, 65) # Age limits for age categories
 data(polymod)
 CM_all <- contact_matrix(survey = get_survey(survey = "https://doi.org/10.5281/zenodo.3874808"), 
                          age.limits = age_limits,
                          survey.pop = data.frame(lower.age.limit = age_limits, population = c(45.8, 183.2, 578.8, 5153.8, 1451.5) * 1e3),
                          symmetric = T)
-  
+
 # Plot matrix
 CM <- CM_all$matrix
 rownames(CM) <- colnames(CM)
@@ -119,7 +118,7 @@ for(i in seq_along(init_vars)) {
   print(x0$N0[x0$agecat %in% paste0(init_vars[i], "_", 1:n_ages)] / N)
 }
 
-# Run simulation ----------------------------------------------------------
+# Run simulation --------------------------------------------------------------
 coef(interMod, names(base_pars)) <- unname(base_pars)
 #coef(interMod, c("theta_lambda1", "theta_lambda2")) <- 1
 tj <- trajectory(object = interMod, 

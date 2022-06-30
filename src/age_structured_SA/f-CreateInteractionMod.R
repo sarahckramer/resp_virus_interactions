@@ -12,7 +12,7 @@ CreateInteractionMod <- function(dat, nA = 5, debug_bool = F) {
   # debug_bool: boolean, should messages be displayed to help debug? 
   
   # Extract C code from file
-  mod_code <- readLines("c-interactionMod.c")
+  mod_code <- readLines("src/age_structured_SA/c-interactionMod.c")
   components_nm <- c("globs", "skel", "rinit")
   components_l <- vector(mode = 'list', length = length(components_nm))
   names(components_l) <- components_nm
