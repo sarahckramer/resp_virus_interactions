@@ -81,6 +81,23 @@ for(i = 0; i < nA; i++) {
     H1_vec[i] = 0; 
     H2_vec[i] = 0;
  }
+
+for(i = 0; i < nA; i++) {
+  
+  if (X_SS_vec[i] + X_IS_vec[i] + X_RS_vec[i] + X_SI_vec[i] + X_SR_vec[i] + X_RR_vec[i] != N_vec[i]) {
+    X_SS_vec[i] = nearbyint(N_vec[i] - X_IS_vec[i] - X_RS_vec[i] - X_SI_vec[i] - X_SR_vec[i] - X_RR_vec[i]);
+  }
+  
+}
+
+for(i = 0; i < nA; i++) {
+  
+  if (X_SS_vec[i] + X_IS_vec[i] + X_RS_vec[i] + X_SI_vec[i] + X_SR_vec[i] + X_RR_vec[i] != N_vec[i]) {
+    Rprintf("sum=%f, N=%f\n", X_SS_vec[i] + X_IS_vec[i] + X_RS_vec[i] + X_SI_vec[i] + X_SR_vec[i] + X_RR_vec[i], N_vec[i]);
+  }
+  
+}
+
 //end_rinit
 
 //start_skel
