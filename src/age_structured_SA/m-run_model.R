@@ -65,12 +65,19 @@ Ri_fun <- function(beta, gamma, C_mat, tau_vec, r0_vec, N_vec) {
 find_beta <- function(beta, gamma, C_mat, tau_vec, r0_vec, N_vec, Ri) {
   Ri_fun(beta, gamma, C_mat, tau_vec, r0_vec, N_vec) - Ri
 }
+# Get season-specific parameters --------------------------------------------
+mle <- read_rds('results/MLEs_flu_h1.rds')
+fit_params <- mle[1, ] %>%
+  select(rho1:eta_ah2, contains(yr)) %>%
+  rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
+  unlist()
 
 # Flu and RSV parameters
 gamma_vec <- c(1 / 5, 1 / 10) # Recovery rates (per day)
 tau_l <- list(rep(1, n_ages), c(1, 0.75, 0.65, 0.65, 0.65)) # Susceptibility
-r0_l <- list(rep(0.5897, n_ages), rep(0.647, n_ages)) # Initial fraction recovered
-R_vec <- c(1.805, 1.931) # Initial reproduction number
+r0_l <- list(rep(unname(fit_params['R10'] + fit_params['R120']), n_ages),
+             rep(unname(fit_params['R20'] + fit_params['R120']), n_ages)) # Initial fraction recovered
+R_vec <- c(c(unname(fit_params['Ri1']), unname(fit_params['Ri2']))) # Initial reproduction number
 beta_vec <- c(0, 0)
 
 for(i in 1:2) {
@@ -90,8 +97,23 @@ for(i in 1:2) {
   print(sprintf("beta[%d] = %.2f", i, beta_vec[i]))
 }
 
-# Create pomp object ------------------------------------------------------
-interMod <- CreateInteractionMod(dat = data.frame(time = seq(from = 0, to = 53, by = 0.1), temp = 0, ah = 0), 
+# Load and format necessary data --------------------------------------------
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')$h1_rsv %>%
+  filter(season == yr)
+
+dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
+
+hk_dat <- hk_dat %>%
+  inner_join(dat_clim,
+             by = c('Year' = 'year',
+                    'Week' = 'week')) %>%
+  select(time, n_T, GOPC, temp, ah) %>%
+  rename('i_ARI' = 'GOPC')
+
+rm(dat_clim)
+
+# Create pomp object --------------------------------------------------------
+interMod <- CreateInteractionMod(dat = hk_dat, 
                                  nA = n_ages, 
                                  debug_bool = F)
 
@@ -100,6 +122,7 @@ interMod <- CreateInteractionMod(dat = data.frame(time = seq(from = 0, to = 53, 
 coef(interMod, paste0("N_", 1:n_ages)) <- N
 coef(interMod, paste0("CM_", 1:(n_ages * n_ages))) <- as.numeric(t(7 * CM))
 coef(interMod, c("b1", "b2")) <- beta_vec
+coef(interMod, fit_params_names) <- fit_params[fit_params_names]
 
 base_pars <- coef(interMod)
 init_pars <- base_pars[c("I10", "I20", "R10", "R20", "R120")]

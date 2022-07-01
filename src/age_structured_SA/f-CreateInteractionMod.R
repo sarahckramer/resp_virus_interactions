@@ -30,7 +30,7 @@ CreateInteractionMod <- function(dat, nA = 5, debug_bool = F) {
     components_l[[nm]] <- Csnippet(text = components_l[[nm]])
   }
   
-  po <- pomp(data = data.frame(time = seq(from = 1, to = 52, by = 1), X = NA),
+  po <- pomp(data = data.frame(dat[, 'time'], X = NA), #data.frame(time = seq(from = 1, to = 52, by = 1), X = NA),
              times = "time",
              t0 = 0,
              covar = covariate_table(dat[, c('time', 'temp', 'ah')], times = 'time'),
