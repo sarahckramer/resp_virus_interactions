@@ -7,7 +7,7 @@ source("src/age_structured_SA/s-base_packages.R")
 source("src/age_structured_SA/f-CreateInteractionMod.R")
 library(socialmixr)
 library(rootSolve)
-debug_bool <- T
+debug_bool <- FALSE
 par(bty = "l", las = 1, lwd = 2)
 print(packageVersion("pomp"))
 
@@ -65,15 +65,15 @@ pl <- ggplot(data = CM_long,
   theme_minimal() + 
   #theme(legend.position = "top") + 
   labs(x = "Contact age", y = "Reported age", fill = "Daily contacts")
-print(pl)
+if (debug_bool) print(pl)
 
 # Loop through seasons to generate synthetic data -----------------------------
 seasons <- c('s13-14', 's15-16', 's16-17', 's17-18', 's18-19')
 fit_params_names <- c('delta1', 'd2', 'theta_lambda1', 'theta_lambda2', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
-yr_index <- 1
+res_all_ages = res_combined = vector('list', length = length(seasons))
 
-for (yr_index in 1:length(seaons)) {
+for (yr_index in 1:length(seasons)) {
   
   # Get season:
   yr <- seasons[yr_index]
@@ -201,12 +201,143 @@ for (yr_index in 1:length(seaons)) {
     labs(x = "Time (weeks)", y = "Fraction", color = "Age", title = var_to_plot)
   print(pl)
   
+  # Generate synthetic observation data ---------------------------------------
+  
+  # Load and format age-structured covariate "data":
+  hk_dat_covar <- read_csv('results/age_structured_SA/synthetic_data/synthetic_covariate_data.csv') %>%
+    filter(season == yr)
+  
+  hk_dat_covar <- hk_dat_covar %>%
+    mutate(n_T3_s2 = ifelse(is.na(n_T1_s2), NA, 0),
+           n_T4_s2 = ifelse(is.na(n_T1_s2), NA, 0),
+           n_T5_s2 = ifelse(is.na(n_T1_s2), NA, 0)) %>%
+    pivot_longer(i_ARI1:i_ARI5, names_to = 'age1', values_to = 'i_ARI_age') %>%
+    pivot_longer(n_T1:n_T5, names_to = 'age2', values_to = 'n_T_age') %>%
+    pivot_longer(n_T1_s2:n_T5_s2, names_to = 'age3', values_to = 'n_T_s2_age') %>%
+    mutate(age1 = str_sub(age1, 6, 6),
+           age2 = str_sub(age2, 4, 4),
+           age3 = str_sub(age3, 4, 4)) %>%
+    filter(age1 == age2, age2 == age3) %>%
+    mutate(age = age1) %>%
+    select(time:n_T, age, i_ARI_age, n_T_age, n_T_s2_age) %>%
+    arrange(time, age)
+  
+  # Set season-specific parameter values:
+  rho1 <- fit_params['rho1']
+  rho2 <- fit_params['rho2']
+  alpha <- fit_params['alpha']
+  phi <- fit_params['phi']
+  
+  # Loop through ages and generate synthetic data:
+  res_by_age_list <- vector('list', length = n_ages)
+  omega <- 2 * pi / 52.25
+  for (i in 1:n_ages) {
+    
+    # Get age-specific covariate "data":
+    dat_covar_temp <- hk_dat_covar %>%
+      filter(age == i) %>%
+      arrange(time)
+    
+    # Get age-specific simulated total cases:
+    tj_temp <- tj %>%
+      select(time,
+             paste0('H1_', i),
+             paste0('H2_', i)) %>%
+      rename('H1' = paste0('H1_', i),
+             'H2' = paste0('H2_', i))
+    expect_equal(nrow(dat_covar_temp), nrow(tj_temp))
+    
+    # Calculate weekly probability of viral detection:
+    rho1w_list = rho2w_list = vector('list', length = 2)
+    
+    # Scenario a: Allow for proportionally inflated/decreased ILI attack rates by age group:
+    rho1w_list[[1]] <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ARI_age)
+    rho1w_list[[1]][rho1w_list[[1]] > 1.0 & !is.na(rho1w_list[[1]])] <- 1.0
+    
+    rho2w_list[[1]] <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ARI_age)
+    rho2w_list[[1]][rho2w_list[[1]] > 1.0 & !is.na(rho2w_list[[1]])] <- 1.0
+    
+    # Scenario b: Assume same ILI attack rate in all age groups:
+    rho1w_list[[2]] <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ARI)
+    rho1w_list[[2]][rho1w_list[[2]] > 1.0 & !is.na(rho1w_list[[2]])] <- 1.0
+    
+    rho2w_list[[2]] <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ARI)
+    rho2w_list[[2]][rho2w_list[[2]] > 1.0 & !is.na(rho2w_list[[2]])] <- 1.0
+    
+    # Generate synthetic observations:
+    set.seed(1890435)
+    obs1 = obs2 = vector('list', length = 4)
+    
+    # Scenario 1: All age groups report:
+    obs1[[1]] <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho1w_list[[1]])
+    obs2[[1]] <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho2w_list[[1]])
+    
+    obs1[[2]] <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho1w_list[[2]])
+    obs2[[2]] <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho2w_list[[2]])
+    
+    # Scenario 2: Assume only youngest age groups report:
+    obs1[[3]] <- rbinom(n = length(dat_covar_temp$n_T_s2_age), size = dat_covar_temp$n_T_s2_age, prob = rho1w_list[[1]])
+    obs2[[3]] <- rbinom(n = length(dat_covar_temp$n_T_s2_age), size = dat_covar_temp$n_T_s2_age, prob = rho2w_list[[1]])
+    
+    obs1[[4]] <- rbinom(n = length(dat_covar_temp$n_T_s2_age), size = dat_covar_temp$n_T_s2_age, prob = rho1w_list[[2]])
+    obs2[[4]] <- rbinom(n = length(dat_covar_temp$n_T_s2_age), size = dat_covar_temp$n_T_s2_age, prob = rho2w_list[[2]])
+    
+    # Compile synthetic observations into tibble:
+    names(obs1) <- c('obs1_s1a', 'obs1_s1b', 'obs1_s2a', 'obs1_s2b')
+    names(obs2) <- c('obs2_s1a', 'obs2_s1b', 'obs2_s2a', 'obs2_s2b')
+    
+    res_temp <- dat_covar_temp %>%
+      select(time:age) %>%
+      bind_cols(bind_cols(obs1)) %>%
+      bind_cols(bind_cols(obs2)) %>%
+      mutate(pop = N[i])
+    
+    # Store observations:
+    res_by_age_list[[i]] <- res_temp
+    
+  }
+  
+  # Compile observations from all age groups and store:
+  res_temp_all_ages <- bind_rows(res_by_age_list)
+  res_all_ages[[yr_index]] <- res_temp_all_ages
+  
+  # Calculate total observations for all scenarios and store:
+  res_temp_combined <- res_temp_all_ages %>%
+    group_by(time, Year, Week, season) %>%
+    summarise(across(obs1_s1a:obs2_s2b, sum),
+              i_ARI = unique(i_ARI),
+              n_T = unique(n_T),
+              pop = sum(pop)) %>%
+    ungroup() %>%
+    select(time:season, i_ARI:pop, obs1_s1a:obs2_s2b)
+  res_combined[[yr_index]] <- res_temp_combined
+  
 }
 
+# Combine synthetic observations from all seasons:
+res_all_ages <- bind_rows(res_all_ages)
+res_combined <- bind_rows(res_combined)
 
+# Visualize "observations" based on different sets of assumptions:
+res_combined_long <- res_combined %>%
+  pivot_longer(obs1_s1a:obs2_s2b,
+               names_to = 'scenario',
+               values_to = 'val') %>%
+  mutate(virus = str_sub(scenario, 1, 4),
+         scenario = str_sub(scenario, 6, 8)) %>%
+  mutate(virus = if_else(virus == 'obs1', 'Influenza', 'RSV'))
 
+pl <- ggplot(data = res_combined_long,
+             aes(x = time, y = val, color = scenario)) +
+  geom_line() +
+  facet_grid(season ~ virus, scale = 'free') +
+  theme_classic() +
+  labs(x = 'Time (Weeks)', y = '# of Cases', color = 'Scenario')
+print(pl)
 
-
+# Write to file:
+write_csv(res_all_ages, 'results/age_structured_SA/synthetic_data/synthetic_obs_by_age.csv')
+write_csv(res_combined, 'results/age_structured_SA/synthetic_data/synthetic_obs_combined.csv')
 
 #######################################################################################################
 # End
