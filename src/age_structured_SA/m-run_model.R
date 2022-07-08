@@ -335,6 +335,44 @@ pl <- ggplot(data = res_combined_long,
   labs(x = 'Time (Weeks)', y = '# of Cases', color = 'Scenario')
 print(pl)
 
+# Compare to observed data:
+hk_dat <- NULL
+for (yr in seasons) {
+  
+  hk_dat_temp <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')$h1_rsv %>%
+    filter(season == yr) %>%
+    select(time, season, n_P1:n_P2)
+  hk_dat <- bind_rows(hk_dat, hk_dat_temp)
+  
+}
+
+hk_dat_long <- hk_dat %>%
+  pivot_longer(n_P1:n_P2,
+               names_to = 'virus',
+               values_to = 'obs') %>%
+  mutate(virus = if_else(virus == 'n_P1', 'Influenza', 'RSV'))
+
+res_combined_long <- res_combined %>%
+  select(time:pop, obs1_s1b, obs2_s1b) %>%
+  pivot_longer(obs1_s1b:obs2_s1b,
+               names_to = 'virus',
+               values_to = 'synth') %>%
+  mutate(virus = if_else(virus == 'obs1_s1b', 'Influenza', 'RSV'))
+
+res_combined_long <- res_combined_long %>%
+  inner_join(hk_dat_long,
+             by = c('time', 'season', 'virus'))
+
+pl <- ggplot(data = res_combined_long,
+             aes(x = time, color = virus)) +
+  geom_point(aes(y = obs)) +
+  geom_line(aes(y = synth)) +
+  facet_wrap(~ season, scale = 'free') +
+  theme_classic() +
+  scale_color_brewer(palette = 'Set1') +
+  labs(x = 'Time (Weeks)', y = '# of Cases', color = 'Virus')
+print(pl)
+
 # Write to file:
 write_csv(res_all_ages, 'results/age_structured_SA/synthetic_data/synthetic_obs_by_age.csv')
 write_csv(res_combined, 'results/age_structured_SA/synthetic_data/synthetic_obs_combined.csv')
