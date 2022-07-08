@@ -6,7 +6,7 @@
 library(tidyverse)
 
 # Read in data:
-hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
 
 # Compile relevant data:
 hk_dat <- hk_dat$h1_rsv %>%
@@ -88,13 +88,6 @@ metrics_plot %>%
             mean = mean(val),
             median = median(val)) %>%
   print()
-# for flu_H1: AR between 2000 and 16000, PT between 55 and 71
-# for flu_B: AR between 2600 and 14500, PT between 60 and 73
-# for RSV: AR between 3000 to 8000 (smaller mean but larger median than either flu), PT between 56 and 90
-# H1 up to 26 weeks earlier and 1 later (mean/median -10.4/-7); B up to 26 weeks earlier and 17 later (mean/median -3.8/3)
-
-# in terms of positivity rates, both flus have wider range (smaller mins and larger maxes) than RSV
-# using positivity rates, both flus always before RSV by at least 4 weeks
 
 # Same, but using ILI+:
 metrics_plot <- ILI_metrics %>%
@@ -117,13 +110,15 @@ metrics_comp <- metrics %>%
 summary(metrics_comp$pt)
 summary(metrics_comp$pt_spec)
 summary(metrics_comp$pt_diff)
-# pretty similar; biggest differences are B in 14-15 and H1 in 16-17 (10 weeks earlier in vir than ILI+), but both are small/not very peaky
 
 # Check syn+ attack rates:
 ILI_metrics <- ILI_metrics %>%
   select(vir, season, ar_spec) %>%
   pivot_wider(names_from = vir, values_from = ar_spec)
 
-summary(ILI_metrics$ili_h1) # 2-17%, mean/median ~9.8/9.4
-summary(ILI_metrics$ili_b) # 2-17%, mean/meidan ~9.6/10.8
-summary(ILI_metrics$ili_rsv) # 5-11%, mean/median ~7.8/8.1
+summary(ILI_metrics$ili_h1)
+summary(ILI_metrics$ili_b)
+summary(ILI_metrics$ili_rsv)
+
+# Clean up:
+rm(list = ls())

@@ -32,3 +32,6 @@ p2 <- ggplot(data = mortality_dat) + geom_line(aes(x = Month, y = No_of_deaths, 
   theme_classic() + labs(y = 'Number of Deaths', color = 'Year') +
   scale_x_continuous(breaks = 1:12) + scale_color_distiller(palette = 'RdYlGn')
 print(p2)
+
+# Clean up:
+rm(list = ls())

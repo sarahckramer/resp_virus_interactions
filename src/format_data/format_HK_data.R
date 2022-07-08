@@ -175,3 +175,6 @@ print(p3)
 print(p4)
 print(p5)
 dev.off()
+
+# Clean up:
+rm(list = ls())

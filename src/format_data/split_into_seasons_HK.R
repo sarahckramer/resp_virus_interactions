@@ -1,350 +1,94 @@
 # ---------------------------------------------------------------------------------------------------------------------
-# Divide Hong Kong data into individual "seasons"
+# Divide data into individual seasons
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load libraries:
 library(tidyverse)
 library(testthat)
 
+# Set season start week:
+start_week <- 46
+
 # Read in data:
 dat_hk <- read_csv('data/formatted/dat_hk.csv')
 
-# Limit (for now) to data of interest:
-dat_hk_ORIG <- dat_hk
-dat_hk <- dat_hk_ORIG %>%
-  select(Time:n_rsv, n_rhino_est_rnd)
-
-# Calculate proportion rather than number positive:
+# Limit to data of interest:
 dat_hk <- dat_hk %>%
-  mutate(prop_h1 = n_h1 / n_samp,
-         prop_h3 = n_h3 / n_samp,
-         prop_b = n_b / n_samp,
-         prop_rsv = n_rsv / n_samp,
-         prop_rhino = n_rhino_est_rnd / n_samp) %>%
-  select(Time:Week, prop_h1:prop_rhino)
+  select(Time:n_rsv, n_rhino_est_rnd, GOPC:PMP.Clinics) %>%
+  rename('n_rhino' = 'n_rhino_est_rnd')
+
+# Label with northern-hemisphere seasons:
+dat_hk <- dat_hk %>%
+  mutate(season = NA) %>%
+  mutate(season = ifelse((Year == 2014 & Week >= start_week) | (Year == 2015 & Week < start_week), 's14-15', season),
+         season = ifelse((Year == 2015 & Week >= start_week) | (Year == 2016 & Week < start_week), 's15-16', season),
+         season = ifelse((Year == 2016 & Week >= start_week) | (Year == 2017 & Week < start_week), 's16-17', season),
+         season = ifelse((Year == 2017 & Week >= start_week) | (Year == 2018 & Week < start_week), 's17-18', season),
+         season = ifelse((Year == 2018 & Week >= start_week) | (Year == 2019 & Week < start_week), 's18-19', season),
+         season = ifelse((Year == 2019 & Week >= start_week) | (Year == 2020 & Week < start_week), 's19-20', season),
+         season = ifelse(Year == 2014 & Week < start_week, 's13-14', season))
+# In this case, do we remove 13-14 and 19-20, since they are not full seasons?
 
 # Check for NAs:
-summary(dat_hk)
+dat_hk %>% pull(season) %>% is.na() %>% any() %>% expect_false()
 
-# List viruses:
-vir_list <- c('prop_h1', 'prop_h3', 'prop_b', 'prop_rsv', 'prop_rhino')
+# Get population sizes:
+pop_dat <- read_csv('data/raw/hk/pop_dat_hk.csv', skip = 4) %>%
+  rename('X1' = 'Year') %>%
+  filter(X1 == 'Both sexes',
+         X2 == 'All age groups') %>%
+  select(!contains('_1')) %>%
+  select(all_of(as.character(unique(dat_hk$Year))))
 
-# Initiate lists to store results:
-onset_list <- vector('list', length(vir_list))
-end_list <- vector('list', length(vir_list))
+pop_dat <- pop_dat %>%
+  pivot_longer(cols = everything(), names_to = 'season', values_to = 'pop') %>%
+  mutate(season = as.numeric(season),
+         pop = as.numeric(pop)) %>%
+  mutate(season = paste0('s', str_sub(season - 1, 3, 4), '-', str_sub(season, 3, 4))) %>%
+  mutate(pop = pop * 1000)
 
-# Explore onset thresholds for flu viruses:
-baseline_perc <- 0.5
+dat_hk <- dat_hk %>%
+  left_join(pop_dat, by = 'season')
 
-par(mfrow = c(3, 1))
-for (vir_index in 1:3) {
-  
-  # Get virus:
-  vir <- vir_list[vir_index]
-  
-  # Subset data:
-  dat_temp <- dat_hk %>%
-    select(Time:Week, all_of(vir)) %>%
-    rename(prop_vir = vir)
-  obs_i <- dat_temp$prop_vir
-  
-  # Get threshold value:
-  baseline <- quantile(obs_i[obs_i != 0], probs = baseline_perc, na.rm = TRUE)
-  
-  # Find onsets and ends:
-  onsets = ends = c()
-  above.baseline.count <- 0
-  below.baseline.count <- 0
-  
-  for (i in 1:length(obs_i)) {
-    if (above.baseline.count < 3) { # start searching for onset
-      if (obs_i[i] > baseline) {
-        above.baseline.count <- above.baseline.count + 1
-      } else {
-        above.baseline.count <- 0
-      }
-    }
-    
-    if (above.baseline.count == 3) { # record onset
-      onsets <- c(onsets, i - 2)
-      above.baseline.count <- 10 # indicator that an onset has occurred
-    }
-    
-    if (above.baseline.count >= 3) { # start searching for end
-      if (obs_i[i] < baseline) {
-        below.baseline.count <- below.baseline.count + 1
-      } else {
-        below.baseline.count <- 0
-      }
-      
-      if (below.baseline.count == 2) { # record end
-        ends <- c(ends, i - 1)
-        above.baseline.count <- 0
-        below.baseline.count <- 0
-      }
-    }
-    
-  }
-  
-  if (length(onsets) != length(ends)) {
-    ends <- c(ends, length(obs_i))
-  }
-  
-  # Remove where outbreaks are too small (<3x baseline?):
-  if (length(onsets) > 0) {
-    for (j in 1:length(onsets)) {
-      obs_temp <- obs_i[onsets[j]:ends[j]]
-      if (!any(obs_temp > baseline * 3)) {
-        onsets[j] <- NA
-        ends[j] <- NA
-      }
-    }
-    
-    onsets <- onsets[!is.na(onsets)]
-    ends <- ends[!is.na(ends)]
-  }
-  
-  # # Add buffer of 4 weeks before onset and after end:
-  # onsets <- onsets - 4
-  # onsets[onsets < 1] <- 1
-  # 
-  # ends <- ends + 4
-  # ends[ends > length(obs_i)] <- length(obs_i)
-  
-  # Plot data and onsets/ends:
-  plot(obs_i, pch = 20, type = 'b', xlab = '', ylab = 'Prop.')
-  abline(h = baseline, lty = 2)
-  abline(v = onsets, col = 'blue')
-  abline(v = ends, col = 'green')
-  
-  # Store results:
-  onset_list[[vir_index]] <- onsets
-  end_list[[vir_index]] <- ends
-  
-}
+# Ensure that Time begins at 1 for each season:
+dat_hk <- dat_hk %>%
+  group_by(season) %>%
+  mutate(Time = Time - min(Time) + 1) %>%
+  ungroup()
 
-# Explore onset thresholds for RSV/rhinovirus:
-baseline_perc <- 0.3
-
-par(mfrow = c(2, 1))
-for (vir_index in 4:5) {
-  
-  # Get virus:
-  vir <- vir_list[vir_index]
-  
-  # Subset data:
-  dat_temp <- dat_hk %>%
-    select(Time:Week, all_of(vir)) %>%
-    rename(prop_vir = vir)
-  obs_i <- dat_temp$prop_vir
-  
-  # Get threshold value:
-  baseline <- quantile(obs_i[obs_i != 0], probs = baseline_perc, na.rm = TRUE)
-  if (vir == 'prop_rhino') {
-    baseline <- quantile(obs_i[7:length(obs_i)][obs_i[7:length(obs_i)] != 0], probs = baseline_perc, na.rm = TRUE)
-  }
-  
-  # Find onsets and ends:
-  onsets = ends = c()
-  above.baseline.count <- 0
-  below.baseline.count <- 0
-  
-  for (i in 1:length(obs_i)) {
-    if (above.baseline.count < 3) { # start searching for onset
-      if (obs_i[i] > baseline) {
-        above.baseline.count <- above.baseline.count + 1
-      } else {
-        above.baseline.count <- 0
-      }
-    }
-    
-    if (above.baseline.count == 3) { # record onset
-      onsets <- c(onsets, i - 2)
-      above.baseline.count <- 10 # indicator that an onset has occurred
-    }
-    
-    if (above.baseline.count >= 3) { # start searching for end
-      if (obs_i[i] < baseline) {
-        below.baseline.count <- below.baseline.count + 1
-      } else {
-        below.baseline.count <- 0
-      }
-      
-      if (below.baseline.count == 2) { # record end
-        ends <- c(ends, i - 1)
-        above.baseline.count <- 0
-        below.baseline.count <- 0
-      }
-    }
-    
-  }
-  
-  if (length(onsets) != length(ends)) {
-    ends <- c(ends, length(obs_i))
-  }
-  
-  # Remove where outbreaks are too small (<3x baseline?):
-  if (length(onsets) > 0) {
-    for (j in 1:length(onsets)) {
-      obs_temp <- obs_i[onsets[j]:ends[j]]
-      if (!any(obs_temp > baseline * 1.5)) {
-        onsets[j] <- NA
-        ends[j] <- NA
-      }
-    }
-    
-    onsets <- onsets[!is.na(onsets)]
-    ends <- ends[!is.na(ends)]
-  }
-  
-  # # Add buffer of 4 weeks before onset and after end:
-  # onsets <- onsets - 4
-  # onsets[onsets < 1] <- 1
-  # 
-  # ends <- ends + 4
-  # ends[ends > length(obs_i)] <- length(obs_i)
-  
-  # Plot data and onsets/ends:
-  plot(obs_i, pch = 20, type = 'b', xlab = '', ylab = 'Prop.')
-  abline(h = baseline, lty = 2)
-  abline(v = onsets, col = 'blue')
-  abline(v = ends, col = 'green')
-  
-  # Store results:
-  onset_list[[vir_index]] <- onsets
-  end_list[[vir_index]] <- ends
-  
-}
-
-# Clean up:
-rm(dat_temp, above.baseline.count, below.baseline.count, baseline, baseline_perc, onsets, ends, i, j, obs_i, obs_temp, vir_index, vir)
-
-# Now find overlap between flu "seasons" and other viruses:
-outbreak_df <- NULL
-for (flu_index in 1:3) {
-  
-  onsets <- onset_list[[flu_index]]
-  ends <- end_list[[flu_index]]
-  
-  for (resp_index in 4:5) {
-    
-    onsets_2 <- onset_list[[resp_index]]
-    ends_2 <- end_list[[resp_index]]
-    
-    end_next <- 0
-    
-    for (i in length(onsets):1) {
-      o <- onsets[i]; e <- ends[i]
-      
-      # want any ends that occur during or directly after the flu outbreak:
-      if (any(ends_2 >= e)) {
-        outbreak_start <- o
-        outbreak_end <- max(e, ends_2[min(which(ends_2 >= e))])
-        
-        if (min(which(ends_2 >= e)) == end_next) {
-          if(end_next > 1) {
-            outbreak_end <- e
-          } else {
-            outbreak_end <- e
-          }
-        }
-        
-        end_next <- min(which(ends_2 >= e))
-        
-        outbreak_df <- rbind(outbreak_df,
-                             c(vir_list[flu_index],
-                               vir_list[resp_index],
-                               outbreak_start,
-                               outbreak_end))
-      } #else {
-      #   if (any(ends_2 > o & ends_2 <= e)) {
-      #     outbreak_start <- o
-      #     outbreak_end <- e
-      #     
-      #     outbreak_df <- rbind(outbreak_df,
-      #                          c(vir_list[flu_index],
-      #                            vir_list[resp_index],
-      #                            outbreak_start,
-      #                            outbreak_end))
-      #   }
-      # }
-      
-    }
-  }
-}
-
-# Clean up:
-rm(flu_index, resp_index, i, onsets, ends, onsets_2, ends_2, o, e, outbreak_start, outbreak_end, end_next)
-
-# Format data frame:
-outbreak_df <- outbreak_df %>%
-  as_tibble() %>%
-  rename('vir1' = 'V1',
-         'vir2' = 'V2',
-         'start' = 'V3',
-         'end' = 'V4') %>%
-  mutate(vir1 = str_sub(vir1, 6, str_length(vir1)),
-         vir2 = str_sub(vir2, 6, str_length(vir2))) %>%
-  mutate(across(.cols = !starts_with('vir'), as.numeric))
-
-# Remove where outbreaks are shorter (or longer?) than given cutoff values:
-outbreak_df <- outbreak_df %>%
-  mutate(duration = end - start + 1) %>%
-  filter(duration >= 25)
-
-# Add buffer of 4 weeks before onsets/after ends:
-outbreak_df <- outbreak_df %>%
-  mutate(start = start - 4,
-         end = end + 4) %>%
-  mutate(start = if_else(start < 1, 1, start),
-         end = ifelse(end > nrow(dat_hk_ORIG), nrow(dat_hk_ORIG), end))
-
-# Format data for input to models:
+# Break down by virus pairs and rename columns:
+vir_list <- c('h1', 'h3', 'b', 'rsv', 'rhino')
 dat_hk_pomp <- vector('list', length = 6)
 
 counter <- 1
-for (vir1_nm in unique(outbreak_df$vir1)) {
-  for (vir2_nm in unique(outbreak_df$vir2)) {
+for (vir1_nm in vir_list[1:3]) {
+  for (vir2_nm in vir_list[4:5]) {
     
     # Rename list element:
     names(dat_hk_pomp)[counter] <- paste(vir1_nm, vir2_nm, sep = '_')
     
-    # Get start and end times for each outbreak:
-    onsets <- outbreak_df %>% filter(vir1 == vir1_nm, vir2 == vir2_nm) %>% pull(start) %>% rev()
-    ends <- outbreak_df %>% filter(vir1 == vir1_nm, vir2 == vir2_nm) %>% pull(end) %>% rev()
+    # Limit to data of interest:
+    dat_out <- dat_hk %>%
+      select(Time:n_samp, contains(vir1_nm), contains(vir2_nm), GOPC:pop)
     
-    # Get data of interest:
-    dat_temp <- dat_hk_ORIG %>%
-      select(Time:n_samp, contains(vir1_nm), contains(vir2_nm), GOPC:PMP.Clinics) %>%
-      mutate(outbreak_number = NA)
-    
-    if (vir2_nm == 'rhino') {
-      dat_temp <- dat_temp %>%
-        select(!c(n_rhino_entero, n_rhino_est)) %>%
-        rename('n_rhino' = 'n_rhino_est_rnd')
-    }
-    
-    # Build data frame containing each outbreak:
-    dat_out <- NULL
-    for (i in 1:length(onsets)) {
-      
-      dat_i <- dat_temp %>%
-        filter(Time >= onsets[i] & Time <= ends[i]) %>%
-        mutate(outbreak_number = i,
-               Time = Time - min(Time) + 1)
-      dat_out <- rbind(dat_out, dat_i)
-      
-    }
-    
-    # Check that no NAs in outbreak number:
-    dat_out %>% pull(outbreak_number) %>% is.na() %>% any() %>% expect_false()
+    # Remove 19-20 season:
+    dat_out <- dat_out %>%
+      filter(season != 's19-20')
     
     # Format column names:
     dat_out <- dat_out %>%
       rename('time' = 'Time',
              'n_T' = 'n_samp') %>%
-      rename_with(~ 'n_P1', .cols = contains(paste0('_', vir1_nm))) %>%
+      rename_with(~ 'n_P1', .cols = contains(vir1_nm)) %>%
       rename_with(~ 'n_P2', .cols = contains(vir2_nm))
+    
+    # Remove seasons where a given threshold for flu is not exceeded:
+    dat_out <- dat_out %>%
+      group_by(season) %>%
+      mutate(tot_pos = sum(n_P1)) %>%
+      ungroup() %>%
+      filter(tot_pos > 2000) %>%
+      select(-tot_pos)
     
     # Store data in list:
     dat_hk_pomp[[counter]] <- dat_out
@@ -356,18 +100,27 @@ for (vir1_nm in unique(outbreak_df$vir1)) {
 }
 
 # Clean up:
-rm(counter, vir1_nm, vir2_nm, onsets, ends, dat_temp, dat_out, i, dat_i)
+rm(counter, vir1_nm, vir2_nm, dat_out)
+
+# Add leading NAs to 2013-14 season:
+dat_hk_pomp <- lapply(dat_hk_pomp, function(ix) {
+  ix %>%
+    complete(Week, season) %>%
+    filter(!(Week == 53 & is.na(n_P1))) %>%
+    select(time:GOPC, Week:season, pop) %>%
+    mutate(Year = if_else(is.na(Year), 2013, Year),
+           time = if_else(is.na(time), Week - 52, time),
+           pop = if_else(is.na(pop), min(dat_hk$pop), pop)) %>%
+    arrange(Year, Week) %>%
+    group_by(season) %>%
+    mutate(time = time - min(time) + 1) %>%
+    ungroup()
+})
 
 # Plot outbreaks for each combination of pathogens:
 plot_list <- vector('list', length = length(dat_hk_pomp))
 for (i in 1:length(dat_hk_pomp)) {
   dat_temp <- dat_hk_pomp[[i]]
-  
-  # p_temp <- ggplot(data = dat_temp %>% pivot_longer(n_P1:n_P2, names_to = 'vir', values_to = 'val')) +
-  #   geom_line(aes(x = time, y = n_T), col = 'black', lwd = 1.25) +
-  #   geom_line(aes(x = time, y = val, group = vir, col = vir)) +
-  #   theme_classic() + scale_color_brewer(palette = 'Set1') +
-  #   facet_wrap(~ outbreak_number)
   
   p_temp <- ggplot(data = dat_temp %>%
                      mutate(prop_P1 = n_P1 / n_T, prop_P2 = n_P2 / n_T) %>%
@@ -376,7 +129,7 @@ for (i in 1:length(dat_hk_pomp)) {
     geom_line(aes(x = time, y = val, group = vir, col = vir)) +
     theme_classic() +
     scale_color_brewer(palette = 'Set1') +
-    facet_wrap(~ outbreak_number) +
+    facet_wrap(~ season) +
     labs(x = 'Time (Weeks)', y = 'Proportion Positive', col = 'Virus', title = names(dat_hk_pomp)[i])
   plot_list[[i]] <- p_temp
   
