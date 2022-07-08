@@ -98,5 +98,3 @@ CreateInteractionMod <- function(dat, nA = 5, debug_bool = F) {
   )
   return(po)
 }
-
-
