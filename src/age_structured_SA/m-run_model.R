@@ -340,5 +340,6 @@ write_csv(res_all_ages, 'results/age_structured_SA/synthetic_data/synthetic_obs_
 write_csv(res_combined, 'results/age_structured_SA/synthetic_data/synthetic_obs_combined.csv')
 
 #######################################################################################################
-# End
-#######################################################################################################
+
+# Clean up:
+rm(list = ls())

@@ -4,10 +4,9 @@
 
 # Setup
 
-# Load libraries:
-library(tidyverse)
+rm(list = ls())
+source("src/age_structured_SA/s-base_packages.R")
 library(socialmixr)
-library(testthat)
 
 # Functions
 
@@ -88,18 +87,12 @@ ari_rate_per_pop <- fr_dat %>%
   mutate(i_ARI_rel = (n_ARI / pop_eff) / (sum(n_ARI) / sum(pop_eff))) %>%
   select(agecat, i_ARI:i_ARI_rel)
 
-# fr_dat %>% filter(virus == 'flu_A') %>% group_by(epiyear, week_no) %>% mutate(i_ARI = (n_ARI / pop_eff) / (sum(n_ARI) / sum(pop_eff))) %>% ungroup() %>% group_by(agecat) %>% summarise(i_ARI_rel = mean(i_ARI))
-# fr_dat %>% filter(virus == 'flu_A') %>% group_by(agecat) %>% summarise(i_ARI = sum(n_ARI) / sum(pop_eff)) %>% ungroup() %>% mutate(i_ARI / mean(i_ARI))
-# fr_dat %>% filter(virus == 'flu_A') %>% group_by(agecat) %>% summarise(i_ARI = mean(i_ARI)) %>% ungroup()
-
 # Calculate average rate of testing by age group:
 test_rate_per_pop <- fr_dat %>%
   filter(virus == 'flu_A') %>%
   group_by(agecat) %>%
   summarise(i_samp = sum(n_samp) / sum(pop_eff)) %>%
   ungroup()
-
-# fr_dat %>% filter(virus == 'flu_A') %>% mutate(i_samp = n_samp / pop_eff) %>% group_by(agecat) %>% summarise(i_samp = mean(i_samp))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -184,3 +177,6 @@ hk_dat <- hk_dat %>%
 
 # Save covariate "data":
 write_csv(hk_dat, file = 'results/age_structured_SA/synthetic_data/synthetic_covariate_data.csv')
+
+# Clean up:
+rm(list = ls())
