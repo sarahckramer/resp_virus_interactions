@@ -102,6 +102,21 @@ for (vir1_nm in vir_list[1:3]) {
 # Clean up:
 rm(counter, vir1_nm, vir2_nm, dat_out)
 
+# Add leading NAs to 2013-14 season:
+dat_hk_pomp <- lapply(dat_hk_pomp, function(ix) {
+  ix %>%
+    complete(Week, season) %>%
+    filter(!(Week == 53 & is.na(n_P1))) %>%
+    select(time:GOPC, Week:season, pop) %>%
+    mutate(Year = if_else(is.na(Year), 2013, Year),
+           time = if_else(is.na(time), Week - 52, time),
+           pop = if_else(is.na(pop), min(dat_hk$pop), pop)) %>%
+    arrange(Year, Week) %>%
+    group_by(season) %>%
+    mutate(time = time - min(time) + 1) %>%
+    ungroup()
+})
+
 # Plot outbreaks for each combination of pathogens:
 plot_list <- vector('list', length = length(dat_hk_pomp))
 for (i in 1:length(dat_hk_pomp)) {
@@ -125,30 +140,12 @@ print(plot_list)
 rm(i, dat_temp)
 
 # Save plots to file:
-pdf('results/plots/data_Hong_Kong_byOutbreak_ALT.pdf', width = 8, height = 5)
+pdf('results/plots/data_Hong_Kong_byOutbreak.pdf', width = 8, height = 5)
 print(plot_list)
 dev.off()
 
 # Save formatted data:
-write_rds(dat_hk_pomp, file = 'data/formatted/dat_hk_byOutbreak_ALT.rds')
-
-# Add leading NAs to 2013-14 season:
-dat_hk_pomp<- lapply(dat_hk_pomp, function(ix) {
-  ix %>%
-    complete(Week, season) %>%
-    filter(!(Week == 53 & is.na(n_P1))) %>%
-    select(time:GOPC, Week:season, pop) %>%
-    mutate(Year = if_else(is.na(Year), 2013, Year),
-           time = if_else(is.na(time), Week - 52, time),
-           pop = if_else(is.na(pop), min(dat_hk$pop), pop)) %>%
-    arrange(Year, Week) %>%
-    group_by(season) %>%
-    mutate(time = time - min(time) + 1) %>%
-    ungroup()
-})
-
-# Save formatted data:
-write_rds(dat_hk_pomp, file = 'data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')
+write_rds(dat_hk_pomp, file = 'data/formatted/dat_hk_byOutbreak.rds')
 
 # Clean up:
 rm(list = ls())
