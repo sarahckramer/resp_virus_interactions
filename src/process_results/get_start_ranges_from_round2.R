@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Use 95% CI or top 5% of fits?:
-method <- 'ci' # 'ci' or 'perc'
+method <- 'perc' # 'ci' or 'perc'
 
 # Function to read in and format results:
 load_and_format_mega_results <- function(filepath, method) {
@@ -63,9 +63,9 @@ load_and_format_mega_results <- function(filepath, method) {
 }
 
 # Read in results:
-res_h1 <- load_and_format_mega_results('results/round2_2_fluH1_FULL/', method) %>%
+res_h1 <- load_and_format_mega_results('results/round2_1_fluH1_FULL/', method) %>%
   select(-loglik)
-res_b <- load_and_format_mega_results('results/round2_2_fluB_FULL/', method) %>%
+res_b <- load_and_format_mega_results('results/round2_1_fluB_FULL/', method) %>%
   select(-loglik)
 
 # Get minimum and maximum start values:
@@ -178,8 +178,8 @@ if (any(sums_b %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
 }
 
 # Write start ranges to file:
-write_rds(ci_start_h1, file = 'results/round2_cis/round2CI_startvals_PROF_H1.rds')
-write_rds(ci_start_b, file = 'results/round2_cis/round2CI_startvals_PROF_B.rds')
+write_rds(ci_start_h1, file = 'results/round2_CIs/round2CI_startvals_H1.rds')
+write_rds(ci_start_b, file = 'results/round2_CIs/round2CI_startvals_B.rds')
 
 # Clean up:
 rm(list = ls())

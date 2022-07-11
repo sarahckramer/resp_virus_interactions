@@ -9,10 +9,9 @@ library(nloptr)
 
 # Set parameters for run:
 debug_bool <- FALSE
-# vir1 <- 'flu_B' # 'flu_A', 'flu_B'
+# vir1 <- 'flu_b'
 vir2 <- 'rsv'
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
-# seasons <- 2006:2014
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
@@ -179,32 +178,8 @@ for (yr_index in 1:length(seasons)) {
   
 }
 
-# po_list <- vector('list', length(seasons))
-# for (yr in seasons) {
-#   print(yr)
-#   
-#   # Load data and create pomp object:
-#   source('src/resp_interaction_model.R')
-#   
-#   # Check whether appreciable activity for both viruses:
-#   if (sum(resp_mod@data[1, ]) <= 100) {
-#     print('Insufficient virus 1')
-#   }
-#   if (sum(resp_mod@data[2, ]) <= 100) {
-#     print('Insufficient virus 2')
-#   }
-#   
-#   if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
-#     if (yr != '2010') {
-#       po_list[[yr - (seasons[1] - 1)]] <- resp_mod
-#     }
-#   }
-#   
-# }
-
 # Remove empty elements:
 seasons <- seasons[lapply(po_list, length) > 0]
-# seasons <- c(min(seasons):max(seasons))[lapply(po_list, length) > 0]
 po_list <- po_list[lapply(po_list, length) > 0]
 
 # Get list of season-specific objective functions:

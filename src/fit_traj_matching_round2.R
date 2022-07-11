@@ -23,18 +23,17 @@ prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # # Set parameters for local run:
 # jobid <- 1
 # no_jobs <- 1
-# vir1 <- 'flu_h1' # 'flu_A', 'flu_B'
+# vir1 <- 'flu_h1'
 # 
 # sobol_size <- 10
 # search_type <- 'round2_CIs'
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
-# prof_lik <- TRUE
+# prof_lik <- FALSE
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
-# seasons <- 2006:2014
 time_max <- 14.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
@@ -227,36 +226,8 @@ for (yr_index in 1:length(seasons)) {
   
 }
 
-# po_list <- vector('list', length(min(seasons):max(seasons)))
-# for (yr in seasons) {
-#   print(yr)
-#   
-#   # Load data and create pomp object:
-#   source('src/resp_interaction_model.R')
-#   
-#   # Check whether appreciable activity for both viruses:
-#   if (sum(resp_mod@data[1, ]) <= 100) {
-#     print('Insufficient virus 1')
-#   }
-#   if (sum(resp_mod@data[2, ]) <= 100) {
-#     print('Insufficient virus 2')
-#   }
-#   
-#   # If doing profile likelihood, set theta_lambda1:
-#   if (prof_lik) {
-#     coef(resp_mod, 'theta_lambda1') <- prof_val
-#   }
-#   
-#   # Add pomp object to list:
-#   if (sum(resp_mod@data[1, ]) > 100 & sum(resp_mod@data[2, ]) > 100) {
-#     po_list[[yr - (seasons[1] - 1)]] <- resp_mod
-#   }
-#   
-# }
-
 # Remove empty elements:
 seasons <- seasons[lapply(po_list, length) > 0]
-# seasons <- c(min(seasons):max(seasons))[lapply(po_list, length) > 0]
 po_list <- po_list[lapply(po_list, length) > 0]
 
 # Choose parameters to estimate:
@@ -323,9 +294,7 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
 
 # Get 99% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
-
 tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
-# tj_res_list <- tj_res_list[!str_detect(names(tj_res_list), '2010')]
 
 ci_list <- vector('list', length(seasons))
 
@@ -370,9 +339,9 @@ rm(i)
 if (search_type == 'round2_CIs') {
   
   if (vir1 == 'flu_h1') {
-    start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_H1.rds')
+    start_range <- read_rds('results/round2_CIs/round2CI_startvals_H1.rds')
   } else if (vir1 == 'flu_b') {
-    start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_B.rds')
+    start_range <- read_rds('results/round2_CIs/round2CI_startvals_B.rds')
   } else {
     stop('Unknown vir1!')
   }
