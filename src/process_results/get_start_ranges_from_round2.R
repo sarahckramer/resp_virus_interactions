@@ -25,6 +25,8 @@ load_and_format_mega_results <- function(filepath, method) {
   pars_df <- lapply(res_full, getElement, 'estpars') %>%
     bind_rows() %>%
     bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                unlist()) %>%
+    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist())
   expect_true(nrow(pars_df) == length(res_files))
   expect_true(all(is.finite(pars_df$loglik)))
@@ -41,6 +43,12 @@ load_and_format_mega_results <- function(filepath, method) {
   }
   
   pars_top <- pars_df[1:no_best, ]
+  
+  # Remove where no convergence occurs:
+  pars_top <- pars_top %>%
+    filter(!str_detect(message, 'maxtime'))
+  pars_top <- pars_top %>%
+    select(-message)
   
   # # Remove where d2 > 10 and theta_lambda2 != 1.0:
   # pars_top <- pars_top %>%

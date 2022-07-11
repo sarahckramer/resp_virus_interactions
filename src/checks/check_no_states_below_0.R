@@ -7,10 +7,21 @@ library(tidyverse)
 library(testthat)
 
 # Specify location of results to check:
-res_loc <- 'results/round2_fluH1_FULL/'
+res_loc <- 'results/round2_1_fluB_FULL/'
+
+# Check for missing results files:
+res_files <- list.files(path = res_loc, full.names = TRUE)
+res_exist <- res_files %>%
+  str_split('_') %>%
+  map(~ .x[9]) %>%
+  str_split(fixed('.')) %>%
+  map(~ .x[1]) %>%
+  unlist() %>%
+  as.numeric() %>%
+  sort()
+print(which(!(1:500 %in% res_exist)))
 
 # Read in and compile all results:
-res_files <- list.files(path = res_loc, full.names = TRUE)
 res_full = list()
 for (i in seq_along(res_files)) {
   res_full[[i]] <- read_rds(res_files[[i]])

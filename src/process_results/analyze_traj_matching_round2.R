@@ -29,19 +29,18 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
     res_full[[i]] <- read_rds(res_files[[i]])
   }
   
-  # Check whether estimations stopped due to tolerance or time:
-  lapply(res_full, getElement, 'message') %>%
-    unlist() %>%
-    table() %>%
-    print()
-  
   # Get parameter estimates and log-likelihoods:
   pars_df <- lapply(res_full, getElement, 'estpars') %>%
     bind_rows() %>%
     bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                unlist()) %>%
+    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist())
   expect_true(nrow(pars_df) == length(res_files))
   expect_true(all(is.finite(pars_df$loglik)))
+  
+  # Check whether estimations stopped due to tolerance or time:
+  print(table(pars_df$message))
   
   # Keep only top results:
   pars_df <- pars_df %>%
@@ -52,6 +51,12 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
   # no_best <- max(no_best, 20)
   
   pars_top <- pars_df[1:no_best, ]
+  
+  # Remove where no convergence occurs:
+  pars_top <- pars_top %>%
+    filter(!str_detect(message, 'maxtime'))
+  pars_top <- pars_top %>%
+    select(-message)
   
   # Format for combining with other results:
   pars_top_LONG <- pars_top %>%

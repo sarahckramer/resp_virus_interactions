@@ -22,6 +22,8 @@ load_and_format_mega_results <- function(filepath) {
   pars_df <- lapply(res_full, getElement, 'estpars') %>%
     bind_rows() %>%
     bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                unlist()) %>%
+    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist())
   expect_true(nrow(pars_df) == length(res_files))
   expect_true(all(is.finite(pars_df$loglik)))
@@ -32,6 +34,13 @@ load_and_format_mega_results <- function(filepath) {
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = (dim(pars_df)[2] - 1))))
   pars_top <- pars_df[1:no_best, ]
+  
+  # Remove where no convergence occurs:
+  print(table(pars_top$message))
+  pars_top <- pars_top %>%
+    filter(!str_detect(message, 'maxtime'))
+  pars_top <- pars_top %>%
+    select(-message)
   
   # Return formatted results:
   return(pars_top)
