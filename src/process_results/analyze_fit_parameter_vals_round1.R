@@ -68,7 +68,7 @@ p1 <- ggplot(data = pars_df, aes(x = year, y = val, group = paste(virus1, year),
 print(p1)
 
 # Plot parameter values and ranges:
-p2 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, col = param)) + geom_point(size = 2) +
+p2 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, col = param)) + geom_point(size = 2.5) +
   theme_bw() + facet_grid(param ~ virus1, scales = 'free_y') +
   theme(legend.position = 'none', axis.text.x = element_text(angle = 45, vjust = 0.7))
 p3 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, ymin = min, ymax = max, col = param)) + geom_pointrange() +

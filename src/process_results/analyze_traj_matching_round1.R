@@ -146,7 +146,7 @@ for (vir1 in flu_types) {
   for (i in 1:length(pars_list_temp)) {
     yr <- pars_list_temp[[i]] %>% pull(year) %>% unique()
     print(yr)
-    vir2 <- 'rsv'; debug_bool <- FALSE; Ri_max1 <- 3.0; Ri_max2 <- 3.0; delta_min <- 7/60;
+    vir2 <- 'rsv'; debug_bool <- FALSE; Ri_max1 <- 3.0; Ri_max2 <- 3.0; d2_max <- 10.0
     source('src/resp_interaction_model.R')
     
     x0s <- pars_list_temp[[i]] %>% select(all_of(estpars))
@@ -218,9 +218,6 @@ p2 <- ggplot(data = pars_df, aes(x = year, y = value, group = paste(virus_pair, 
   geom_boxplot() + theme_classic() +
   facet_wrap(~ param, scales = 'free_y') +
   labs(x = 'Season', y = 'Parameter Value') +
-  # scale_x_continuous(breaks = 2006:2014,
-  #                    labels = paste0('s', str_pad(c(5:13), width = 2, side = 'left', pad = '0'),
-  #                                    '-', str_pad(c(6:14), width = 2, side = 'left', pad = '0'))) +
   scale_fill_brewer(palette = 'Set2')
 
 # Plot overall fit range across all years, by virus:

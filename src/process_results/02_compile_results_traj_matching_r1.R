@@ -26,7 +26,7 @@ debug_bool <- FALSE
 
 Ri_max1 <- 3.0
 Ri_max2 <- 3.0
-delta_min <- 7 / 60.0
+d2_max <- 10.0
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -37,15 +37,11 @@ res_files <- list.files(path = 'results', pattern = 'res_', full.names = TRUE)
 
 # Get virus/season for each result:
 which_flu <- str_split(res_files, pattern = '_') %>%
-  lapply(function(ix) {
-    ix[3]
-  }) %>%
+  map(~ .x[3]) %>%
   unlist()
 which_flu <- paste('flu', which_flu, sep = '_')
 yrs <- str_split(res_files, pattern = '_') %>%
-  lapply(function(ix) {
-    ix[5]
-  }) %>%
+  map(~ .x[5]) %>%
   unlist()
 
 # Read in all results:
@@ -61,12 +57,14 @@ pars_df <- lapply(res_full, getElement, 'estpars') %>%
   bind_rows() %>%
   bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
               unlist()) %>%
+  bind_cols('message' = lapply(res_full, getElement, 'message') %>%
+              unlist()) %>%
   mutate(virus1 = which_flu,
          year = yrs) %>%
-  select(virus1:year, Ri1:loglik)
+  select(virus1:year, Ri1:message)
 
 expect_true(nrow(pars_df) == length(res_files))
-expect_true(ncol(pars_df) == (length(estpars) + 3))
+expect_true(ncol(pars_df) == (length(estpars) + 4))
 expect_true(all(is.finite(pars_df$loglik)))
 
 # Write results to file:
@@ -104,6 +102,11 @@ for (vir1 in unique(which_flu)) {
       print(table(pars_temp$virus1))
       print(table(pars_temp$year))
       
+      # Remove fits that didn't converge:
+      pars_temp <- pars_temp %>%
+        filter(!str_detect(message, 'maxtime')) %>%
+        select(-message)
+      
       # Check that no model states go below zero:
       source('src/resp_interaction_model.R')
       
@@ -122,18 +125,6 @@ for (vir1 in unique(which_flu)) {
         pull(.id) %>%
         unique() %>%
         as.integer()
-      
-      # rows_to_remove <- c()
-      # for (i in 1:nrow(pars_temp)) {
-      #   coef(resp_mod, estpars) <- pars_temp[i, estpars]
-      #   traj_temp <- trajectory(resp_mod, format = 'data.frame') %>%
-      #     select(!(H1_tot:H2_tot)) %>%
-      #     pivot_longer(X_SS:H2,
-      #                  names_to = 'state')
-      #   if (any(traj_temp$value < 0)) {
-      #     rows_to_remove <- c(rows_to_remove, i)
-      #   }
-      # }
       
       # Remove parameter sets that go negative:
       nrow_check <- nrow(pars_temp) - length(rows_to_remove)
@@ -228,12 +219,6 @@ for (vir1 in unique(which_flu)) {
       nas_in_ll <- slices %>%
         filter(is.na(ll)) %>%
         mutate(init_sum = I10 + I20 + R10 + R20 + R120)
-      
-      # init_sums <- slices %>%
-      #   filter(is.na(ll)) %>%
-      #   mutate(init_sum = I10 + I20 + R10 + R20 + R120) %>%
-      #   pull(init_sum)
-      # expect_true(all(init_sums > 1))
       
       if (fit_shared) {
         expect_true(all(nas_in_ll$init_sum > 1.0 | nas_in_ll$rho1 > 1.0 | nas_in_ll$rho2 > 1.0 |

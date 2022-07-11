@@ -13,24 +13,17 @@ library(gridExtra)
 source('src/functions/functions_flu_RSV.R')
 source('src/functions/test_code.R')
 
-# Set early start value if it doesn't exist:
-if (!exists('early_start_val')) {
-  early_start_val <- FALSE
-}
-
 # Set lag_val if it doesn't exist:
 if (!exists('lag_val')) {
   lag_val <- 0
 }
-print(lag_val)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load and format data
 
 # Read in data:
-hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')
-# fr_dat <- read_rds('data/formatted/GROG_pop_vir_ari_dat_2003-4_2013-14.rds')
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
 
 # Get data of interest:
 dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
@@ -51,12 +44,6 @@ dat_pomp <- dat_pomp %>%
   select(time:pop, temp, ah, rh)
 expect_true(nrow(dat_pomp) == nrow_check)
 rm(dat_clim)
-
-# # Format data:
-# formatted_dat <- prepare_data('flu_A', vir2, 2006, fr_dat, early_start = early_start_val)
-# dat_full <- formatted_dat[[1]]
-# dat_pomp <- formatted_dat[[2]]
-# rm(fr_dat, formatted_dat)
 
 # If no data for this season, skip:
 if (nrow(dat_pomp) > 0) {
@@ -82,24 +69,6 @@ if (nrow(dat_pomp) > 0) {
       theme_classic()
     print(p2)
   }
-  
-  # if(debug_bool) {
-  #   # Plot ARI incidence rate (based on total or effective pop size) 
-  #   p1 <- ggplot(data = dat_full %>% pivot_longer(cols = c("i_ARI", "i_ARI_wrong"), names_to = "var", values_to = "val"), 
-  #                mapping = aes(x = week_date, y = 100 * val, color = var)) + 
-  #     geom_line() + 
-  #     labs(x = "Time (weeks)", y = "ARI incidence rate (per week per 100)") +
-  #     theme_classic()
-  #   print(p1)
-  #   
-  #   # Plot positivity fraction
-  #   p2 <- ggplot(data = dat_full, 
-  #                mapping = aes(x = week_date, y = n_pos / n_samp, color = virus)) + 
-  #     geom_line() + 
-  #     labs(x = "Time (weeks)", y = "Positivity fraction") +
-  #     theme_classic()
-  #   print(p2)
-  # }
   
   # ---------------------------------------------------------------------------------------------------------------------
   
