@@ -113,7 +113,7 @@ for (yr_index in 1:length(seasons)) {
   }
   
   # Load and format necessary data --------------------------------------------
-  hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')$h1_rsv %>%
+  hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv %>%
     filter(season == yr)
   
   dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
@@ -377,7 +377,7 @@ for (yr_index in 1:length(seasons)) {
 hk_dat <- NULL
 for (yr in seasons) {
   
-  hk_dat_temp <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')$h1_rsv %>%
+  hk_dat_temp <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv %>%
     filter(season == yr) %>%
     select(time, season, n_P1:n_P2)
   hk_dat <- bind_rows(hk_dat, hk_dat_temp)
