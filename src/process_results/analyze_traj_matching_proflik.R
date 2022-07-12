@@ -34,12 +34,14 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
     select(all_of(shared_estpars)) %>%
     bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
                 unlist()) %>%
+    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
+                unlist()) %>%
     bind_cols(map_chr(str_split(res_files, '_'), 5),
               map_chr(str_split(res_files, '_'), 7),
               map_chr(str_split(map_chr(str_split(res_files, '_'), 8), fixed('.')), 1)) %>%
-    rename(vir1 = '...13',
-           profpar = '...14',
-           run = '...15') %>%
+    rename(vir1 = '...14',
+           profpar = '...15',
+           run = '...16') %>%
     mutate(profpar = as.numeric(profpar),
            run = as.numeric(run),
            vir1 = if_else(vir1 == 'b', 'B', 'H1'),
@@ -48,6 +50,10 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
     arrange(vir1, profpar, run)
   expect_true(nrow(res_temp) == length(res_files))
   expect_true(all(is.finite(res_temp$loglik)))
+  
+  res_temp <- res_temp %>%
+    filter(!str_detect(message, 'maxtime')) %>%
+    select(-message)
   
   # Set profpar to correct values:
   if (prof_par == 'delta1') {
@@ -87,8 +93,8 @@ res_thetalambda2 <- load_and_format_proflik_results(filepath = 'results/prof_lik
                                                     prof_par = 'theta_lambda2',
                                                     shared_estpars = shared_estpars)
 res_delta1 <- load_and_format_proflik_results(filepath = 'results/prof_lik_delta1/',
-                                             prof_par = 'delta1',
-                                             shared_estpars = shared_estpars)
+                                              prof_par = 'delta1',
+                                              shared_estpars = shared_estpars)
 res_d2 <- load_and_format_proflik_results(filepath = 'results/prof_lik_d2/',
                                           prof_par = 'd2',
                                           shared_estpars = shared_estpars)
@@ -151,6 +157,66 @@ plot_list_zoom <- lapply(1:length(res_list_top), function(ix) {
     geom_hline(color = 'red', aes(yintercept = ci)) +
     labs(x = names(res_list_top)[ix], y = 'Log Likelihood')
 })
+
+p1 <- ggplot(res_list_top[[1]] %>%
+               filter(vir1 == 'H1') %>%
+               filter(loglik > (max(loglik) - 100)),
+             aes(x = profpar, y = loglik)) +
+  geom_point() + theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12)) +
+  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
+  geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
+  labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood') +
+  scale_x_continuous(n.breaks = 10)
+p2 <- ggplot(res_list_top[[3]] %>%
+               filter(vir1 == 'H1') %>%
+               filter(loglik > (max(loglik) - 100)),
+             aes(x = profpar, y = loglik)) +
+  geom_point() + theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12)) +
+  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
+  geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
+  labs(x = expression(7/delta), y = 'Log-Likelihood') +
+  scale_x_continuous(n.breaks = 5)
+p3 <- ggplot(res_list_top[[2]] %>%
+               filter(vir1 == 'H1') %>%
+               filter(loglik > (max(loglik) - 100)),
+             aes(x = profpar, y = loglik)) +
+  geom_point() + theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12)) +
+  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
+  geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
+  labs(x = bquote(theta[lambda*2]), y = 'Log-Likelihood') +
+  scale_x_continuous(n.breaks = 5)
+p4 <- ggplot(res_list_top[[4]] %>%
+               filter(vir1 == 'H1') %>%
+               filter(loglik > (max(loglik) - 100)),
+             aes(x = profpar, y = loglik)) +
+  geom_point() + theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12)) +
+  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
+  geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
+  labs(x = 'd2', y = 'Log-Likelihood') +
+  scale_x_continuous(n.breaks = 10)
+fig <- (p1 + p2) / (p3 + p4)
+fig
+ggsave('results/plots/profile_likelihoods.svg', fig, width = 11.5, height = 7)
+
+pdf('results/plots/profile_likelihoods.pdf', width = 11.5, height = 7)
+print(fig)
+dev.off()
+
+fig2 <- p1 + p2
+fig2
+ggsave('results/plots/profile_likelihoods_flu-on-rsv-only.svg', fig2, width = 11.5, height = 4.25)
+
+pdf('results/plots/profile_likelihoods_flu-on-rsv-only.pdf', width = 11.5, height = 4.25)
+print(fig2)
+dev.off()
 
 # ---------------------------------------------------------------------------------------------------------------------
 
