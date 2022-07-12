@@ -335,7 +335,45 @@ pl <- ggplot(data = res_combined_long,
   labs(x = 'Time (Weeks)', y = '# of Cases', color = 'Scenario')
 print(pl)
 
-# Compare to observed data:
+# Compare to observed data, synthetic data from homogeneous mixing model ------
+res_homogeneous <- NULL
+for (yr_index in 1:length(seasons)) {
+  
+  # Get season:
+  yr <- seasons[yr_index]
+  print(yr)
+  
+  # Get season-specific parameters --------------------------------------------
+  mle <- read_rds('results/MLEs_flu_h1.rds')
+  fit_params <- mle[1, ] %>%
+    select(rho1:eta_ah2, contains(yr)) %>%
+    rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
+    unlist()
+  
+  # Create pomp object --------------------------------------------------------
+  vir1 <- 'flu_h1'; vir2 <- 'rsv'
+  Ri_max1 <- 3.0; Ri_max2 <- 2.0; d2_max <- 10.0
+  source('src/resp_interaction_model.R')
+  
+  # Set parameters
+  coef(resp_mod, names(fit_params)) <- fit_params
+  
+  # Run simulation ------------------------------------------------------------
+  sim <- simulate(object = resp_mod,
+                  format = 'data.frame') %>%
+    select(time, n_P1:n_P2)
+  
+  sim_long <- sim %>%
+    pivot_longer(n_P1:n_P2,
+                 names_to = 'virus',
+                 values_to = 'synth_homogeneous') %>%
+    mutate(season = yr,
+           virus = if_else(virus == 'n_P1', 'Influenza', 'RSV'))
+  
+  res_homogeneous <- bind_rows(res_homogeneous, sim_long)
+  
+}
+
 hk_dat <- NULL
 for (yr in seasons) {
   
@@ -361,12 +399,15 @@ res_combined_long <- res_combined %>%
 
 res_combined_long <- res_combined_long %>%
   inner_join(hk_dat_long,
+             by = c('time', 'season', 'virus')) %>%
+  inner_join(res_homogeneous,
              by = c('time', 'season', 'virus'))
 
 pl <- ggplot(data = res_combined_long,
              aes(x = time, color = virus)) +
   geom_point(aes(y = obs)) +
   geom_line(aes(y = synth)) +
+  geom_line(aes(y = synth_homogeneous), lty = 2) +
   facet_wrap(~ season, scale = 'free') +
   theme_classic() +
   scale_color_brewer(palette = 'Set1') +
