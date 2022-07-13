@@ -71,9 +71,9 @@ load_and_format_mega_results <- function(filepath, method) {
 }
 
 # Read in results:
-res_h1 <- load_and_format_mega_results('results/round2_1_fluH1_FULL/', method) %>%
+res_h1 <- load_and_format_mega_results('results/round2_4_fluH1_FULL/', method) %>%
   select(-loglik)
-res_b <- load_and_format_mega_results('results/round2_1_fluB_FULL/', method) %>%
+res_b <- load_and_format_mega_results('results/round2_3_fluB_FULL/', method) %>%
   select(-loglik)
 
 # Get minimum and maximum start values:

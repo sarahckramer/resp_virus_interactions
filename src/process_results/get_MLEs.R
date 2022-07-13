@@ -48,9 +48,9 @@ load_and_format_mega_results <- function(filepath) {
 }
 
 # Get MLEs:
-res_h1 <- load_and_format_mega_results('results/round2_2_fluH1_FULL/') %>%
+res_h1 <- load_and_format_mega_results('results/round2_4_fluH1_FULL/') %>%
   select(-loglik)
-res_b <- load_and_format_mega_results('results/round2_2_fluB_FULL/') %>%
+res_b <- load_and_format_mega_results('results/round2_3_fluB_FULL/') %>%
   select(-loglik)
 
 # Save MLEs:

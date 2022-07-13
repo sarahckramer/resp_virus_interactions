@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Specify location of results to check:
-res_loc <- 'results/round2_1_fluB_FULL/'
+res_loc <- 'results/round2_4_fluH1_FULL/'
 
 # Check for missing results files:
 res_files <- list.files(path = res_loc, full.names = TRUE)
