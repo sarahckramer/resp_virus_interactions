@@ -43,7 +43,7 @@ print(lag_val)
 # Load and format data
 
 # Read in data:
-hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
 
 # Get data of interest:
 dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
@@ -160,12 +160,12 @@ if (nrow(dat_pomp) > 0) {
   
   if (exists('model_params')) {
     
-    model_params <- c(model_params, 0.1, 0.6, 0.2)
+    model_params <- c(model_params, 0.1, 0.8, 0.2)
     names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'vacc_eff', 'p_vacc')
     
   } else {
     
-    model_params <- c(0.1, 0.6, 0.2)
+    model_params <- c(0.1, 0.8, 0.2)
     names(model_params) <- c('theta_lambda_vacc', 'vacc_eff', 'p_vacc')
     
   }
@@ -228,7 +228,7 @@ if (nrow(dat_pomp) > 0) {
   }
   
   # # Vaccine affects flu, but not RSV:
-  # model_params['vacc_eff', ] <- 0.6
+  # model_params['vacc_eff', ] <- 0.8
   # model_params['theta_lambda_vacc', ] <- 1.0
   # check_independent_dynamics_VACC(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   # t_vacc <- 0
@@ -240,7 +240,7 @@ if (nrow(dat_pomp) > 0) {
   # check_independent_dynamics_VACC(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   # 
   # # Vaccine affects both:
-  # model_params['vacc_eff', ] <- 0.6
+  # model_params['vacc_eff', ] <- 0.8
   # model_params['theta_lambda_vacc', ] <- 0.1
   # check_independent_dynamics_VACC(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   # 
@@ -258,10 +258,14 @@ if (nrow(dat_pomp) > 0) {
   # Check that only flu impacted if vaccine only affects flu:
   t_vacc <- 0
   model_params <- parmat(params = coef(resp_mod), nrep = 2)
-  model_params['vacc_eff', ] <- 0.6
+  model_params['vacc_eff', ] <- 0.8
   model_params['p_vacc', ] <- c(0.0, 0.2)
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
+  
+  if (exists('mle') & yr == 's13-14') {
+    model_params['R20', ] <- round(mle$`s13-14_R20`, 7)
+  }
   
   p7 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   if (debug_bool) print(p7)
@@ -277,10 +281,6 @@ if (nrow(dat_pomp) > 0) {
   model_params['p_vacc', ] <- c(0.0, 0.2)
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
-  
-  if (exists('mle') & yr == 's16-17') {
-    model_params['R10', ] <- round(mle$`s16-17_R10`, 7)
-  }
   
   p9 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   if (debug_bool) print(p9)

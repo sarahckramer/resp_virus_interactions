@@ -38,7 +38,7 @@ source('src/vaccination_simulation_study/functions_simulation_study.R')
 mle <- read_rds('results/MLEs_flu_h1.rds')[1, ]
 
 # Get infection data:
-hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak_ALT_leadNAs.rds')$h1_rsv
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv
 start_week <- 40
 
 hk_dat <- hk_dat %>%

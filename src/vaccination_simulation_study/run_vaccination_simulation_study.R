@@ -9,11 +9,11 @@ library(tidyverse)
 library(patchwork)
 
 # Set vaccination coverage levels and time points:
-vacc_cov_vec <- seq(0.1, 1.0, by = 0.1) # seq(0.05, 1.0, by = 0.05)
-vacc_time_vec <- seq(0, 52, by = 2) # seq(0, 52, by = 1)
+vacc_cov_vec <- seq(0.05, 1.0, by = 0.05) # seq(0.1, 1.0, by = 0.1)
+vacc_time_vec <- seq(0, 52, by = 1) # seq(0, 52, by = 2)
 
 # Set vaccination efficacy against flu:
-vacc_eff <- 0.6
+vacc_eff <- 0.8
 
 # Set parameters for run:
 vir1 <- 'flu_h1'
@@ -112,11 +112,11 @@ for (yr_index in 1:length(seasons)) {
 }
 
 # Read in all simulation results:
-file_list <- list.files('results/vaccine_simulation_study/simulations/run_initial_hk/', pattern = 'sim', full.names = TRUE)
+file_list <- list.files('results/vaccine_simulation_study/simulations/run_hk/', pattern = 'sim', full.names = TRUE)
 
 res_list <- vector('list', length(file_list))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 72, 77))
+  res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 64, 69))
 }
 rm(i)
 
@@ -152,7 +152,7 @@ res_metrics <- res_metrics %>%
   select(!c(pt1:pt2))
 
 # # Write results to file:
-# write_rds(res_metrics, 'results/res_MET_simulation_study_TEMP.rds')
+# write_rds(res_metrics, 'results/vaccine_simulation_study/res_MET_simulation_study.rds')
 
 # Plot results:
 res_metrics <- res_metrics %>%
@@ -182,6 +182,8 @@ p_heat_ar <- ggplot(data = res_metrics_AVG, aes(x = vacc_time, y = vacc_cov, fil
        fill = 'Impact')
 
 print(p_lines_ar / p_heat_ar)
+p_hk <- p_lines_ar / p_heat_ar
+ggsave('results/vaccine_simulation_study/plots/ar_impact_AVG.svg', p_hk, width = 9.5, height = 6)
 
 # Plot results by individual season:
 pdf('results/vaccine_simulation_study/plots/vacc_impact_AR.pdf',
