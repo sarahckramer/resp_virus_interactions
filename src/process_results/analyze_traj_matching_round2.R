@@ -93,13 +93,13 @@ shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
 # H1, using round 1 CIs, all estpars:
-res_h1_round1CI <- load_and_format_mega_results(filepath = 'results/round2_2_fluH1_FULL/',
+res_h1_round1CI <- load_and_format_mega_results(filepath = 'results/round2_4_fluH1_FULL/',
                                                 shared_estpars = shared_estpars,
                                                 unit_estpars = unit_estpars,
                                                 run_name = 'H1_round1CIs_FULL')
 
 # B, using round 1 CIs, all estpars:
-res_b_round1CI <- load_and_format_mega_results(filepath = 'results/round2_2_fluB_FULL/',
+res_b_round1CI <- load_and_format_mega_results(filepath = 'results/round2_3_fluB_FULL/',
                                                shared_estpars = shared_estpars,
                                                unit_estpars = unit_estpars,
                                                run_name = 'B_round1CIs_FULL')
