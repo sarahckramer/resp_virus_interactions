@@ -178,10 +178,14 @@ ci_res <- ci_res %>%
 write_csv(ci_res, file = 'results/99CI_from_boostrapping_HPDI.csv')
 
 # Read in MLEs and add to data frame:
-mle <- read_csv('results/mle.csv')
-mle$vir1 = c('flu_h1', 'flu_b')
-mle <- mle %>%
-  pivot_longer(cols = !vir1, names_to = 'parameter', values_to = 'mle')
+mle_h1 <- read_rds('results/MLEs_flu_h1.rds')
+mle_b <- read_rds('results/MLEs_flu_b.rds')
+
+mle <- bind_rows(mle_h1[1, ], mle_b[1, ]) %>%
+  mutate(vir1 = c('flu_h1', 'flu_b')) %>%
+  pivot_longer(cols = !vir1,
+               names_to = 'parameter',
+               values_to = 'mle')
 
 ci_res <- ci_res %>%
   left_join(mle, by = c('vir1', 'parameter')) %>%
@@ -208,8 +212,8 @@ gtsave(table_h1, filename = 'results/plots/table_CIs_h1.html')
 gtsave(table_b, filename = 'results/plots/table_CIs_b.html')
 
 # Check whether MLEs fall within CIs:
-ci_res %>% filter(mle <= lower) # s18-19_R10 (B)
-ci_res %>% filter(mle >= upper) # s15-16_R20 (B), s18-19_R120 (B)
+ci_res %>% filter(mle <= lower) # several season-specific paramters for B (although they are close to the boundaries)
+ci_res %>% filter(mle >= upper)
 
 # Plot range of fit values for each parameter:
 res_df_h1_NOSHARED <- res_df_h1_long %>%

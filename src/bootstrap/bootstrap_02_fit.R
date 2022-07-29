@@ -247,9 +247,9 @@ estpars <- c(shared_estpars, unit_sp_estpars)
 
 # Get start ranges for all parameters:
 if (vir1 == 'flu_h1') {
-  start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_H1.rds')
+  start_range <- read_rds('results/round2_cis/round2CI_startvals_H1.rds')
 } else if (vir1 == 'flu_b') {
-  start_range <- read_rds('results/round2_cis/round2CI_startvals_PROF_B.rds')
+  start_range <- read_rds('results/round2_cis/round2CI_startvals_B.rds')
 } else {
   stop('Unknown vir1!')
 }
