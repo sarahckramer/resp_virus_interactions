@@ -33,18 +33,37 @@ check_correct_N_CONST <- function(pomp_object, true_n, n_sim = 10) {
   # Function to check that deterministic and stochastic simulations maintain correct N (when pop size constant)
   # params pomp_object: The pomp model object to be checked
   # params true_n: The expected population size
-  # params n_sim: The number of stochastic simulations to run
+  # params n_sim: The number of stochastic simulations to run; if 0, don't run stochastic model
+  
   sim_determ <- trajectory(object = pomp_object, format = 'data.frame') %>%
     rowwise() %>%
-    mutate(Ncheck = sum(c_across(X_SS:X_RR)),
+    mutate(Ncheck = sum(c_across(contains('X') | contains('V'))),
            Ntrue = true_n)
-  sim_stoch <- simulate(object = pomp_object, nsim = n_sim, format = 'data.frame') %>%
-    rowwise() %>%
-    mutate(Ncheck = sum(c_across(X_SS:X_RR)),
-           Ntrue = true_n)
-  
   expect_true(all.equal(sim_determ$Ncheck, sim_determ$Ntrue))
-  expect_true(all.equal(sim_stoch$Ncheck, sim_stoch$Ntrue))
+  
+  if (n_sim > 0) {
+    sim_stoch <- simulate(object = pomp_object, nsim = n_sim, format = 'data.frame') %>%
+      rowwise() %>%
+      mutate(Ncheck = sum(c_across(X_SS:X_RR)),
+             Ntrue = true_n)
+    expect_true(all.equal(sim_stoch$Ncheck, sim_stoch$Ntrue))
+  }
+  
+}
+
+check_correct_N_CONST_VACC <- function(sim_res, true_n) {
+  # Function to check that deterministic simulations maintain correct N in the presence of vaccination (when pop size constant)
+  # params sim_res: The deterministic simulation results from a single run of the model with vaccination
+  # params true_n: The expected population size
+  
+  check_n <- sim_res %>%
+    rowwise() %>%
+    mutate(Ncheck = round(sum(c_across(contains('X') | contains('V'))), 6)) %>%
+    pull(Ncheck) %>%
+    unique()
+  expect_true(length(check_n) == 1)
+  expect_true(check_n == true_n)
+  
 }
 
 check_obs_lessthan_samples <- function(pomp_object, n_sim = 10) {
@@ -146,4 +165,110 @@ quick_explore_interaction <- function(pomp_object, int_vals, n_sim = 10) {
   }
   
   return(p_list)
+}
+
+
+check_independent_dynamics_VACC <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) {
+  # Function to check that, when the vaccine has no interaction effect, virus dynamics are independent
+  # param dat: Virological, ARI, and covariate data (tibble)
+  # param t_vacc: The week at which to vaccinate some proportion of the susceptible population (numeric)
+  # param mod_parms: Either a named vector or a matrix (created using parmat) of parameter values for model runs
+  # param Ri1_max: Upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
+  # param Ri2_max: Upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
+  # param d2_max: Upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
+  # param debug_bool: Should debugging info be printed? (boolean)
+  # returns: Plot of flu and RSV when modeled together and in isolation
+  
+  sim_determ <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
+    pivot_longer(cols = -c('time', '.id'), names_to = 'var_nm', values_to = 'val') %>%
+    mutate(var_type = if_else(str_detect(var_nm, 'X_'), 'state', 'accum')) %>%
+    filter(var_nm %in% c('H1', 'H2'))
+  
+  expect_true(all.equal(sim_determ$val[sim_determ$.id == 1 & sim_determ$var_nm == 'H1'],
+                        sim_determ$val[sim_determ$.id == 2 & sim_determ$var_nm == 'H1']))
+  expect_true(all.equal(sim_determ$val[sim_determ$.id == 1 & sim_determ$var_nm == 'H2'],
+                        sim_determ$val[sim_determ$.id == 3 & sim_determ$var_nm == 'H2']))
+  
+  # print(all.equal(sim_determ$val[sim_determ$.id == 1 & sim_determ$var_nm == 'H1'],
+  #                 sim_determ$val[sim_determ$.id == 2 & sim_determ$var_nm == 'H1']))
+  # print(all.equal(sim_determ$val[sim_determ$.id == 1 & sim_determ$var_nm == 'H2'],
+  #                 sim_determ$val[sim_determ$.id == 3 & sim_determ$var_nm == 'H2']))
+  
+  p_temp <- ggplot(data = sim_determ %>% filter(.id == 1), aes(x = time, y = 100 * val)) +
+    geom_point(aes(color = var_nm)) +
+    geom_line(data = sim_determ %>% filter(.id == 2, var_nm == 'H1'), color = 'pink') +
+    geom_line(data = sim_determ %>% filter(.id == 3, var_nm == 'H2'), color = 'purple') +
+    labs(x = 'Time (Weeks)', y = 'Incidence (%)') +
+    theme_classic()
+  
+  return(p_temp)
+  
+  # mod_parms <- c(mod_parms, 1e-5, 0)
+  # names(mod_parms)[4:5] <- c('I10', 'I20')
+  # sim_determ_FLU <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
+  #   dplyr::select(time, H1:H2) %>%
+  #   pivot_longer(H1:H2, names_to = 'var_nm', values_to = 'val') %>%
+  #   filter(var_nm == 'H1')
+  # 
+  # mod_parms['I10'] <- 0
+  # mod_parms['I20'] <- 1e-5
+  # sim_determ_RSV <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
+  #   dplyr::select(time, H1:H2) %>%
+  #   pivot_longer(H1:H2, names_to = 'var_nm', values_to = 'val') %>%
+  #   filter(var_nm == 'H2')
+  # 
+  # all.equal(sim_determ$val[sim_determ$var_nm == 'H1'], sim_determ_FLU$val) %>% print()
+  # all.equal(sim_determ$val[sim_determ$var_nm == 'H2'], sim_determ_RSV$val) %>% print()
+  # 
+  # p_temp <- ggplot(data = sim_determ, aes(x = time, y = 100 * val)) +
+  #   geom_point(aes(color = var_nm)) +
+  #   geom_line(data = sim_determ_FLU, color = 'pink') +
+  #   geom_line(data = sim_determ_RSV, color = 'purple') +
+  #   labs(x = 'Time (Weeks)', y = 'Incidence (%)') +
+  #   theme_classic()
+  # 
+  # return(p_temp)
+  
+}
+
+
+check_single_virus_impact <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) {
+  # Function to check whether a vaccine impacting only flu/RSV actually only impacts the outbreak of flu/RSV
+  # param dat: Virological, ARI, and covariate data (tibble)
+  # param t_vacc: The week at which to vaccinate some proportion of the susceptible population (numeric)
+  # param mod_parms: Either a named vector or a matrix (created using parmat) of parameter values for model runs
+  # param Ri1_max: Upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
+  # param Ri2_max: Upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
+  # param d2_max: Upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
+  # param debug_bool: Should debugging info be printed? (boolean)
+  # returns: Plot of flu and RSV in populations with and without vaccination
+  
+  sim_determ <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
+    pivot_longer(cols = -c('time', '.id'), names_to = 'var_nm', values_to = 'val') %>%
+    mutate(var_type = if_else(str_detect(var_nm, 'X_'), 'state', 'accum')) %>%
+    filter(var_nm %in% c('H1', 'H2'))
+  
+  if (unique(mod_parms['vacc_eff', ]) > 0) {
+    
+    expect_true(!all(sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 1] ==
+                       sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 2]))
+    expect_true(all.equal(sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 1],
+                          sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 2]))
+    
+  } else {
+    
+    expect_true(all.equal(sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 1],
+                          sim_determ$val[sim_determ$var_nm == 'H1' & sim_determ$.id == 2]))
+    expect_true(!all(sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 1] ==
+                       sim_determ$val[sim_determ$var_nm == 'H2' & sim_determ$.id == 2]))
+    
+  }
+  
+  p_temp <- ggplot(data = sim_determ %>% filter(.id == 1), aes(x = time, y = 100 * val, color = var_nm)) +
+    geom_point() + geom_line(data = sim_determ %>% filter(.id == 2)) +
+    labs(x = 'Time (Weeks)', y = 'Incidence (%)') +
+    theme_classic()
+  
+  return(p_temp)
+  
 }
