@@ -8,8 +8,8 @@
 library(tidyverse)
 
 # Set vaccination coverage levels and time points:
-vacc_cov_vec <- seq(0.05, 1.0, by = 0.05) # seq(0.1, 1.0, by = 0.1)
-vacc_time_vec <- seq(0, 52, by = 1) # seq(0, 52, by = 2)
+vacc_cov_vec <- round(seq(0.05, 1.0, by = 0.05), digits = 2) # seq(0.1, 1.0, by = 0.1)
+vacc_time_vec <- round(seq(0, 52, by = 1)) # seq(0, 52, by = 2)
 
 # Set vaccination efficacy against flu:
 vacc_eff <- 0.8
@@ -51,8 +51,8 @@ model_params <- mle %>%
   rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
   unlist()
 
-model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff, p_vacc)
-names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff', 'p_vacc')
+model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
+names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
 
 resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
                                       Ri1_max = Ri_max1,
@@ -68,6 +68,9 @@ model_params <- parmat(params = coef(resp_mod), nrep = 2)
 # Also run where 1) RSV has no impact on flu, and 2) no flu is circulating:
 # model_params['theta_lambda2', ] <- 1.0
 # model_params['I10', ] <- 0
+
+# Set vaccination coverage:
+model_params['p_vacc', ] <- c(0, p_vacc)
 
 # Initiate results data frame:
 res <- NULL
@@ -168,8 +171,8 @@ model_params <- mle %>%
   unlist()
 model_params[c('Ri1', 'Ri2', 'I10', 'I20')] <- temp_params %>% filter(season == yr) %>% select(Ri1:I20) %>% unlist()
 
-model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff, p_vacc)
-names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff', 'p_vacc')
+model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
+names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
 
 # Get data frame for current season and create pomp model:
 dat_pomp <- hk_dat_USE %>% filter(season == yr)
@@ -184,6 +187,9 @@ resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
 resp_mod <- set_model_parameters(resp_mod, model_params, vaccinate = TRUE)
 
 model_params <- parmat(params = coef(resp_mod), nrep = 2)
+
+# Set vaccination coverage:
+model_params['p_vacc', ] <- c(0, p_vacc)
 
 # Initiate results data frame:
 res <- NULL
