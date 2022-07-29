@@ -140,7 +140,7 @@ for (yr_index in 1:length(seasons)) {
   names(params_test) <- c('Ri1', 'Ri2', 'I10', 'I20')
   params_test$I10 <- exp(params_test$I10)
   params_test$I20 <- exp(params_test$I20)
-
+  
   model_params <- parmat(params = coef(resp_mod), nrep = n_lhs)
   model_params[c('Ri1', 'Ri2', 'I10', 'I20'), ] <- t(params_test)
   
@@ -219,22 +219,18 @@ for (yr_index in 1:length(seasons)) {
   
 }
 
-# print(p_list)
+print(p_list)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Choose "temperate" parameter sets
 
 # Select parameter sets to use (FR climate data):
-res_to_use <- res_list[[3]] %>%
-  filter(.id == 988) %>%
-  mutate(season = seasons[3])
-
-res_to_use <- res_to_use %>%
-  bind_rows(res_list[[1]] %>% filter(.id == 291) %>% mutate(season = seasons[1]),
-            res_list[[2]] %>% filter(.id == 509) %>% mutate(season = seasons[2]),
-            res_list[[4]] %>% filter(.id == 291) %>% mutate(season = seasons[4]), # or 520 - smaller RSV outbreak, but only difference of 5 vs. 7 weeks
-            res_list[[5]] %>% filter(.id == 846) %>% mutate(season = seasons[5])) %>%
+res_to_use <- bind_rows(res_list[[1]] %>% filter(.id == 970) %>% mutate(season = seasons[1]),
+                        res_list[[2]] %>% filter(.id == 509) %>% mutate(season = seasons[2]),
+                        res_list[[3]] %>% filter(.id == 988) %>% mutate(season = seasons[3]),
+                        res_list[[4]] %>% filter(.id == 520) %>% mutate(season = seasons[4]), # or 520 - smaller RSV outbreak, but only difference of 5 vs. 7 weeks
+                        res_list[[5]] %>% filter(.id == 846) %>% mutate(season = seasons[5])) %>%
   arrange(season)
 
 write_csv(res_to_use, file = 'results/vaccine_simulation_study/temperate_params_to_use.csv')
