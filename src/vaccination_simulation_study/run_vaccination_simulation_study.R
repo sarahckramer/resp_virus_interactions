@@ -52,6 +52,8 @@ model_params <- mle %>%
   unlist()
 
 model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
+# model_params <- c(model_params, 1.0, unname(model_params['delta1']), vacc_eff)
+# model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 182, vacc_eff)
 names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
 
 resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
@@ -172,6 +174,8 @@ model_params <- mle %>%
 model_params[c('Ri1', 'Ri2', 'I10', 'I20')] <- temp_params %>% filter(season == yr) %>% select(Ri1:I20) %>% unlist()
 
 model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
+# model_params <- c(model_params, 1.0, unname(model_params['delta1']), vacc_eff)
+# model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 182, vacc_eff)
 names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
 
 # Get data frame for current season and create pomp model:
