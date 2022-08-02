@@ -101,8 +101,8 @@ test_rate_per_pop <- fr_dat %>%
 # Load infection data:
 hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv %>%
   select(time:n_T, GOPC:season) %>%
-  rename('i_ARI' = 'GOPC') %>%
-  mutate(i_ARI = i_ARI / 1000)
+  rename('i_ILI' = 'GOPC') %>%
+  mutate(i_ILI = i_ILI / 1000)
 
 # Get population size by age group:
 age_limits <- c(0, 1, 5, 16, 65) # Age limits for age categories
@@ -120,11 +120,11 @@ rm(age_limits, CM_all)
 
 # Inflate or reduce ILI attack rate based on relative attack rates in France:
 hk_dat <- hk_dat %>%
-  mutate(i_ARI1 = i_ARI * ari_rate_per_pop$i_ARI_rel[1],
-         i_ARI2 = i_ARI * ari_rate_per_pop$i_ARI_rel[1],
-         i_ARI3 = i_ARI * ari_rate_per_pop$i_ARI_rel[2],
-         i_ARI4 = i_ARI * ari_rate_per_pop$i_ARI_rel[3],
-         i_ARI5 = i_ARI * ari_rate_per_pop$i_ARI_rel[4])
+  mutate(i_ILI1 = i_ILI * ari_rate_per_pop$i_ARI_rel[1],
+         i_ILI2 = i_ILI * ari_rate_per_pop$i_ARI_rel[1],
+         i_ILI3 = i_ILI * ari_rate_per_pop$i_ARI_rel[2],
+         i_ILI4 = i_ILI * ari_rate_per_pop$i_ARI_rel[3],
+         i_ILI5 = i_ILI * ari_rate_per_pop$i_ARI_rel[4])
 
 # Alternative scenario: Assign same ARI rate to all age groups:
 # For this, just use the values in column i_ARI
@@ -173,10 +173,10 @@ hk_dat %>%
 
 # Reorder columns:
 hk_dat <- hk_dat %>%
-  select(time:Year, Week:season, i_ARI, n_T, i_ARI1:n_T2_s2)
+  select(time:Year, Week:season, i_ILI, n_T, i_ILI1:n_T2_s2)
 
 # Save covariate "data":
-write_csv(hk_dat, file = 'results/age_structured_SA/synthetic_data/synthetic_covariate_data.csv')
+write_csv(hk_dat, file = 'data/age_structured_SA/synthetic_covariate_data.csv')
 
 # Clean up:
 rm(list = ls())
