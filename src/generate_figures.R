@@ -61,13 +61,15 @@ plot(fig2)
 
 ggsave('results/plots/figures_for_manuscript/Figure2.svg', width = 9.5, height = 6, fig2)
 
-# Figure 3: Plot heatmaps from simulation study
-file_list_hk <- list.files('results/vaccine_simulation_study/simulations/run_initial_hk/', pattern = 'sim', full.names = TRUE)
-file_list_temp <- list.files('results/vaccine_simulation_study/simulations/run_initial_temperate/', pattern = 'sim', full.names = TRUE)
+# Figure 3: Observed vs. simulated cases
+
+# Figure 4: Plot heatmaps from simulation study
+file_list_hk <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'SUBTROPICAL', full.names = TRUE)
+file_list_temp <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'TEMPERATE', full.names = TRUE)
 
 res_list <- vector('list', length(file_list_hk))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_hk[i]) %>% mutate(season = str_sub(file_list_hk[i], 72, 77))
+  res_list[[i]] <- read_rds(file_list_hk[i]) %>% mutate(season = str_sub(file_list_hk[i], 62, 67))
 }
 res_hk <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -75,7 +77,7 @@ res_hk <- bind_rows(res_list) %>%
 
 res_list <- vector('list', length(file_list_temp))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_temp[i]) %>% mutate(season = str_sub(file_list_temp[i], 79, 84))
+  res_list[[i]] <- read_rds(file_list_temp[i]) %>% mutate(season = str_sub(file_list_temp[i], 62, 67))
 }
 
 res_temp <- bind_rows(res_list) %>%
@@ -96,13 +98,16 @@ res_metrics <- res %>%
             ar2_impact = ar2[.id == 2] / ar2[.id == 1]) %>%
   ungroup()
 
+res_metrics <- res_metrics %>%
+  filter(vacc_cov <= 0.60)
+
 res_metrics_AVG <- res_metrics %>%
   group_by(climate, vacc_cov, vacc_time) %>%
   summarise(ar2_impact = median(ar2_impact))
 
 upper_bound_ar <- max(res_metrics_AVG$ar2_impact)
 
-# p3 <- ggplot(data= res_metrics_AVG,
+# p4 <- ggplot(data= res_metrics_AVG,
 #              aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
 #   geom_tile() + facet_wrap(~ climate, ncol = 2) +
 #   theme_classic() + theme(strip.text = element_blank()) +
@@ -110,9 +115,9 @@ upper_bound_ar <- max(res_metrics_AVG$ar2_impact)
 #                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
 #   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
 #   labs(x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'Impact')
-# p3
+# p4
 
-p3a <- ggplot(data= res_metrics_AVG %>% filter(climate == 'temp'),
+p4a <- ggplot(data= res_metrics_AVG %>% filter(climate == 'temp'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -130,7 +135,7 @@ p3a <- ggplot(data= res_metrics_AVG %>% filter(climate == 'temp'),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
   labs(x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'Impact', tag = 'A')
-p3b <- ggplot(data= res_metrics_AVG %>% filter(climate == 'subtrop'),
+p4b <- ggplot(data= res_metrics_AVG %>% filter(climate == 'subtrop'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -147,5 +152,5 @@ p3b <- ggplot(data= res_metrics_AVG %>% filter(climate == 'subtrop'),
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
   labs(x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'Impact', tag = 'B')
 
-fig3 <- grid_arrange_shared_legend(p3a, p3b, ncol = 2, plot = FALSE)
-ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 10, height = 5)
+fig4 <- grid_arrange_shared_legend(p4a, p4b, ncol = 2, plot = FALSE)
+ggsave('results/plots/figures_for_manuscript/Figure4.svg', fig4, width = 10, height = 5)
