@@ -11,7 +11,7 @@ debug_bool <- FALSE
 par(bty = "l", las = 1, lwd = 2)
 print(packageVersion("pomp"))
 
-# Functions:
+# Functions
 
 # Calculate reproduction number using next-generation matrix approach
 Ri_fun <- function(beta, gamma, C_mat, tau_vec, r0_vec, N_vec) {
