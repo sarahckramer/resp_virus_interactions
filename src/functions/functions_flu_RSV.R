@@ -74,7 +74,7 @@ prepare_data <- function(virus1_nm, virus2_nm, epiyear_val, dat, early_start = F
 
 create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.0, debug_bool = F) {
   # Function to create pomp object 
-  # param dat: ARI and virological data (data frame, first time point must be 1) 
+  # param dat: ILI and virological data (data frame, first time point must be 1) 
   # param Ri1_max: upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
   # param Ri2_max: upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
   # param d2_max: upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
@@ -110,7 +110,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
   po <- pomp(data = dat[, c('time', 'n_P1', 'n_P2')],
              times = 'time',
              t0 = 0,
-             covar = covariate_table(dat[, c('time', 'i_ARI', 'n_T', 'temp', 'ah')], times = 'time'),
+             covar = covariate_table(dat[, c('time', 'i_ILI', 'n_T', 'temp', 'ah')], times = 'time'),
              accumvars = c('H1_tot', 'H2_tot', 'H1', 'H2'),
              obsnames = c('n_P1', 'n_P2'),
              statenames = c('X_SS', 'X_IS', 'X_TS', 'X_RS', 
@@ -124,7 +124,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
                             # 'delta', # 1 / average refractory period (assume same duration for flu and RSV)
                             'delta1', 'd2', #'delta2', # 1 / average refractory periods; relative length of refractory period for RSV->flu
                             'theta_lambda1', 'theta_lambda2', # interaction effects on susceptibility to infection
-                            'rho1', 'rho2', # probs. infection leads to ARI consultation
+                            'rho1', 'rho2', # probs. infection leads to ILI consultation
                             'alpha', 'phi', # amplitude and phase of seasonality of all-cause consultations
                             'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
                             'eta_temp1', 'eta_temp2', # temperature forcing on virus 1 and 2
@@ -162,7 +162,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
 
 create_SITRxSITR_mod_VACC <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.0, t0_eff = 0, debug_bool = F) {
   # Function to create pomp object with influenza vaccination
-  # param dat: ARI and virological data (data frame) 
+  # param dat: ILI and virological data (data frame) 
   # param Ri1_max: upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
   # param Ri2_max: upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
   # param d2_max: upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
@@ -199,7 +199,7 @@ create_SITRxSITR_mod_VACC <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max 
   po <- pomp(data = dat[, c('time', 'n_P1', 'n_P2')],
              times = 'time',
              t0 = t0_eff,
-             covar = covariate_table(dat[, c('time', 'i_ARI', 'n_T', 'temp', 'ah')], times = 'time'),
+             covar = covariate_table(dat[, c('time', 'i_ILI', 'n_T', 'temp', 'ah')], times = 'time'),
              accumvars = c('H1', 'H2'),
              obsnames = c('n_P1', 'n_P2'),
              statenames = c('X_SS', 'X_IS', 'X_TS', 'X_RS', 
@@ -213,7 +213,7 @@ create_SITRxSITR_mod_VACC <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max 
                             # 'delta', # 1 / average refractory period (assume same duration for flu and RSV)
                             'delta1', 'd2', #'delta2', # 1 / average refractory periods; relative length of refractory period for RSV->flu
                             'theta_lambda1', 'theta_lambda2', # interaction effects on susceptibility to infection
-                            'rho1', 'rho2', # probs. infection leads to ARI consultation
+                            'rho1', 'rho2', # probs. infection leads to ILI consultation
                             'alpha', 'phi', # amplitude and phase of seasonality of all-cause consultations
                             'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
                             'eta_temp1', 'eta_temp2', # temperature forcing on virus 1 and 2

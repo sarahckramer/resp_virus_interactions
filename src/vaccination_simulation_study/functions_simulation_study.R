@@ -4,7 +4,7 @@
 
 run_simulation_with_vaccination <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) {
   # Function to run deterministic simulations of the SITRxSITR model with instantaneous vaccination at any time point
-  # param dat: Virological, ARI, and covariate data (tibble)
+  # param dat: Virological, ILI, and covariate data (tibble)
   # param t_vacc: The week at which to vaccinate some proportion of the susceptible population (numeric)
   # param mod_parms: Either a named vector or a matrix (created using parmat) of parameter values for model runs
   # param Ri1_max: Upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)

@@ -49,16 +49,16 @@ rm(dat_clim)
 if (nrow(dat_pomp) > 0) {
   
   # Format data:
-  dat_pomp <- dat_pomp %>%
-    rename('i_ARI' = 'GOPC') %>%
-    mutate(i_ARI = i_ARI / 1000)
-  # https://www.censtatd.gov.hk/en/
-  # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
+    dat_pomp <- dat_pomp %>%
+      rename('i_ILI' = 'GOPC') %>%
+      mutate(i_ILI = i_ILI / 1000)
+    # https://www.censtatd.gov.hk/en/
+    # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
   
   # Plot data:
   if (debug_bool) {
     # Plot ILI incidence:
-    p1 <- ggplot(data = dat_pomp, aes(x = time, y = i_ARI)) + geom_line() +
+    p1 <- ggplot(data = dat_pomp, aes(x = time, y = i_ILI)) + geom_line() +
       labs(x = 'Time (Weeks)', y = 'ILI Incidence Rate (per 1000 Consultations)') +
       theme_classic()
     print(p1)

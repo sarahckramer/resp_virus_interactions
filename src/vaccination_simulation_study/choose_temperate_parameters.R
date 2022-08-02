@@ -73,8 +73,8 @@ hk_dat <- hk_dat %>%
   ungroup()
 
 hk_dat <- hk_dat %>%
-  rename('i_ARI' = 'GOPC')# %>%
-# mutate(i_ARI = i_ARI / 1000)
+  rename('i_ILI' = 'GOPC')# %>%
+# mutate(i_ILI = i_ILI / 1000)
 
 # Get climate data:
 # dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')

@@ -170,7 +170,7 @@ quick_explore_interaction <- function(pomp_object, int_vals, n_sim = 10) {
 
 check_independent_dynamics_VACC <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) {
   # Function to check that, when the vaccine has no interaction effect, virus dynamics are independent
-  # param dat: Virological, ARI, and covariate data (tibble)
+  # param dat: Virological, ILI, and covariate data (tibble)
   # param t_vacc: The week at which to vaccinate some proportion of the susceptible population (numeric)
   # param mod_parms: Either a named vector or a matrix (created using parmat) of parameter values for model runs
   # param Ri1_max: Upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
@@ -234,7 +234,7 @@ check_independent_dynamics_VACC <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_
 
 check_single_virus_impact <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) {
   # Function to check whether a vaccine impacting only flu/RSV actually only impacts the outbreak of flu/RSV
-  # param dat: Virological, ARI, and covariate data (tibble)
+  # param dat: Virological, ILI, and covariate data (tibble)
   # param t_vacc: The week at which to vaccinate some proportion of the susceptible population (numeric)
   # param mod_parms: Either a named vector or a matrix (created using parmat) of parameter values for model runs
   # param Ri1_max: Upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
