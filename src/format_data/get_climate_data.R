@@ -15,25 +15,12 @@ library(testthat)
 # Get Hong Kong data:
 dat_hk <- get_GSOD(2012:2019, country = 'HONG KONG SAR CHINA')
 
-# Get station nearest/in Santiago, Chile:
-stat_id_chl <- nearest_stations(LAT = -33.45, LON = -70.67, distance = 5)
-
-# Get Chile data:
-dat_chile <- get_GSOD(2006:2019, station = stat_id_chl)
-
 # Get French data:
 stat_id_fr <- nearest_stations(LAT = 48.85, LON = 2.35, distance = 13)
 dat_fr <- get_GSOD(2012:2019, station = stat_id_fr)
 
 # Format data from all regions and calculate AH in g/m3:
 dat_hk <- dat_hk %>%
-  select(NAME, ISO2C, LATITUDE, LONGITUDE, YEARMODA:TEMP, MIN, MAX, RH, PRCP) %>%
-  mutate(ES_CC = 0.611 * exp((2256000 / 461.52) * (1 / 273.15 - 1 / (TEMP + 273.15))),
-         ES_ARM = 0.61094 * exp((17.625 * (TEMP)) / (TEMP + 243.04)),
-         EA = (RH / 100) * ES_ARM,
-         AH = (EA * 1000) * 2.16679 / (TEMP + 273.15)) %>%
-  select(NAME:MAX, AH, RH:PRCP)
-dat_chile <- dat_chile %>%
   select(NAME, ISO2C, LATITUDE, LONGITUDE, YEARMODA:TEMP, MIN, MAX, RH, PRCP) %>%
   mutate(ES_CC = 0.611 * exp((2256000 / 461.52) * (1 / 273.15 - 1 / (TEMP + 273.15))),
          ES_ARM = 0.61094 * exp((17.625 * (TEMP)) / (TEMP + 243.04)),
@@ -59,12 +46,6 @@ dat_hk <- dat_hk %>%
   select(-YEAR_NEW) %>%
   mutate(WEEK = ifelse(YEAR == 2017, WEEK, WEEK + 1)) %>%
   filter(YEAR < 2020 & YEAR >= 2013)
-
-dat_chile <- dat_chile %>%
-  mutate(WEEK = as.numeric(strftime(YEARMODA, format = '%V')),
-         YEAR = ifelse(WEEK == 1 & MONTH == 12, YEAR + 1, YEAR),
-         YEAR = ifelse((WEEK == 52 | WEEK == 53) & MONTH == 1, YEAR - 1, YEAR))
-
 dat_fr <- dat_fr %>%
   mutate(WEEK = as.numeric(strftime(YEARMODA, format = '%U'))) %>%
   group_by(YEAR) %>%
@@ -81,13 +62,6 @@ dat_hk %>%
   group_by(YEAR, WEEK) %>%
   summarise(days_w_data = length(AH)) %>%
   filter(days_w_data != 7)
-
-dat_chile %>%
-  group_by(YEAR, WEEK) %>%
-  summarise(days_w_data = length(AH)) %>%
-  filter(days_w_data != 7)
-# A lot more missingness here - take average of just the available days?
-
 dat_fr %>%
   group_by(YEAR, WEEK) %>%
   summarise(days_w_data = length(AH)) %>%
@@ -100,14 +74,6 @@ dat_hk %>%
   select(YEAR, yearweek) %>%
   unique() %>%
   pull(YEAR) %>% table()
-
-dat_chile %>%
-  mutate(yearweek = paste(YEAR, WEEK, sep = '_')) %>%
-  select(YEAR, yearweek) %>%
-  unique() %>%
-  pull(YEAR) %>% table()
-# 2006 missing 6 weeks; 2009 missing 3; 2010 missing 1; 2016 missing 16 (weeks 36-51); 2017 missing 1
-
 dat_fr %>%
   mutate(yearweek = paste(YEAR, WEEK, sep = '_')) %>%
   select(YEAR, yearweek) %>%
@@ -131,22 +97,6 @@ dat_hk <- dat_hk %>%
          'year' = 'YEAR',
          'week' = 'WEEK') %>%
   ungroup()
-# dat_chile %>%
-#   group_by(NAME, ISO2C, YEAR, WEEK) %>%
-#   summarise(date = min(YEARMODA),
-#             lat = unique(LATITUDE),
-#             long = unique(LONGITUDE),
-#             temp = mean(TEMP),
-#             min_temp = mean(MIN),
-#             max_temp = mean(MAX),
-#             ah = mean(AH),
-#             rh = mean(RH),
-#             prcp = mean(PRCP)) %>%
-#   rename('stn' = 'NAME',
-#          'iso2c' = 'ISO2C',
-#          'year' = 'YEAR',
-#          'week' = 'WEEK') %>%
-#   ungroup()
 dat_fr <- dat_fr %>%
   group_by(NAME, ISO2C, YEAR, WEEK) %>%
   summarise(date = min(YEARMODA),
