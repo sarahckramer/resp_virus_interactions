@@ -11,7 +11,7 @@ debug_bool <- FALSE
 par(bty = "l", las = 1, lwd = 2)
 print(packageVersion("pomp"))
 
-# Functions:
+# Functions
 
 # Calculate reproduction number using next-generation matrix approach
 Ri_fun <- function(beta, gamma, C_mat, tau_vec, r0_vec, N_vec) {
@@ -50,7 +50,7 @@ CM_all <- contact_matrix(survey = get_survey(survey = "https://doi.org/10.5281/z
 CM <- CM_all$matrix
 rownames(CM) <- colnames(CM)
 n_ages <- nrow(CM)
-N <- CM_all$demography$population 
+N <- CM_all$demography$population
 
 # age1 represents the reporter age, age2 the contact age
 CM_long <- CM %>% 
@@ -123,7 +123,7 @@ for (yr_index in 1:length(seasons)) {
                by = c('Year' = 'year',
                       'Week' = 'week')) %>%
     select(time, n_T, GOPC, temp, ah) %>%
-    rename('i_ARI' = 'GOPC')
+    rename('i_ILI' = 'GOPC')
   
   rm(dat_clim)
   
@@ -204,14 +204,14 @@ for (yr_index in 1:length(seasons)) {
   # Generate synthetic observation data ---------------------------------------
   
   # Load and format age-structured covariate "data":
-  hk_dat_covar <- read_csv('results/age_structured_SA/synthetic_data/synthetic_covariate_data.csv') %>%
+  hk_dat_covar <- read_csv('data/age_structured_SA/synthetic_covariate_data.csv') %>%
     filter(season == yr)
   
   hk_dat_covar <- hk_dat_covar %>%
     mutate(n_T3_s2 = ifelse(is.na(n_T1_s2), NA, 0),
            n_T4_s2 = ifelse(is.na(n_T1_s2), NA, 0),
            n_T5_s2 = ifelse(is.na(n_T1_s2), NA, 0)) %>%
-    pivot_longer(i_ARI1:i_ARI5, names_to = 'age1', values_to = 'i_ARI_age') %>%
+    pivot_longer(i_ILI1:i_ILI5, names_to = 'age1', values_to = 'i_ILI_age') %>%
     pivot_longer(n_T1:n_T5, names_to = 'age2', values_to = 'n_T_age') %>%
     pivot_longer(n_T1_s2:n_T5_s2, names_to = 'age3', values_to = 'n_T_s2_age') %>%
     mutate(age1 = str_sub(age1, 6, 6),
@@ -219,7 +219,7 @@ for (yr_index in 1:length(seasons)) {
            age3 = str_sub(age3, 4, 4)) %>%
     filter(age1 == age2, age2 == age3) %>%
     mutate(age = age1) %>%
-    select(time:n_T, age, i_ARI_age, n_T_age, n_T_s2_age) %>%
+    select(time:n_T, age, i_ILI_age, n_T_age, n_T_s2_age) %>%
     arrange(time, age)
   
   # Set season-specific parameter values:
@@ -251,17 +251,17 @@ for (yr_index in 1:length(seasons)) {
     rho1w_list = rho2w_list = vector('list', length = 2)
     
     # Scenario a: Allow for proportionally inflated/decreased ILI attack rates by age group:
-    rho1w_list[[1]] <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ARI_age)
+    rho1w_list[[1]] <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ILI_age)
     rho1w_list[[1]][rho1w_list[[1]] > 1.0 & !is.na(rho1w_list[[1]])] <- 1.0
     
-    rho2w_list[[1]] <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ARI_age)
+    rho2w_list[[1]] <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ILI_age)
     rho2w_list[[1]][rho2w_list[[1]] > 1.0 & !is.na(rho2w_list[[1]])] <- 1.0
     
     # Scenario b: Assume same ILI attack rate in all age groups:
-    rho1w_list[[2]] <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ARI)
+    rho1w_list[[2]] <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ILI)
     rho1w_list[[2]][rho1w_list[[2]] > 1.0 & !is.na(rho1w_list[[2]])] <- 1.0
     
-    rho2w_list[[2]] <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ARI)
+    rho2w_list[[2]] <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ILI)
     rho2w_list[[2]][rho2w_list[[2]] > 1.0 & !is.na(rho2w_list[[2]])] <- 1.0
     
     # Generate synthetic observations:
@@ -305,11 +305,11 @@ for (yr_index in 1:length(seasons)) {
   res_temp_combined <- res_temp_all_ages %>%
     group_by(time, Year, Week, season) %>%
     summarise(across(obs1_s1a:obs2_s2b, sum),
-              i_ARI = unique(i_ARI),
+              i_ILI = unique(i_ILI),
               n_T = unique(n_T),
               pop = sum(pop)) %>%
     ungroup() %>%
-    select(time:season, i_ARI:pop, obs1_s1a:obs2_s2b)
+    select(time:season, i_ILI:pop, obs1_s1a:obs2_s2b)
   res_combined[[yr_index]] <- res_temp_combined
   
 }
@@ -317,6 +317,10 @@ for (yr_index in 1:length(seasons)) {
 # Combine synthetic observations from all seasons:
 res_all_ages <- bind_rows(res_all_ages)
 res_combined <- bind_rows(res_combined)
+
+# Reorder columns:
+res_combined <- res_combined %>%
+  select(time:Year, n_T, i_ILI, Week:season, pop, obs1_s1a:obs2_s2b)
 
 # Visualize "observations" based on different sets of assumptions:
 res_combined_long <- res_combined %>%
@@ -415,8 +419,8 @@ pl <- ggplot(data = res_combined_long,
 print(pl)
 
 # Write to file:
-write_csv(res_all_ages, 'results/age_structured_SA/synthetic_data/synthetic_obs_by_age.csv')
-write_csv(res_combined, 'results/age_structured_SA/synthetic_data/synthetic_obs_combined.csv')
+write_csv(res_all_ages, 'data/age_structured_SA/synthetic_obs_by_age.csv')
+write_csv(res_combined, 'data/age_structured_SA/synthetic_obs_combined.csv')
 
 #######################################################################################################
 
