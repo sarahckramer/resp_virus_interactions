@@ -1,5 +1,6 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Code to fit DETERMINISTIC flu/RSV interaction model
+# Round 2: Fit all seasons simultaneously, constraining shared parameters to be the same for all seasons
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Setup
