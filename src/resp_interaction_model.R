@@ -18,6 +18,11 @@ if (!exists('lag_val')) {
   lag_val <- 0
 }
 
+# Fit to observed data, not synthetic data from age-structured model:
+if (!exists('age_structured')) {
+  age_structured <- FALSE
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load and format data
@@ -29,6 +34,18 @@ hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
 dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
   filter(season == yr)
 nrow_check <- nrow(dat_pomp)
+
+if (age_structured) {
+  
+  dat_pomp <- read_csv('data/age_structured_SA/synthetic_obs_combined.csv') %>%
+    filter(season == yr) %>%
+    select(time:n_T, obs1_s1b, obs2_s1b, i_ILI:pop) %>%
+    rename('n_P1' = 'obs1_s1b',
+           'n_P2' = 'obs2_s1b')
+  nrow_check <- nrow(dat_pomp)
+  print(dat_pomp)
+  
+}
 
 # Get climate data:
 dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
@@ -49,11 +66,13 @@ rm(dat_clim)
 if (nrow(dat_pomp) > 0) {
   
   # Format data:
+  if (!age_structured) {
     dat_pomp <- dat_pomp %>%
       rename('i_ILI' = 'GOPC') %>%
       mutate(i_ILI = i_ILI / 1000)
     # https://www.censtatd.gov.hk/en/
     # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
+  }
   
   # Plot data:
   if (debug_bool) {

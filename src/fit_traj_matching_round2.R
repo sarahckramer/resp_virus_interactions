@@ -66,6 +66,9 @@ if (prof_lik) {
   jobid_orig <- jobid
 }
 
+# # Fit for synthetic data from age-structured model?:
+# age_structured <- TRUE
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Functions

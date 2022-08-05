@@ -43,6 +43,9 @@ Ri_max1 <- 3.0
 Ri_max2 <- 3.0
 d2_max <- 10.0
 
+# # Fit for synthetic data from age-structured model?:
+# age_structured <- TRUE
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Run trajectory matching
