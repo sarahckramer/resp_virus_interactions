@@ -38,7 +38,15 @@ expect_true(all(is.finite(pars_df$loglik)))
 pars_df <- pars_df %>%
   arrange(desc(loglik))
 
-no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = (dim(pars_df)[2] - 1))))
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+shared_estpars <- pars_df %>% select(!contains(unit_estpars) & !'loglik') %>% names()
+expect_equal(length(shared_estpars), 12)
+true_estpars <- c(shared_estpars, unit_estpars)
+
+df_use <- length(shared_estpars) + 5 * length(unit_estpars)
+expect_equal(df_use, 47)
+
+no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
 no_best <- max(no_best, 50)
 
 pars_top <- pars_df[1:no_best, ]
@@ -49,10 +57,6 @@ if (str_detect(res_loc, 'H1')) {
 } else {
   vir1 <- 'flu_b'
 }
-
-unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
-shared_estpars <- pars_top %>% select(!contains(unit_estpars) & !'loglik') %>% names()
-true_estpars <- c(shared_estpars, unit_estpars)
 
 prof_lik <- FALSE
 lag_val <- 0

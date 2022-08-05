@@ -46,7 +46,10 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
   pars_df <- pars_df %>%
     arrange(desc(loglik))
   
-  no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = (dim(pars_df)[2] - 1))))
+  df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
+  expect_equal(df_use, 47)
+  
+  no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   print(no_best)
   # no_best <- max(no_best, 20)
   

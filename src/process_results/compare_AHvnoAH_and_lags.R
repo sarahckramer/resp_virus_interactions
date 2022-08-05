@@ -27,6 +27,8 @@ load_and_format_mega_results <- function(filepath, cond) {
   pars_df <- lapply(res_full, getElement, 'estpars') %>%
     bind_rows() %>%
     bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                unlist()) %>%
+    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist())
   expect_true(nrow(pars_df) == length(res_files))
   expect_true(all(is.finite(pars_df$loglik)))
@@ -35,7 +37,10 @@ load_and_format_mega_results <- function(filepath, cond) {
   pars_df <- pars_df %>%
     arrange(desc(loglik))
   
-  no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = (dim(pars_df)[2] - 1))))
+  df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
+  expect_equal(df_use, 47)
+  
+  no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   pars_top <- pars_df[1:no_best, ]
   
   # Add label:
@@ -91,8 +96,8 @@ p1 <- ggplot(data = res_h1, aes(x = condition, y = loglik, group = condition)) +
 p2 <- ggplot(data = res_b, aes(x = condition, y = loglik, group = condition)) + geom_jitter() + theme_classic()# + geom_boxplot()
 grid.arrange(p1, p2, ncol = 2)
 
-# full is significantly better than noAH if 2 * (loglik_full - loglik_noAH) <= qchisq(p = 0.95, df = 2 - 1)
-qchisq(p = 0.95, df = 2 - 1)
+# full is significantly better than noAH if 2 * (loglik_full - loglik_noAH) <= qchisq(p = 0.95, df = 2)
+qchisq(p = 0.95, df = 2)
 
 2 * (min(res_h1$loglik[res_h1$condition == 'full']) - max(res_h1$loglik[res_h1$condition == 'noAH']))
 2 * (min(res_b$loglik[res_b$condition == 'full']) - max(res_b$loglik[res_b$condition == 'noAH']))

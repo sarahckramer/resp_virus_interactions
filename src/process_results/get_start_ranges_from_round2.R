@@ -35,8 +35,11 @@ load_and_format_mega_results <- function(filepath, method) {
   pars_df <- pars_df %>%
     arrange(desc(loglik))
   
+  df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
+  expect_equal(df_use, 47)
+  
   if (method == 'ci') {
-    no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = (dim(pars_df)[2] - 1))))
+    no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
     # no_best <- max(no_best, 50)
   } else if (method == 'perc') {
     no_best <- 25

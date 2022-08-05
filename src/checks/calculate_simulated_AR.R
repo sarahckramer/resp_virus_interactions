@@ -22,6 +22,8 @@ load_and_format_mega_results <- function(filepath, true_estpars, run_name) {
   pars_df <- lapply(res_full, getElement, 'estpars') %>%
     bind_rows() %>%
     bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                unlist()) %>%
+    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist())
   expect_true(nrow(pars_df) == length(res_files))
   expect_true(all(is.finite(pars_df$loglik)))
@@ -30,7 +32,10 @@ load_and_format_mega_results <- function(filepath, true_estpars, run_name) {
   pars_df <- pars_df %>%
     arrange(desc(loglik))
   
-  no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = (dim(pars_df)[2] - 1))))
+  df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
+  expect_equal(df_use, 47)
+  
+  no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   # no_best <- max(no_best, 50)
   
   pars_top <- pars_df[1:no_best, ]
