@@ -359,9 +359,6 @@ for (yr in seasons) {
   
   if (yr != 's14-15') {
     
-    # cor.test(unlist(res_temp[res_temp$vir1 == 'H1N1' & res_temp$virus == 'Influenza', 'mean']), unlist(res_temp[res_temp$vir1 == 'H1N1' & res_temp$virus == 'Influenza', 'obs']))$estimate ** 2 %>% print()
-    # summary(lm(obs ~ mean, data = res_temp %>% filter(vir1 == 'H1N1', virus == 'Influenza')))$r.squared %>% print()
-    
     r2_a <- res_temp %>%
       filter(vir1 == 'H1N1' & virus == 'Influenza') %>%
       mutate(resid_sq = (obs - mean) ** 2,
@@ -370,15 +367,6 @@ for (yr in seasons) {
                 ss_total = sum(total_sq, na.rm = TRUE)) %>%
       mutate(r2 = 1 - ss_error / ss_total) %>%
       pull(r2)
-    
-    # r2_a <- res_temp %>%
-    #   filter(vir1 == 'H1N1' & virus == 'Influenza') %>%
-    #   mutate(resid = obs - mean) %>%
-    #   summarise(var_resid = var(resid, na.rm = TRUE),
-    #             var_data = var(obs, na.rm = TRUE)) %>%
-    #   mutate(r2 = 1 - var_resid / var_data) %>%
-    #   pull(r2)
-    # print(r2_a)
     
     r2_b <- res_temp %>%
       filter(vir1 == 'H1N1' & virus == 'RSV') %>%
