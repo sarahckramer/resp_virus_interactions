@@ -126,12 +126,12 @@ for (i in 1:length(seasons)) {
     as_tibble() %>%
     mutate(mean1 = rho1_w * n_T,
            mean2 = rho2_w * n_T,
-           median1 = qbinom(p = 0.50, size = n_T, prob = rho1_w),
-           median2 = qbinom(p = 0.50, size = n_T, prob = rho2_w),
-           lower1 = qbinom(p = 0.25, size = n_T, prob = rho1_w),
-           lower2 = qbinom(p = 0.25, size = n_T, prob = rho2_w),
-           upper1 = qbinom(p = 0.75, size = n_T, prob = rho1_w),
-           upper2 = qbinom(p = 0.75, size = n_T, prob = rho2_w)) %>%
+           # median1 = qbinom(p = 0.50, size = n_T, prob = rho1_w),
+           # median2 = qbinom(p = 0.50, size = n_T, prob = rho2_w),
+           lower1 = qbinom(p = 0.025, size = n_T, prob = rho1_w),
+           lower2 = qbinom(p = 0.025, size = n_T, prob = rho2_w),
+           upper1 = qbinom(p = 0.975, size = n_T, prob = rho1_w),
+           upper2 = qbinom(p = 0.975, size = n_T, prob = rho2_w)) %>%
     select(time, season, Year, Week, mean1:upper2)
   
   # Run several stochastic simulations and calculate mean/median/IQR:
@@ -142,12 +142,12 @@ for (i in 1:length(seasons)) {
     group_by(time) %>%
     summarise(mean1_stoch = mean(n_P1),
               mean2_stoch = mean(n_P2),
-              median1_stoch = median(n_P1),
-              median2_stoch = median(n_P2),
-              lower1_stoch = quantile(n_P1, probs = 0.25, na.rm = TRUE),
-              lower2_stoch = quantile(n_P2, probs = 0.25, na.rm = TRUE),
-              upper1_stoch = quantile(n_P1, probs = 0.75, na.rm = TRUE),
-              upper2_stoch = quantile(n_P2, probs = 0.75, na.rm = TRUE))
+              # median1_stoch = median(n_P1),
+              # median2_stoch = median(n_P2),
+              lower1_stoch = quantile(n_P1, probs = 0.025, na.rm = TRUE),
+              lower2_stoch = quantile(n_P2, probs = 0.025, na.rm = TRUE),
+              upper1_stoch = quantile(n_P1, probs = 0.975, na.rm = TRUE),
+              upper2_stoch = quantile(n_P2, probs = 0.975, na.rm = TRUE))
   
   # Combine and store:
   expect_equal(nrow(traj_temp), nrow(sim_temp))
@@ -211,12 +211,12 @@ for (i in 1:length(seasons)) {
     as_tibble() %>%
     mutate(mean1 = rho1_w * n_T,
            mean2 = rho2_w * n_T,
-           median1 = qbinom(p = 0.50, size = n_T, prob = rho1_w),
-           median2 = qbinom(p = 0.50, size = n_T, prob = rho2_w),
-           lower1 = qbinom(p = 0.25, size = n_T, prob = rho1_w),
-           lower2 = qbinom(p = 0.25, size = n_T, prob = rho2_w),
-           upper1 = qbinom(p = 0.75, size = n_T, prob = rho1_w),
-           upper2 = qbinom(p = 0.75, size = n_T, prob = rho2_w)) %>%
+           # median1 = qbinom(p = 0.50, size = n_T, prob = rho1_w),
+           # median2 = qbinom(p = 0.50, size = n_T, prob = rho2_w),
+           lower1 = qbinom(p = 0.025, size = n_T, prob = rho1_w),
+           lower2 = qbinom(p = 0.025, size = n_T, prob = rho2_w),
+           upper1 = qbinom(p = 0.975, size = n_T, prob = rho1_w),
+           upper2 = qbinom(p = 0.975, size = n_T, prob = rho2_w)) %>%
     select(time, season, Year, Week, mean1:upper2)
   
   # Run several stochastic simulations and calculate mean/median/IQR:
@@ -227,12 +227,12 @@ for (i in 1:length(seasons)) {
     group_by(time) %>%
     summarise(mean1_stoch = mean(n_P1),
               mean2_stoch = mean(n_P2),
-              median1_stoch = median(n_P1),
-              median2_stoch = median(n_P2),
-              lower1_stoch = quantile(n_P1, probs = 0.25, na.rm = TRUE),
-              lower2_stoch = quantile(n_P2, probs = 0.25, na.rm = TRUE),
-              upper1_stoch = quantile(n_P1, probs = 0.75, na.rm = TRUE),
-              upper2_stoch = quantile(n_P2, probs = 0.75, na.rm = TRUE))
+              # median1_stoch = median(n_P1),
+              # median2_stoch = median(n_P2),
+              lower1_stoch = quantile(n_P1, probs = 0.025, na.rm = TRUE),
+              lower2_stoch = quantile(n_P2, probs = 0.025, na.rm = TRUE),
+              upper1_stoch = quantile(n_P1, probs = 0.975, na.rm = TRUE),
+              upper2_stoch = quantile(n_P2, probs = 0.975, na.rm = TRUE))
   
   # Combine and store:
   expect_equal(nrow(traj_temp), nrow(sim_temp))
@@ -250,7 +250,7 @@ res_b <- bind_rows(sim_list) %>%
   select(-c(n_T, GOPC, pop)) %>%
   mutate(vir1 = 'B')
 
-# Plot means from binomial distribution (with or without error bars):
+# Plot means and 95% CIs from binomial distribution:
 res <- bind_rows(res_h1, res_b)
 res <- res %>%
   select(time:Week, vir1, mean1:mean2, lower1:upper2, n_P1:n_P2) %>%
@@ -281,81 +281,11 @@ p_legend <- ggplot(data = res, aes(x = mean, y = obs, color = season)) +
 p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
 
 p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
-       aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        # legend.title = element_text(size = 14),
-        # legend.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'A')
-
-p3b <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'RSV'),
-              aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500), limits = c(9, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'B')
-
-p3c <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'Influenza'),
-            aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'C')
-
-p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
-              aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'D')
-
-fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 2, heights = c(15, 1))
-plot(fig3)
-
-ggsave('results/plots/figures_for_manuscript/Figure3_DETERM.svg', fig3, width = 14, height = 8)
-
-p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
   geom_pointrange(size = 0.2) +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
+  # geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
+  #             inherit.aes = FALSE, color = 'black', se = FALSE) +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
@@ -371,25 +301,23 @@ p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
 
 p3b <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'RSV'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
   geom_pointrange(size = 0.2) +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.position = 'none',
         plot.tag = element_text(size = 22),
         plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500), limits = c(9, 500)) +
+  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
   scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
   scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
   labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'B')
 
 p3c <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'Influenza'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
   geom_pointrange(size = 0.2) +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
@@ -403,9 +331,8 @@ p3c <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'Influenza'),
 
 p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
   geom_pointrange(size = 0.2) +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
@@ -420,192 +347,143 @@ p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
 fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 2, heights = c(15, 1))
 plot(fig3)
 
-ggsave('results/plots/figures_for_manuscript/Figure3_DETERM_errorbars.svg', fig3, width = 14, height = 8)
+ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 8)
 
-# For each virus and virus-virus pair, calculate correlation coefficient:
-cor.test(unlist(res[res$vir1 == 'H1N1' & res$virus == 'Influenza', 'mean']), unlist(res[res$vir1 == 'H1N1' & res$virus == 'Influenza', 'obs']))
-cor.test(unlist(res[res$vir1 == 'H1N1' & res$virus == 'RSV', 'mean']), unlist(res[res$vir1 == 'H1N1' & res$virus == 'RSV', 'obs']))
-cor.test(unlist(res[res$vir1 == 'B' & res$virus == 'Influenza', 'mean']), unlist(res[res$vir1 == 'B' & res$virus == 'Influenza', 'obs']))
-cor.test(unlist(res[res$vir1 == 'B' & res$virus == 'RSV', 'mean']), unlist(res[res$vir1 == 'B' & res$virus == 'RSV', 'obs']))
+# For each virus, virus-virus pair, and season, calculate correlation coefficient:
+seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+r2a_list = r2b_list = r2c_list = r2d_list = c()
+for (yr in seasons) {
+  
+  res_temp <- res %>%
+    filter(season == yr)
+  
+  if (yr != 's14-15') {
+    
+    # cor.test(unlist(res_temp[res_temp$vir1 == 'H1N1' & res_temp$virus == 'Influenza', 'mean']), unlist(res_temp[res_temp$vir1 == 'H1N1' & res_temp$virus == 'Influenza', 'obs']))$estimate ** 2 %>% print()
+    # summary(lm(obs ~ mean, data = res_temp %>% filter(vir1 == 'H1N1', virus == 'Influenza')))$r.squared %>% print()
+    
+    r2_a <- res_temp %>%
+      filter(vir1 == 'H1N1' & virus == 'Influenza') %>%
+      mutate(resid_sq = (obs - mean) ** 2,
+             total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
+      summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+                ss_total = sum(total_sq, na.rm = TRUE)) %>%
+      mutate(r2 = 1 - ss_error / ss_total) %>%
+      pull(r2)
+    
+    # r2_a <- res_temp %>%
+    #   filter(vir1 == 'H1N1' & virus == 'Influenza') %>%
+    #   mutate(resid = obs - mean) %>%
+    #   summarise(var_resid = var(resid, na.rm = TRUE),
+    #             var_data = var(obs, na.rm = TRUE)) %>%
+    #   mutate(r2 = 1 - var_resid / var_data) %>%
+    #   pull(r2)
+    # print(r2_a)
+    
+    r2_b <- res_temp %>%
+      filter(vir1 == 'H1N1' & virus == 'RSV') %>%
+      mutate(resid_sq = (obs - mean) ** 2,
+             total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
+      summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+                ss_total = sum(total_sq, na.rm = TRUE)) %>%
+      mutate(r2 = 1 - ss_error / ss_total) %>%
+      pull(r2)
+    
+    r2a_list <- c(r2a_list, r2_a)
+    r2b_list <- c(r2b_list, r2_b)
+    
+  } else {
+    
+    r2a_list <- c(r2a_list, NA)
+    r2b_list <- c(r2b_list, NA)
+    
+  }
+  
+  
+  if (yr != 's16-17') {
+    
+    r2_c <- res_temp %>%
+      filter(vir1 == 'B' & virus == 'Influenza') %>%
+      mutate(resid_sq = (obs - mean) ** 2,
+             total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
+      summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+                ss_total = sum(total_sq, na.rm = TRUE)) %>%
+      mutate(r2 = 1 - ss_error / ss_total) %>%
+      pull(r2)
+    
+    r2_d <- res_temp %>%
+      filter(vir1 == 'B' & virus == 'RSV') %>%
+      mutate(resid_sq = (obs - mean) ** 2,
+             total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
+      summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+                ss_total = sum(total_sq, na.rm = TRUE)) %>%
+      mutate(r2 = 1 - ss_error / ss_total) %>%
+      pull(r2)
+    
+    r2c_list <- c(r2c_list, r2_c)
+    r2d_list <- c(r2d_list, r2_d)
+    
+  } else {
+    
+    r2c_list <- c(r2c_list, NA)
+    r2d_list <- c(r2d_list, NA)
+    
+  }
+  
+}
 
-# Plot means from fully stochastic simulations (with or without error bars):
-res <- bind_rows(res_h1, res_b)
-res <- res %>%
-  select(time:Week, vir1, mean1_stoch:mean2_stoch, lower1_stoch:upper2_stoch, n_P1:n_P2) %>%
-  pivot_longer(n_P1:n_P2, names_to = 'virus', values_to = 'obs') %>%
-  pivot_longer(mean1_stoch:mean2_stoch, names_to = 'virus1', values_to = 'mean') %>%
-  pivot_longer(lower1_stoch:lower2_stoch, names_to = 'virus2', values_to = 'lower') %>%
-  pivot_longer(upper1_stoch:upper2_stoch, names_to = 'virus3', values_to = 'upper') %>%
-  mutate(virus = str_sub(virus, 4),
-         virus1 = str_sub(virus1, 5, 5),
-         virus2 = str_sub(virus2, 6, 6),
-         virus3 = str_sub(virus3, 6, 6)) %>%
-  filter(virus == virus1,
-         virus == virus2,
-         virus == virus3) %>%
-  select(-c(virus1, virus2, virus3)) %>%
-  mutate(virus = if_else(virus == 1, 'Influenza', 'RSV'))
+print(summary(r2a_list))
+print(summary(r2b_list))
+print(summary(r2c_list))
+print(summary(r2d_list))
 
-# Plot means from binomial distribution (with or without error bars):
-p_legend <- ggplot(data = res, aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  facet_grid(vir1 ~ virus) +
-  theme_classic() +
-  theme(legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'bottom') +
-  guides(color = guide_legend(nrow = 1)) +
-  scale_color_viridis(discrete = TRUE) +
-  labs(color = 'Season')
-p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
+# For each virus, virus-virus pair, and season, calculate the proportion of observations falling within confidence intervals:
+prop_a_list = prop_b_list = prop_c_list = prop_d_list = c()
+for (yr in seasons) {
+  
+  prop_a <- res %>%
+    filter(season == yr,
+           vir1 == 'H1N1',
+           virus == 'Influenza') %>%
+    mutate(within_ci = obs >= lower & obs <= upper) %>%
+    summarise(prop = sum(within_ci, na.rm = TRUE) / length(within_ci[!is.na(within_ci)])) %>%
+    pull(prop)
+  
+  prop_b <- res %>%
+    filter(season == yr,
+           vir1 == 'H1N1',
+           virus == 'RSV') %>%
+    mutate(within_ci = obs >= lower & obs <= upper) %>%
+    summarise(prop = sum(within_ci, na.rm = TRUE) / length(within_ci[!is.na(within_ci)])) %>%
+    pull(prop)
+  
+  prop_c <- res %>%
+    filter(season == yr,
+           vir1 == 'B',
+           virus == 'Influenza') %>%
+    mutate(within_ci = obs >= lower & obs <= upper) %>%
+    summarise(prop = sum(within_ci, na.rm = TRUE) / length(within_ci[!is.na(within_ci)])) %>%
+    pull(prop)
+  
+  prop_d <- res %>%
+    filter(season == yr,
+           vir1 == 'B',
+           virus == 'RSV') %>%
+    mutate(within_ci = obs >= lower & obs <= upper) %>%
+    summarise(prop = sum(within_ci, na.rm = TRUE) / length(within_ci[!is.na(within_ci)])) %>%
+    pull(prop)
+  
+  prop_a_list <- c(prop_a_list, prop_a)
+  prop_b_list <- c(prop_b_list, prop_b)
+  prop_c_list <- c(prop_c_list, prop_c)
+  prop_d_list <- c(prop_d_list, prop_d)
+  
+}
 
-p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
-              aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        # legend.title = element_text(size = 14),
-        # legend.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'A')
-
-p3b <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'RSV'),
-              aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500), limits = c(9, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'B')
-
-p3c <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'Influenza'),
-              aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'C')
-
-p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
-              aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'D')
-
-fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 2, heights = c(15, 1))
-plot(fig3)
-
-ggsave('results/plots/figures_for_manuscript/Figure3_STOCH.svg', fig3, width = 14, height = 8)
-
-p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_pointrange(size = 0.2) +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        # legend.title = element_text(size = 14),
-        # legend.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'A')
-
-p3b <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'RSV'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_pointrange(size = 0.2) +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500), limits = c(9, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'B')
-
-p3c <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'Influenza'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_pointrange(size = 0.2) +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'C')
-
-p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_pointrange(size = 0.2) +
-  geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-              inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(x = 'Simulated Cases', y = 'Observed Cases', color = 'Season', tag = 'D')
-
-fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 2, heights = c(15, 1))
-plot(fig3)
-
-ggsave('results/plots/figures_for_manuscript/Figure3_STOCH_errorbars.svg', fig3, width = 14, height = 8)
-
-# For each virus and virus-virus pair, calculate correlation coefficient:
-cor.test(unlist(res[res$vir1 == 'H1N1' & res$virus == 'Influenza', 'mean']), unlist(res[res$vir1 == 'H1N1' & res$virus == 'Influenza', 'obs']))
-cor.test(unlist(res[res$vir1 == 'H1N1' & res$virus == 'RSV', 'mean']), unlist(res[res$vir1 == 'H1N1' & res$virus == 'RSV', 'obs']))
-cor.test(unlist(res[res$vir1 == 'B' & res$virus == 'Influenza', 'mean']), unlist(res[res$vir1 == 'B' & res$virus == 'Influenza', 'obs']))
-cor.test(unlist(res[res$vir1 == 'B' & res$virus == 'RSV', 'mean']), unlist(res[res$vir1 == 'B' & res$virus == 'RSV', 'obs']))
+print(summary(prop_a_list))
+print(summary(prop_b_list))
+print(summary(prop_c_list))
+print(summary(prop_d_list))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
