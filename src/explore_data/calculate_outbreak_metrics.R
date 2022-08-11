@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------------------------
-# Calculate observed attack rates and peak timings for flu and RSV outbreaks (France)
+# Calculate observed attack rates, peak timings, and outbreak concentration for flu and RSV outbreaks
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Load libraries:
@@ -12,7 +12,7 @@ hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
 hk_dat <- hk_dat$h1_rsv %>%
   rename(n_h1 = n_P1,
          n_rsv = n_P2) %>%
-  select(time, season, n_h1, n_rsv, n_T, GOPC) %>%
+  select(time, Year, Week, season, n_h1, n_rsv, n_T, GOPC) %>%
   full_join(hk_dat$b_rsv %>%
               rename(n_b = n_P1,
                      n_rsv = n_P2) %>%
@@ -24,101 +24,123 @@ hk_dat <- hk_dat$h1_rsv %>%
   select(time:n_h1, n_b, n_rsv:GOPC) %>%
   arrange(season)
 
-# Loop through seasons and compile:
-metrics_list = ILI_metrics_list = vector('list', length = length(unique(hk_dat$season)))
-for (i in 1:length(unique(hk_dat$season))) {
-  yr <- c(unique(hk_dat$season))[i]
-  
-  metrics_list[[i]] <- hk_dat %>%
-    filter(season == yr) %>%
-    # mutate(n_h1 = n_h1 / n_T,
-    #        n_b = n_b / n_T,
-    #        n_rsv = n_rsv / n_T) %>%
-    select(-c(n_T, GOPC)) %>%
-    pivot_longer(n_h1:n_rsv, names_to = 'vir', values_to = 'val') %>%
-    group_by(vir) %>%
-    summarise(ar = sum(val, na.rm = TRUE),
-              pt = which.max(val) + 45) %>%
-    mutate(season = yr)
-  
-  ILI_metrics_list[[i]] <- hk_dat %>%
-    filter(season == yr) %>%
-    mutate(ili_h1 = GOPC * (n_h1 / n_T),
-           ili_b = GOPC * (n_b / n_T),
-           ili_rsv = GOPC * (n_rsv / n_T)) %>%
-    select(-c(n_h1:n_T)) %>%
-    pivot_longer(ili_h1:ili_rsv, names_to = 'vir', values_to = 'val') %>%
-    group_by(vir) %>%
-    summarise(ar_all = sum(GOPC, na.rm = TRUE),
-              ar_spec = sum(val, na.rm = TRUE),
-              pt_spec = which.max(val) + 45) %>%
-    mutate(season = yr)
-}
-rm(i, yr)
+# Calculate peak timing and attack rate metrics:
+metrics_pt_ar <- hk_dat %>%
+  pivot_longer(n_h1:n_rsv, names_to = 'vir', values_to = 'number') %>%
+  mutate(prop = number / n_T) %>%
+  select(-GOPC) %>%
+  group_by(vir, season) %>%
+  summarise(pt = which.max(prop) + 45,
+            ar = sum(number, na.rm = TRUE),
+            ar_prop = sum(number, na.rm = TRUE) / sum(n_T, na.rm = TRUE))
 
-metrics <- bind_rows(metrics_list)
-ILI_metrics <- bind_rows(ILI_metrics_list)
-rm(metrics_list, ILI_metrics_list)
-
-# Calculate peak timing difference:
-metrics <- metrics %>%
-  select(-ar) %>%
+# Calculate peak timing differences:
+metrics_pt_diff <- metrics_pt_ar %>%
+  select(-c(ar, ar_prop)) %>%
   pivot_wider(names_from = vir, values_from = pt) %>%
   mutate(n_h1 = n_h1 - n_rsv,
          n_b = n_b - n_rsv) %>%
   select(-n_rsv) %>%
-  pivot_longer(c(n_h1, n_b), names_to = 'vir', values_to = 'pt_diff') %>%
-  right_join(metrics, by = c('vir', 'season')) %>%
-  arrange(season) %>%
-  select(season:vir, ar:pt, pt_diff)
+  pivot_longer(n_b:n_h1, names_to = 'vir', values_to = 'pt_diff')
 
-# Plot "realistic" values:
-metrics_plot <- metrics %>%
-  pivot_longer(ar:pt_diff, names_to = 'metric', values_to = 'val')
+# Calculate the number of weeks containing 75% of reported cases:
+metrics_conc <- NULL
+for (yr in unique(hk_dat$season)) {
+  
+  hk_dat_temp <- hk_dat %>%
+    filter(season == yr)
+  
+  for (vir in c('n_h1', 'n_b', 'n_rsv')) {
+    
+    case_counts_temp <- hk_dat_temp %>% pull(vir)
+    case_counts_temp[is.na(case_counts_temp)] <- 0
+    
+    target_sum <- sum(case_counts_temp)
+    sum_cases <- 0
+    which_weeks <- c()
+    
+    while (sum_cases < 0.75 * target_sum) {
+      
+      which_max <- which.max(case_counts_temp)
+      max_val <- case_counts_temp[which_max]
+      
+      sum_cases <- sum_cases + max_val
+      which_weeks <- c(which_weeks, which_max)
+      
+      case_counts_temp[which_max] <- 0
+      
+    }
+    
+    metrics_conc <- rbind(metrics_conc,
+                          c(vir,
+                            yr,
+                            length(which_weeks),
+                            min(which_weeks) + length(which_weeks) - 1 == max(which_weeks)))
+    
+  }
+  
+  rm(case_counts_temp, target_sum, sum_cases, which_weeks, which_max, max_val)
+  
+}
+rm(hk_dat_temp, yr, vir)
 
-p1 <- ggplot(data = metrics_plot, aes(x = vir, y = val, fill = metric)) + geom_violin() +
-  facet_wrap(~ metric, scales = 'free_y') + theme_classic() +
-  labs(x = 'Virus', y = 'Value') + scale_fill_brewer(palette = 'Set1')
-print(p1)
+metrics_conc <- metrics_conc %>%
+  as_tibble() %>%
+  rename('vir' = 'V1',
+         'season' = 'V2',
+         'duration' = 'V3',
+         'consecutive' = 'V4')
 
-metrics_plot %>%
-  group_by(vir, metric) %>%
-  summarise(min = min(val),
+# Join all metrics:
+metrics <- metrics_pt_ar %>%
+  left_join(metrics_pt_diff, by = c('vir', 'season')) %>%
+  left_join(metrics_conc, by = c('vir', 'season')) %>%
+  select(vir:season, ar:ar_prop, pt, pt_diff, duration, consecutive) %>%
+  mutate(duration = as.numeric(duration),
+         consecutive = as.numeric(as.logical(consecutive)))
+rm(metrics_pt_ar, metrics_pt_diff, metrics_conc)
+
+# Print values:
+metrics <- metrics %>%
+  pivot_longer(ar:consecutive, names_to = 'metric', values_to = 'val')
+
+metrics %>%
+  filter(vir == 'n_h1') %>%
+  group_by(metric) %>%
+  summarise(mean = mean(val),
+            median = median(val),
+            min = min(val),
             max = max(val),
-            mean = mean(val),
-            median = median(val)) %>%
+            sum = sum(val)) %>%
+  print()
+metrics %>%
+  filter(vir == 'n_b') %>%
+  group_by(metric) %>%
+  summarise(mean = mean(val),
+            median = median(val),
+            min = min(val),
+            max = max(val),
+            sum = sum(val)) %>%
+  print()
+metrics %>%
+  filter(vir == 'n_rsv') %>%
+  group_by(metric) %>%
+  summarise(mean = mean(val),
+            median = median(val),
+            min = min(val),
+            max = max(val),
+            sum = sum(val)) %>%
   print()
 
-# Same, but using ILI+:
-metrics_plot <- ILI_metrics %>%
-  pivot_longer(ar_all:pt_spec, names_to = 'metric', values_to = 'val')
-
-p2 <- ggplot(data = metrics_plot, aes(x = vir, y = val, fill = metric)) + geom_violin() +
-  facet_wrap(~ metric, scales = 'free_y') + theme_classic() +
-  labs(x = 'Virus', y = 'Value') + scale_fill_brewer(palette = 'Set1')
-print(p2)
-
-# Compare peak timing values for viral vs. syn+ data:
-metrics_comp <- metrics %>%
-  mutate(vir = str_remove(vir, 'n_')) %>%
-  left_join(ILI_metrics %>%
-              mutate(vir = str_remove(vir, 'ili_')),
-            by = c('vir', 'season')) %>%
-  select(season:vir, pt, pt_spec) %>%
-  mutate(pt_diff = pt - pt_spec)
-
-summary(metrics_comp$pt)
-summary(metrics_comp$pt_spec)
-summary(metrics_comp$pt_diff)
-
-# Check syn+ attack rates:
-ILI_metrics <- ILI_metrics %>%
-  select(vir, season, ar_spec) %>%
-  pivot_wider(names_from = vir, values_from = ar_spec)
-
-summary(ILI_metrics$ili_h1)
-summary(ILI_metrics$ili_b)
-summary(ILI_metrics$ili_rsv)
+# Plot "realistic" values:
+p1 <- ggplot(data = metrics %>% filter(metric != 'consecutive'),
+       aes(x = vir, y = val, fill = metric)) +
+  geom_violin() +
+  facet_wrap(~ metric, scales = 'free_y') +
+  theme_classic() +
+  labs(x = 'Virus', y = 'Value', fill = 'Metric') +
+  scale_fill_brewer(palette = 'Set1')
+print(p1)
 
 # Clean up:
 rm(list = ls())
