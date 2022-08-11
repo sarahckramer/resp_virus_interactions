@@ -6,79 +6,41 @@
 library(tidyverse)
 library(testthat)
 
-# Function to read in and format results:
-load_and_format_mega_results <- function(filepath, true_estpars, run_name) {
-  
-  # Get list of results files:
-  res_files <- list.files(path = filepath, full.names = TRUE)
-  
-  # Read in results:
-  res_full = list()
-  for (i in seq_along(res_files)) {
-    res_full[[i]] <- read_rds(res_files[[i]])
-  }
-  
-  # Get parameter estimates and log-likelihoods:
-  pars_df <- lapply(res_full, getElement, 'estpars') %>%
-    bind_rows() %>%
-    bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
-                unlist()) %>%
-    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
-                unlist())
-  expect_true(nrow(pars_df) == length(res_files))
-  expect_true(all(is.finite(pars_df$loglik)))
-  
-  # Keep only top results:
-  pars_df <- pars_df %>%
-    arrange(desc(loglik))
-  
-  df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  expect_equal(df_use, 47)
-  
-  no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
-  # no_best <- max(no_best, 50)
-  
-  pars_top <- pars_df[1:no_best, ]
-  
-  # Return formatted results:
-  return(pars_top)
-  
-}
-
-# Set shared and unit parameters:
-shared_estpars <- c('rho1', 'rho2', 'delta', 'theta_lambda1', 'theta_lambda2')
-unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
-true_estpars <- c(shared_estpars, unit_estpars)
-
-# Read in results:
-res_h1_round1CI <- load_and_format_mega_results(filepath = 'results/round2_flu_h1_round1ci_thetalambda1_thetalambda2/',
-                                                true_estpars = true_estpars,
-                                                run_name = 'H1_round1CIs')
-res_b_round1CI <- load_and_format_mega_results(filepath = 'results/round2_flu_b_round1ci_thetalambda1_thetalambda2/',
-                                               true_estpars = true_estpars,
-                                               run_name = 'B_round1CIs')
-
-# Compile results:
-res_list <- list(res_h1_round1CI, res_b_round1CI)
-names(res_list) <- c('flu_h1', 'flu_b')
-rm(res_h1_round1CI, res_b_round1CI)
+# Read in MLEs:
+mle_h1 <- read_rds('results/MLEs_flu_h1.rds')
+mle_b <- read_rds('results/MLEs_flu_b.rds')
 
 # Set necessary parameters:
 prof_lik <- FALSE
 
+# Set shared and unit parameters:
+shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                    'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+true_estpars <- c(shared_estpars, unit_estpars)
+
 # Loop through results and get trajectories:
 ar_list <- vector('list', 2)
-for (i in 1:length(res_list)) {
+for (i in 1:length(ar_list)) {
   
   # Set vir1:
-  if (str_detect(names(res_list)[i], 'h1')) {
+  if (i == 1) {
     vir1 <- 'flu_h1'
+    mle <- mle_h1
   } else {
     vir1 <- 'flu_b'
+    mle <- mle_b
   }
   
   # Read in pomp models:
   source('src/functions/setup_global_likelilhood.R')
+  
+  # Get data:
+  if (i == 1) {
+    dat_temp <- hk_dat$h1_rsv
+  } else {
+    dat_temp <- hk_dat$b_rsv
+  }
   
   # Loop through seasons:
   ar_list_seas <- vector('list', length = length(seasons))
@@ -91,37 +53,56 @@ for (i in 1:length(res_list)) {
     resp_mod <- po_list[[j]]
     
     # Get parameter values:
-    pars_temp <- res_list[[i]] %>%
+    pars_temp <- mle[1, ] %>%
       select(all_of(shared_estpars),
              contains(yr))
-    names(pars_temp)[6:12] <- unit_estpars
+    names(pars_temp)[13:19] <- unit_estpars
     
-    # Get trajectories for top 10 parameter sets:
-    ar_list_temp <- vector('list', length = nrow(pars_temp))#min(nrow(pars_temp), 10))
-    for (k in 1:nrow(pars_temp)) {#min(nrow(pars_temp), 10)) {
-      
-      # Set parameter values:
-      coef(resp_mod, c(shared_estpars, unit_estpars)) <- pars_temp[k, ]
-      
-      # Get trajectories:
-      traj_temp <- trajectory(resp_mod, format = 'data.frame')
-      
-      # Calculate attack rates:
-      sums_temp <- traj_temp %>%
-        select(H1_tot:H2_tot) %>%
-        summarise(sum1 = sum(H1_tot),
-                  sum2 = sum(H2_tot)) %>%
-        mutate(virus1 = vir1,
-               season = yr,
-               set = k)
-      
-      # Store in list:
-      ar_list_temp[[k]] <- sums_temp
-      
-    }
+    # Get trajectory at MLE:
+    coef(resp_mod, c(shared_estpars, unit_estpars)) <- pars_temp
+    traj_temp <- trajectory(resp_mod, format = 'data.frame') %>%
+      mutate(season = yr) %>%
+      left_join(dat_temp, by = c('time', 'season')) %>%
+      rename('i_ILI' = 'GOPC') %>%
+      mutate(i_ILI = i_ILI / 1000)
     
-    # Store data frame of ARs in list:
-    ar_list_seas[[j]] <- bind_rows(ar_list_temp)
+    # Calculate attack rates (total):
+    ar_tot <- traj_temp %>%
+      select(time, H1:H2) %>%
+      summarise(H1 = sum(H1),
+                H2 = sum(H2)) %>%
+      mutate(virus1 = vir1,
+             season = yr)
+    
+    # Calculate mean number of observed cases:
+    rho1 <- as.numeric(pars_temp['rho1'])
+    rho2 <- as.numeric(pars_temp['rho2'])
+    alpha <- as.numeric(pars_temp['alpha'])
+    phi <- as.numeric(pars_temp['phi'])
+    
+    rho1_w <- rho1 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H1 / traj_temp$i_ILI
+    rho2_w <- rho2 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H2 / traj_temp$i_ILI
+    
+    rho1_w[rho1_w > 1.0 & !is.na(rho1_w)] <- 1.0
+    rho2_w[rho2_w > 1.0 & !is.na(rho2_w)] <- 1.0
+    
+    expect_equal(nrow(traj_temp), length(rho1_w))
+    expect_equal(nrow(traj_temp), length(rho2_w))
+    
+    traj_temp$rho1_w <- rho1_w
+    traj_temp$rho2_w <- rho2_w
+    
+    ar_obs <- traj_temp %>%
+      mutate(obs1 = rho1_w * n_T,
+             obs2 = rho2_w * n_T) %>%
+      summarise(obs1 = sum(obs1, na.rm = TRUE),
+                obs2 = sum(obs2, na.rm = TRUE)) %>%
+      mutate(virus1 = vir1,
+             season = yr)
+    
+    # Store ARs in list:
+    ar_list_seas[[j]] <- inner_join(ar_tot, ar_obs, by = c('virus1', 'season')) %>%
+      select(virus1:season, H1:H2, obs1:obs2)
     
   }
   
@@ -131,30 +112,35 @@ for (i in 1:length(res_list)) {
 }
 
 # Clean up:
-rm(ar_list_seas, ar_list_temp, dat_pomp, hk_dat, obj_fun_list, po_list, resp_mod, sums_temp, traj_temp,
-   debug_bool, vir1, vir2, Ri_max1, Ri_max2, delta_min, early_start_val, prof_lik, i, j, k, yr, yr_index)
+rm(ar_list_seas, dat_pomp, hk_dat, obj_fun_list, po_list, resp_mod, traj_temp,
+   debug_bool, vir1, vir2, Ri_max1, Ri_max2, d2_max, prof_lik, lag_val, age_structured,
+   i, j, yr, yr_index)
 
 # Plot attack rates by virus/season:
 ar_df <- bind_rows(ar_list) %>%
-  pivot_longer(sum1:sum2, names_to = 'virus', values_to = 'attack_rate') %>%
-  mutate(virus = if_else(virus == 'sum1', 'Flu', 'RSV'),
+  select(-c(obs1:obs2)) %>%
+  pivot_longer(H1:H2, names_to = 'virus', values_to = 'attack_rate') %>%
+  mutate(virus = if_else(virus == 'H1', 'Influenza', 'RSV'),
          virus1 = if_else(virus1 == 'flu_h1', 'H1', 'B'),
          virus1 = factor(virus1),
          virus1 = relevel(virus1, ref = 'H1'),
          attack_rate = attack_rate * 100)
 rm(ar_list)
 
-p1 <- ggplot(data = ar_df, aes(x = season, y = attack_rate, fill = virus, group = paste(season, virus))) +
-  geom_boxplot() + theme_classic() + facet_wrap(~ virus1) + scale_fill_brewer(palette = 'Set1') +
-  labs(x = 'Season', y = 'Attack Rate (%)', fill = 'Virus')
+p1 <- ggplot(data = ar_df,
+             aes(x = virus, y = attack_rate, group = virus)) +
+  geom_violin(fill = 'gray90') +
+  theme_classic() +
+  facet_wrap(~ virus1) +
+  labs(x = 'Virus', y = 'Attack Rate (%)')
 print(p1)
 
 # Print attack rate ranges:
-ar_df %>% filter(virus1 == 'H1', virus == 'Flu') %>% group_by(season) %>% summarise(mean = mean(attack_rate), median = median(attack_rate)) %>% print()
-ar_df %>% filter(virus1 == 'B', virus == 'Flu') %>% group_by(season) %>% summarise(mean = mean(attack_rate), median = median(attack_rate)) %>% print()
+ar_df %>% filter(virus1 == 'H1', virus == 'Influenza') %>% pull(attack_rate) %>% summary() %>% print()
+ar_df %>% filter(virus1 == 'B', virus == 'Influenza') %>% pull(attack_rate) %>% summary() %>% print()
 
-ar_df %>% filter(virus1 == 'H1', virus == 'RSV') %>% group_by(season) %>% summarise(mean = mean(attack_rate), median = median(attack_rate)) %>% print()
-ar_df %>% filter(virus1 == 'B', virus == 'RSV') %>% group_by(season) %>% summarise(mean = mean(attack_rate), median = median(attack_rate)) %>% print()
+ar_df %>% filter(virus1 == 'H1', virus == 'RSV') %>% pull(attack_rate) %>% summary() %>% print()
+ar_df %>% filter(virus1 == 'B', virus == 'RSV') %>% pull(attack_rate) %>% summary() %>% print()
 
 # Clean up:
 rm(list = ls())
