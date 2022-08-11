@@ -349,7 +349,8 @@ plot(fig3)
 
 ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 8)
 
-# For each virus, virus-virus pair, and season, calculate correlation coefficient:
+# For each virus, virus-virus pair, and season, calculate coefficient of efficiency:
+# https://stats.stackexchange.com/questions/185898/difference-between-nash-sutcliffe-efficiency-and-coefficient-of-determination
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 r2a_list = r2b_list = r2c_list = r2d_list = c()
 for (yr in seasons) {
