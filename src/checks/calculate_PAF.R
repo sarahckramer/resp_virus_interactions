@@ -70,6 +70,36 @@ for (i in 1:length(seasons)) {
   traj_temp <- traj_temp %>%
     filter(.id %in% c(1, 3, 5))
   
+  # # Also look at how # of observed cases changes:
+  # rho1 <- as.numeric(pars_temp['rho1'])
+  # rho2 <- as.numeric(pars_temp['rho2'])
+  # alpha <- as.numeric(pars_temp['alpha'])
+  # phi <- as.numeric(pars_temp['phi'])
+  # 
+  # dat_temp <- hk_dat$h1_rsv
+  # traj_temp <- traj_temp %>%
+  #   left_join(dat_temp, by = c('time', 'season')) %>%
+  #   rename('i_ILI' = 'GOPC') %>%
+  #   mutate(i_ILI = i_ILI / 1000) %>%
+  #   select(time:H2, n_T, i_ILI)
+  # 
+  # rho1_w <- rho1 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H1 / traj_temp$i_ILI
+  # rho2_w <- rho2 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H2 / traj_temp$i_ILI
+  # 
+  # rho1_w[rho1_w > 1.0 & !is.na(rho1_w)] <- 1.0
+  # rho2_w[rho2_w > 1.0 & !is.na(rho2_w)] <- 1.0
+  # 
+  # expect_equal(nrow(traj_temp), length(rho1_w))
+  # expect_equal(nrow(traj_temp), length(rho2_w))
+  # 
+  # traj_temp$rho1_w <- rho1_w
+  # traj_temp$rho2_w <- rho2_w
+  # 
+  # traj_temp <- traj_temp %>%
+  #   mutate(mean_obs1 = rho1_w * n_T,
+  #          mean_obs2 = rho2_w * n_T) %>%
+  #   select(time:H2, mean_obs1:mean_obs2)
+  
   # Store:
   traj_list_H1N1[[i]] <- traj_temp
   
@@ -120,6 +150,36 @@ for (i in 1:length(seasons)) {
   traj_temp <- traj_temp %>%
     filter(.id %in% c(1, 3, 5))
   
+  # # Also look at how # of observed cases changes:
+  # rho1 <- as.numeric(pars_temp['rho1'])
+  # rho2 <- as.numeric(pars_temp['rho2'])
+  # alpha <- as.numeric(pars_temp['alpha'])
+  # phi <- as.numeric(pars_temp['phi'])
+  # 
+  # dat_temp <- hk_dat$b_rsv
+  # traj_temp <- traj_temp %>%
+  #   left_join(dat_temp, by = c('time', 'season')) %>%
+  #   rename('i_ILI' = 'GOPC') %>%
+  #   mutate(i_ILI = i_ILI / 1000) %>%
+  #   select(time:H2, n_T, i_ILI)
+  # 
+  # rho1_w <- rho1 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H1 / traj_temp$i_ILI
+  # rho2_w <- rho2 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H2 / traj_temp$i_ILI
+  # 
+  # rho1_w[rho1_w > 1.0 & !is.na(rho1_w)] <- 1.0
+  # rho2_w[rho2_w > 1.0 & !is.na(rho2_w)] <- 1.0
+  # 
+  # expect_equal(nrow(traj_temp), length(rho1_w))
+  # expect_equal(nrow(traj_temp), length(rho2_w))
+  # 
+  # traj_temp$rho1_w <- rho1_w
+  # traj_temp$rho2_w <- rho2_w
+  # 
+  # traj_temp <- traj_temp %>%
+  #   mutate(mean_obs1 = rho1_w * n_T,
+  #          mean_obs2 = rho2_w * n_T) %>%
+  #   select(time:H2, mean_obs1:mean_obs2)
+  
   # Store:
   traj_list_B[[i]] <- traj_temp
   
@@ -145,9 +205,12 @@ rm(res_H1N1, res_B)
 res_ars <- res %>%
   group_by(virus_pair, season, .id) %>%
   summarise(attack_rate_H1 = sum(H1),
-            attack_rate_H2 = sum(H2))
+            attack_rate_H2 = sum(H2))#,
+            # attack_rate_obs1 = sum(mean_obs1, na.rm = TRUE),
+            # attack_rate_obs2 = sum(mean_obs2, na.rm = TRUE))
 
 paf_h1_fluOnRSV = paf_h1_RSVonFlu = paf_b_fluOnRSV = c()
+paf_h1_obs_fluOnRSV = paf_h1_obs_RSVonFlu = paf_b_obs_fluOnRSV = c()
 for (yr in unique(res_ars$season)) {
   
   res_temp_H1N1 <- res_ars %>%
@@ -164,11 +227,21 @@ for (yr in unique(res_ars$season)) {
     # paf_h1_fluOnRSV <- c(paf_h1_fluOnRSV, (ar_pop - ar_unexposed) / ar_pop) # negative
     paf_h1_fluOnRSV <- c(paf_h1_fluOnRSV, (ar_unexposed - ar_pop) / ar_pop)
     
+    # ar_pop <- res_temp_H1N1$attack_rate_obs2[res_temp_H1N1$.id == 1]
+    # ar_unexposed <- res_temp_H1N1$attack_rate_obs2[res_temp_H1N1$.id == 3]
+    # 
+    # paf_h1_obs_fluOnRSV <- c(paf_h1_obs_fluOnRSV, (ar_unexposed - ar_pop) / ar_pop)
+    
     # Impact of RSV on flu:
     ar_pop <- res_temp_H1N1$attack_rate_H1[res_temp_H1N1$.id == 1]
     ar_unexposed <- res_temp_H1N1$attack_rate_H1[res_temp_H1N1$.id == 5]
     
     paf_h1_RSVonFlu <- c(paf_h1_RSVonFlu, (ar_unexposed - ar_pop) / ar_pop)
+    
+    # ar_pop <- res_temp_H1N1$attack_rate_obs1[res_temp_H1N1$.id == 1]
+    # ar_unexposed <- res_temp_H1N1$attack_rate_obs1[res_temp_H1N1$.id == 5]
+    # 
+    # paf_h1_obs_RSVonFlu <- c(paf_h1_obs_RSVonFlu, (ar_unexposed - ar_pop) / ar_pop)
     
   }
   
@@ -180,6 +253,11 @@ for (yr in unique(res_ars$season)) {
     
     paf_b_fluOnRSV <- c(paf_b_fluOnRSV, (ar_unexposed - ar_pop) / ar_pop)
     
+    # ar_pop <- res_temp_B$attack_rate_obs2[res_temp_H1N1$.id == 1]
+    # ar_unexposed <- res_temp_B$attack_rate_obs2[res_temp_H1N1$.id == 3]
+    # 
+    # paf_b_obs_fluOnRSV <- c(paf_b_obs_fluOnRSV, (ar_unexposed - ar_pop) / ar_pop)
+    
   }
   
 }
@@ -188,6 +266,11 @@ print(summary(paf_h1_fluOnRSV))
 print(summary(paf_b_fluOnRSV))
 
 print(summary(paf_h1_RSVonFlu))
+
+# print(summary(paf_h1_obs_fluOnRSV))
+# print(summary(paf_b_obs_fluOnRSV))
+# 
+# print(summary(paf_h1_obs_RSVonFlu))
 
 # Plot how interaction influences outbreak dynamics:
 res <- res %>%
