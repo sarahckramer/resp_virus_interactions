@@ -44,23 +44,27 @@ d2_max <- 10.0
 lag_val <- 0
 
 if (prof_lik) {
+  
+  jobid_orig <- ceiling(jobid / 5)
+  jobid <- (jobid - 1) %% 5 + 1
+  
+  print(jobid_orig)
+  print(jobid)
+  
   prof_param <- 'theta_lambda1'
   # prof_param <- 'theta_lambda2'
   # prof_param <- 'delta1'
   # prof_param <- 'd2'
   
   if (prof_param == 'delta1') {
-    prof_val <- (7 / seq(5, 255, by = 5))[jobid]
+    prof_val <- (7 / seq(5, 255, by = 5))[jobid_orig]
   } else if (prof_param == 'd2') {
-    prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid]
+    prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid_orig]
   }
   else {
-    prof_val <- seq(0.0, 1.0, by = 0.02)[jobid]
+    prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
   }
   print(prof_val)
-  
-  jobid_orig <- jobid
-  jobid <- 1
   
 } else {
   jobid_orig <- jobid

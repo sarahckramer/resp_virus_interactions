@@ -6,6 +6,7 @@
 
 # Load libraries:
 library(tidyverse)
+library(patchwork)
 library(testthat)
 
 # Get/format date (for saving results):
@@ -56,21 +57,8 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
     select(-message)
   
   # Set profpar to correct values:
-  if (prof_par == 'delta1') {
-    res_temp <- res_temp %>%
-      mutate(profpar = (7 / seq(5, 255, by = 5))[profpar]) %>%
-      mutate(profpar = 7 / profpar)
-  } else if (prof_par == 'd2') {
-    res_temp <- res_temp %>%
-      mutate(profpar = c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[profpar])
-  } else {
-    res_temp <- res_temp %>%
-      mutate(profpar = seq(0.0, 1.0, by = 0.02)[profpar])
-  }
-  
-  # # Rename profpar column:
-  # res_temp <- res_temp %>%
-  #   rename(!!prof_par := 'profpar')
+  res_temp <- res_temp %>%
+    mutate(profpar = seq(0.0, 0.2, by = 0.01)[profpar])
   
   # Return formatted results:
   return(res_temp)
@@ -86,164 +74,79 @@ shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 
                     'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 
 # Read in and format results:
-res_thetalambda1 <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda1/',
-                                                    prof_par = 'theta_lambda1',
-                                                    shared_estpars = shared_estpars)
-res_thetalambda2 <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda2/',
-                                                    prof_par = 'theta_lambda2',
-                                                    shared_estpars = shared_estpars)
-res_delta1 <- load_and_format_proflik_results(filepath = 'results/prof_lik_delta1/',
-                                              prof_par = 'delta1',
-                                              shared_estpars = shared_estpars)
-res_d2 <- load_and_format_proflik_results(filepath = 'results/prof_lik_d2/',
-                                          prof_par = 'd2',
-                                          shared_estpars = shared_estpars)
-
-# Combine all results?:
-res_list <- list(res_thetalambda1, res_thetalambda2, res_delta1, res_d2)
-names(res_list) <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
-rm(res_thetalambda1, res_thetalambda2, res_delta1, res_d2)
+res <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda1/',
+                                       prof_par = 'theta_lambda1',
+                                       shared_estpars = shared_estpars)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Plot profiles and 99% CIs
 
 # Get maximum log-likelihood values for each virus/profile:
-maxloglik <- lapply(res_list, function(ix) {
-  ix %>%
-    group_by(vir1) %>%
-    summarise(loglik = max(loglik)) %>%
-    pull(loglik) %>%
-    unlist()
-})
+maxloglik <- res %>%
+  group_by(vir1) %>%
+  summarise(loglik = max(loglik)) %>%
+  pull(loglik) %>%
+  unlist()
 
 # Calculate cutoff value for 99% CI and add to tibbles:
-ci_cutoff <- lapply(maxloglik, function(ix) {
-  ix - 0.5 * qchisq(df = 1, p = 0.99)
-})
-res_list <- lapply(1:length(res_list), function(ix) {
-  res_list[[ix]] %>% mutate(ci = if_else(vir1 == 'B', ci_cutoff[[ix]][2], ci_cutoff[[ix]][1]))
-})
-names(res_list) <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
+ci_cutoff <- maxloglik - 0.5 * qchisq(df = 1, p = 0.99)
+res <- res %>%
+  mutate(ci = if_else(vir1 == 'H1', ci_cutoff[1], ci_cutoff[2]))
 
 # Get top estimate for each value of profpar:
-res_list_top <- lapply(res_list, function(ix) {
-  ix %>%
-    group_by(vir1, profpar) %>%
-    filter(rank(-loglik) == 1) %>%
-    ungroup()
-})
-names(res_list_top) <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
+res <- res %>%
+  group_by(vir1, profpar) %>%
+  filter(rank(-loglik) == 1) %>%
+  ungroup()
 
 # Plot profile likelihoods with cutoff for 99% CI:
-plot_list <- lapply(1:length(res_list_top), function(ix) {
-  ggplot(res_list_top[[ix]], aes(x = profpar, y = loglik)) +
-    geom_point() + theme_classic() +
-    facet_wrap(~ vir1, scales = 'free_y') +
-    geom_smooth(method = 'loess', span = 0.25) +
-    geom_hline(color = 'red', aes(yintercept = ci)) +
-    labs(x = names(res_list_top)[ix], y = 'Log Likelihood')
-})
-
-plot_list_zoom <- lapply(1:length(res_list_top), function(ix) {
-  ggplot(res_list_top[[ix]] %>%
-           group_by(vir1) %>%
-           filter(loglik > (max(loglik) - 100)) %>%
-           ungroup(),
-         aes(x = profpar, y = loglik)) +
-    geom_point() + theme_classic() +
-    facet_wrap(~ vir1, scales = 'free_y') +
-    geom_smooth(method = 'loess', span = 0.75) +
-    geom_hline(color = 'red', aes(yintercept = ci)) +
-    labs(x = names(res_list_top)[ix], y = 'Log Likelihood')
-})
-
-p1 <- ggplot(res_list_top[[1]] %>%
-               filter(vir1 == 'H1') %>%
-               filter(loglik > (max(loglik) - 100)),
+p1 <- ggplot(res %>%
+               filter(vir1 == 'H1'),# %>%
+             # filter(loglik > (max(loglik) - 100)), # allows for zooming
              aes(x = profpar, y = loglik)) +
   geom_point() + theme_classic() +
   theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12)) +
+        axis.text = element_text(size = 12),
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.09, 0.98)) +
   geom_smooth(method = 'loess', span = 0.75, color = 'black') +
   geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
-  labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood') +
+  labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'A') +
   scale_x_continuous(n.breaks = 10)
-p2 <- ggplot(res_list_top[[3]] %>%
-               filter(vir1 == 'H1') %>%
-               filter(loglik > (max(loglik) - 100)),
+
+# edit tag positions
+
+p2 <- ggplot(res %>%
+               filter(vir1 == 'B'),# %>%
+             # filter(loglik > (max(loglik) - 100)), # allows for zooming
              aes(x = profpar, y = loglik)) +
   geom_point() + theme_classic() +
   theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12)) +
+        axis.text = element_text(size = 12),
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.09, 0.98)) +
   geom_smooth(method = 'loess', span = 0.75, color = 'black') +
   geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
-  labs(x = expression(7/delta), y = 'Log-Likelihood') +
-  scale_x_continuous(n.breaks = 5)
-p3 <- ggplot(res_list_top[[2]] %>%
-               filter(vir1 == 'H1') %>%
-               filter(loglik > (max(loglik) - 100)),
-             aes(x = profpar, y = loglik)) +
-  geom_point() + theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12)) +
-  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
-  geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
-  labs(x = bquote(theta[lambda*2]), y = 'Log-Likelihood') +
-  scale_x_continuous(n.breaks = 5)
-p4 <- ggplot(res_list_top[[4]] %>%
-               filter(vir1 == 'H1') %>%
-               filter(loglik > (max(loglik) - 100)),
-             aes(x = profpar, y = loglik)) +
-  geom_point() + theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12)) +
-  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
-  geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
-  labs(x = 'd2', y = 'Log-Likelihood') +
-  scale_x_continuous(n.breaks = 10)
-fig <- (p1 + p2) / (p3 + p4)
-fig
-ggsave('results/plots/profile_likelihoods.svg', fig, width = 11.5, height = 7)
+  labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'B') +
+  scale_x_continuous(n.breaks = 10) + scale_y_continuous(breaks = seq(-3975, -3935, by = 10))
 
-pdf('results/plots/profile_likelihoods.pdf', width = 11.5, height = 7)
-print(fig)
-dev.off()
-
-fig2 <- p1 + p2
-fig2
-ggsave('results/plots/profile_likelihoods_flu-on-rsv-only.svg', fig2, width = 11.5, height = 4.25)
-
-pdf('results/plots/profile_likelihoods_flu-on-rsv-only.pdf', width = 11.5, height = 4.25)
-print(fig2)
-dev.off()
+fig1 <- p1 + p2
+fig1
+ggsave('results/plots/profile_likelihood_thetalambda1.svg', fig1, width = 11.5, height = 4.6)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # How do other shared parameter values change as prof_par changes?
+res %>%
+  filter(vir1 == 'H1') %>%
+  select(all_of(shared_estpars[shared_estpars != 'theta_lambda1']), profpar) %>%
+  pairs(pch = 20)
 
-for (i in 1:length(res_list)) {
-  res_list[[i]] %>%
-    filter(vir1 == 'H1') %>%
-    select(all_of(shared_estpars[shared_estpars != names(res_list)[i]]), profpar) %>%
-    pairs(pch = 20)
-  
-  res_list[[i]] %>%
-    filter(vir1 == 'B') %>%
-    select(all_of(shared_estpars[shared_estpars != names(res_list)[i]]), profpar) %>%
-    pairs(pch = 20)
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# Save plots to file:
-pdf(paste0('results/plots/', date, '_prof_lik_tj.pdf'), width = 10, height = 4.5)
-print(plot_list)
-dev.off()
-
-pdf(paste0('results/plots/', date, '_prof_lik_tj_ZOOM.pdf'), width = 10, height = 4.5)
-print(plot_list_zoom)
-dev.off()
+res %>%
+  filter(vir1 == 'B') %>%
+  select(all_of(shared_estpars[shared_estpars != 'theta_lambda1']), profpar) %>%
+  pairs(pch = 20)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
