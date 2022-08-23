@@ -20,6 +20,7 @@ check_transformations <- function(pomp_object) {
               info = 'Parameters not correctly transformed')
 }
 
+
 check_params <- function(pomp_object) {
   # Function to check that setting parameter values works as expected
   # params pomp_object: The pomp model object to be checked
@@ -28,6 +29,7 @@ check_params <- function(pomp_object) {
   coef(pomp_object, names(coef(pomp_object))[select_parms]) <- c(0.1, 0.2, 0.3)
   expect_true(all(coef(pomp_object)[select_parms] == c(0.1, 0.2, 0.3)))
 }
+
 
 check_correct_N_CONST <- function(pomp_object, true_n, n_sim = 10) {
   # Function to check that deterministic and stochastic simulations maintain correct N (when pop size constant)
@@ -51,6 +53,7 @@ check_correct_N_CONST <- function(pomp_object, true_n, n_sim = 10) {
   
 }
 
+
 check_correct_N_CONST_VACC <- function(sim_res, true_n) {
   # Function to check that deterministic simulations maintain correct N in the presence of vaccination (when pop size constant)
   # params sim_res: The deterministic simulation results from a single run of the model with vaccination
@@ -65,6 +68,7 @@ check_correct_N_CONST_VACC <- function(sim_res, true_n) {
   expect_true(check_n == true_n)
   
 }
+
 
 check_obs_lessthan_samples <- function(pomp_object, n_sim = 10) {
   # Function to check that simulated case numbers never exceed the total number of tests performed
@@ -103,6 +107,7 @@ check_obs_lessthan_samples <- function(pomp_object, n_sim = 10) {
   return(p_temp)
 }
 
+
 check_independent_dynamics <- function(pomp_object) {
   # Function to check that, when no interaction is specified, virus dynamics are independent
   # params pomp_object: The pomp model object to be checked
@@ -132,6 +137,7 @@ check_independent_dynamics <- function(pomp_object) {
   
   return(p_temp)
 }
+
 
 quick_explore_interaction <- function(pomp_object, int_vals, n_sim = 10) {
   
@@ -202,32 +208,6 @@ check_independent_dynamics_VACC <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_
     theme_classic()
   
   return(p_temp)
-  
-  # mod_parms <- c(mod_parms, 1e-5, 0)
-  # names(mod_parms)[4:5] <- c('I10', 'I20')
-  # sim_determ_FLU <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
-  #   dplyr::select(time, H1:H2) %>%
-  #   pivot_longer(H1:H2, names_to = 'var_nm', values_to = 'val') %>%
-  #   filter(var_nm == 'H1')
-  # 
-  # mod_parms['I10'] <- 0
-  # mod_parms['I20'] <- 1e-5
-  # sim_determ_RSV <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
-  #   dplyr::select(time, H1:H2) %>%
-  #   pivot_longer(H1:H2, names_to = 'var_nm', values_to = 'val') %>%
-  #   filter(var_nm == 'H2')
-  # 
-  # all.equal(sim_determ$val[sim_determ$var_nm == 'H1'], sim_determ_FLU$val) %>% print()
-  # all.equal(sim_determ$val[sim_determ$var_nm == 'H2'], sim_determ_RSV$val) %>% print()
-  # 
-  # p_temp <- ggplot(data = sim_determ, aes(x = time, y = 100 * val)) +
-  #   geom_point(aes(color = var_nm)) +
-  #   geom_line(data = sim_determ_FLU, color = 'pink') +
-  #   geom_line(data = sim_determ_RSV, color = 'purple') +
-  #   labs(x = 'Time (Weeks)', y = 'Incidence (%)') +
-  #   theme_classic()
-  # 
-  # return(p_temp)
   
 }
 

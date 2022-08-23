@@ -6,6 +6,15 @@
 library(tidyverse)
 library(testthat)
 
+# Set directory where final results from round2 fits are stored:
+res_dir_h1 <- 'results/round2_4_fluH1_FULL/'
+res_dir_b <- 'results/round2_3_fluB_FULL/'
+
+# Check that directory for storing results exists, and create if not:
+if (!dir.exists('results/')) {
+  dir.create('results/')
+}
+
 # Function to read in and format results:
 load_and_format_mega_results <- function(filepath) {
   
@@ -54,9 +63,9 @@ load_and_format_mega_results <- function(filepath) {
 }
 
 # Get MLEs:
-res_h1 <- load_and_format_mega_results('results/round2_4_fluH1_FULL/') %>%
+res_h1 <- load_and_format_mega_results(res_dir_h1) %>%
   select(-loglik)
-res_b <- load_and_format_mega_results('results/round2_3_fluB_FULL/') %>%
+res_b <- load_and_format_mega_results(res_dir_b) %>%
   select(-loglik)
 
 # Save MLEs:

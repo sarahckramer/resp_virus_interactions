@@ -10,33 +10,30 @@ library(corrplot)
 library(ppcor)
 library(gridExtra)
 
+# Set directory where results from round1 fits are stored:
+res_dir <- 'results/round1_fitsharedFALSE/'
+
+# Check that directory for storing plots exists, and create if not:
+if (!dir.exists('results/')) {
+  dir.create('results/')
+}
+if (!dir.exists('results/plots/')) {
+  dir.create('results/plots')
+}
+
 # Get/format date (for saving results):
 date <- format(Sys.Date(), '%d%m%y')
 
-# Were shared params also fit?:
-fit_shared <- FALSE
-
 # Specify parameters estimated:
-if (fit_shared) {
-  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2',
-               'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi',
-               'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
-} else {
-  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
-}
+estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Plot results by flu type/season
 
 # Read in results:
-if (fit_shared) {
-  pars_list <- read_rds('results/round1_fitsharedTRUE/traj_match_round1_byvirseas_TOP.rds')
-  slice_list <- read_rds('results/round1_fitsharedTRUE/traj_match_round1_byvirseas_SLICE.rds')
-} else {
-  pars_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
-  slice_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_SLICE.rds')
-}
+pars_list <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_TOP.rds'))
+slice_list <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_SLICE.rds'))
 
 # Get vectors of flu types/seasons:
 flu_types <- c('flu_h1', 'flu_b')
@@ -90,13 +87,8 @@ for (vir1 in flu_types) {
 rm(vir_seas, vir1, yr)
 
 # Output plots to file (for A and B separately):
-if (fit_shared) {
-  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedTRUE.pdf'),
-      width = 15, height = 10)
-} else {
-  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE.pdf'),
-      width = 15, height = 10)
-}
+pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE.pdf'),
+    width = 15, height = 10)
 
 for (vir1 in flu_types) {
   pars_list_temp <- pars_list[str_detect(names(pars_list), vir1)]
@@ -121,12 +113,7 @@ for (vir1 in flu_types) {
   # Plot slices:
   for (i in 1:length(slice_list_temp)) {
     
-    if (fit_shared) {
-      par(mfrow = c(5, 4), bty = 'l')
-    } else {
-      par(mfrow = c(3, 3), bty = 'l')
-    }
-    
+    par(mfrow = c(3, 3), bty = 'l')
     for (par in estpars) {
       slices_cur <- filter(slice_list_temp[[i]], slice == par)
       plot(slices_cur[[par]], slices_cur$ll, type = 'l',
@@ -236,13 +223,8 @@ p4 <- ggplot(data = pars_mle, aes(x = virus_pair, y = mle, group = virus_pair)) 
   labs(x = 'Virus', y = 'Parameter Value', title = 'MLE Values')
 
 # Save plots to file:
-if (fit_shared) {
-  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedTRUE.pdf'),
-      width = 15, height = 8)
-} else {
-  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE.pdf'),
-      width = 15, height = 8)
-}
+pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE.pdf'),
+    width = 15, height = 8)
 print(p1)
 print(p2)
 print(p3)

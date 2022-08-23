@@ -6,6 +6,18 @@
 library(tidyverse)
 library(testthat)
 
+# Set directory where results from round2 fits are stored:
+res_dir_h1 <- 'results/round2_4_fluH1_FULL/'
+res_dir_b <- 'results/round2_3_fluB_FULL/'
+
+# Check that directory for storing results exists, and create if not:
+if (!dir.exists('results/')) {
+  dir.create('results/')
+}
+if (!dir.exists('results/round2_CIs/')) {
+  dir.create('results/round2_CIs/')
+}
+
 # Use 95% CI or top 5% of fits?:
 method <- 'perc' # 'ci' or 'perc'
 
@@ -74,9 +86,9 @@ load_and_format_mega_results <- function(filepath, method) {
 }
 
 # Read in results:
-res_h1 <- load_and_format_mega_results('results/round2_4_fluH1_FULL/', method) %>%
+res_h1 <- load_and_format_mega_results(res_dir_h1, method) %>%
   select(-loglik)
-res_b <- load_and_format_mega_results('results/round2_3_fluB_FULL/', method) %>%
+res_b <- load_and_format_mega_results(res_dir_b, method) %>%
   select(-loglik)
 
 # Get minimum and maximum start values:

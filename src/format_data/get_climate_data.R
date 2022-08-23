@@ -6,6 +6,7 @@
 library(GSODR)
 library(tidyverse)
 library(testthat)
+library(rstudioapi)
 
 # # List all available country names:
 # get_inventory() %>%
@@ -18,6 +19,9 @@ dat_hk <- get_GSOD(2012:2019, country = 'HONG KONG SAR CHINA')
 # Get French data:
 stat_id_fr <- nearest_stations(LAT = 48.85, LON = 2.35, distance = 13)
 dat_fr <- get_GSOD(2012:2019, station = stat_id_fr)
+
+# Reset working directory:
+setwd(getActiveProject())
 
 # Format data from all regions and calculate AH in g/m3:
 dat_hk <- dat_hk %>%

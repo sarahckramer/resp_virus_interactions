@@ -7,10 +7,10 @@ library(tidyverse)
 library(testthat)
 
 # Specify location of results to check:
-res_loc <- 'results/round2_4_fluH1_FULL/'
+res_dir <- 'results/round2_4_fluH1_FULL/'
 
 # Check for missing results files:
-res_files <- list.files(path = res_loc, full.names = TRUE)
+res_files <- list.files(path = res_dir, full.names = TRUE)
 res_exist <- res_files %>%
   str_split('_') %>%
   map(~ .x[9]) %>%
@@ -52,7 +52,7 @@ no_best <- max(no_best, 50)
 pars_top <- pars_df[1:no_best, ]
 
 # Get/set relevant model parameters:
-if (str_detect(res_loc, 'H1')) {
+if (str_detect(res_dir, 'H1')) {
   vir1 <- 'flu_h1'
 } else {
   vir1 <- 'flu_b'

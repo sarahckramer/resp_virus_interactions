@@ -9,6 +9,17 @@ library(tidyverse)
 library(patchwork)
 library(testthat)
 
+# Set directory where profile likelihood results are stored:
+res_dir <- 'results/prof_lik_thetalambda1/'
+
+# Check that directory for storing plots exists, and create if not:
+if (!dir.exists('results/')) {
+  dir.create('results/')
+}
+if (!dir.exists('results/plots/')) {
+  dir.create('results/plots')
+}
+
 # Get/format date (for saving results):
 date <- format(Sys.Date(), '%d%m%y')
 
@@ -74,7 +85,7 @@ shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 
                     'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 
 # Read in and format results:
-res <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda1/',
+res <- load_and_format_proflik_results(filepath = res_dir,
                                        prof_par = 'theta_lambda1',
                                        shared_estpars = shared_estpars)
 
@@ -114,9 +125,6 @@ p1 <- ggplot(res %>%
   geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
   labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'A') +
   scale_x_continuous(n.breaks = 10)
-
-# edit tag positions
-
 p2 <- ggplot(res %>%
                filter(vir1 == 'B'),# %>%
              # filter(loglik > (max(loglik) - 100)), # allows for zooming

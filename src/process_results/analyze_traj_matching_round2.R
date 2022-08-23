@@ -9,6 +9,19 @@ library(tidyverse)
 library(testthat)
 library(gridExtra)
 
+# Set directory where final results from round2 fits are stored:
+res_dir_h1 <- 'results/round2_4_fluH1_FULL/'
+res_dir_b <- 'results/round2_3_fluB_FULL/'
+res_dir_round1 <- 'results/round1_fitsharedFALSE/'
+
+# Check that directory for storing plots exists, and create if not:
+if (!dir.exists('results/')) {
+  dir.create('results/')
+}
+if (!dir.exists('results/plots/')) {
+  dir.create('results/plots')
+}
+
 # Get/format date (for saving results):
 date <- format(Sys.Date(), '%d%m%y')
 
@@ -95,20 +108,20 @@ shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 
                     'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
-# H1, using round 1 CIs, all estpars:
-res_h1_round1CI <- load_and_format_mega_results(filepath = 'results/round2_4_fluH1_FULL/',
-                                                shared_estpars = shared_estpars,
-                                                unit_estpars = unit_estpars,
-                                                run_name = 'H1_round1CIs_FULL')
+# H1, all estpars:
+res_h1 <- load_and_format_mega_results(filepath = res_dir_h1,
+                                       shared_estpars = shared_estpars,
+                                       unit_estpars = unit_estpars,
+                                       run_name = 'H1_FULL')
 
-# B, using round 1 CIs, all estpars:
-res_b_round1CI <- load_and_format_mega_results(filepath = 'results/round2_3_fluB_FULL/',
-                                               shared_estpars = shared_estpars,
-                                               unit_estpars = unit_estpars,
-                                               run_name = 'B_round1CIs_FULL')
+# B, all estpars:
+res_b <- load_and_format_mega_results(filepath = res_dir_b,
+                                      shared_estpars = shared_estpars,
+                                      unit_estpars = unit_estpars,
+                                      run_name = 'B_FULL')
 
 # Extract results:
-res_LIST <- list(res_h1_round1CI, res_b_round1CI)
+res_LIST <- list(res_h1, res_b)
 pars_top_LIST = pars_top_long_LIST = pars_corr_LIST = vector('list', length = length(res_LIST))
 for (i in 1:length(res_LIST)) {
   pars_top_LIST[[i]] <- res_LIST[[i]][[1]]
@@ -117,19 +130,19 @@ for (i in 1:length(res_LIST)) {
 }
 rm(i)
 
-names(pars_top_LIST) <- c('flu_h1_round1CI_FULL', 'flu_b_round1CI_FULL')
-names(pars_top_long_LIST) <- c('flu_h1_round1CI_FULL', 'flu_b_round1CI_FULL')
-names(pars_corr_LIST) <- c('flu_h1_round1CI_FULL', 'flu_b_round1CI_FULL')
+names(pars_top_LIST) <- c('flu_h1_FULL', 'flu_b_FULL')
+names(pars_top_long_LIST) <- c('flu_h1_FULL', 'flu_b_FULL')
+names(pars_corr_LIST) <- c('flu_h1_FULL', 'flu_b_FULL')
 
 # Clean up:
-try(rm(res_LIST, res_h1_round1CI, res_b_round1CI))
+try(rm(res_LIST, res_h1, res_b))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Get results from round 1
 
 # Read in results:
-res_r1 <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
+res_r1 <- read_rds(paste0(res_dir_round1, 'traj_match_round1_byvirseas_TOP.rds'))
 
 # Compile to data frames:
 res_r1 <- bind_rows(res_r1)
@@ -251,19 +264,7 @@ for (i in 1:length(pars_top_LIST)) {
   for (j in 1:5) {
     mle <- setNames(object = as.numeric(pars_top_LIST[[i]][j, 1:(length(shared_estpars) + length(unit_estpars) * 5)]),
                     nm = estpars)
-    # # slices <- slice_design(center = mle,
-    # #                        rho1 = seq(from = 0, to = 1.0, by = 0.05),
-    # #                        rho2 = seq(from = 0, to = 1.0, by = 0.05),
-    # #                        theta_lambda1 = seq(from = 0, to = 1.0, by = 0.05),
-    # #                        delta = 7 / seq(from = 1, to = 365, by = 30)) %>%
-    # #   mutate(ll = NA)
-    # slices <- slice_design(center = mle,
-    #                        rho1 = seq(from = 0.01, to = 0.2, by = 0.01),
-    #                        rho2 = seq(from = 0.01, to = 0.2, by = 0.01),
-    #                        theta_lambda1 = seq(from = 0, to = 0.2, by = 0.01),
-    #                        theta_lambda2 = seq(from = 0, to = 0.2, by = 0.01),
-    #                        delta = seq(from = 0.01, to = 0.3, by = 0.01)) %>%
-    #   mutate(ll = NA)
+    
     slices <- slice_design(center = mle,
                            rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
                            rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20),
