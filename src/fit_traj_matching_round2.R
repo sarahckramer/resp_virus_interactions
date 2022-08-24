@@ -20,6 +20,7 @@ int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
+no_ah <- as.logical(Sys.getenv("NOAH")); print(no_ah)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -30,6 +31,7 @@ prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # search_type <- 'round2_CIs'
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
 # prof_lik <- FALSE
+# no_ah <- FALSE
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -247,8 +249,6 @@ if (int_eff == 'susc') {
   } else {
     shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                         'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
-    # shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-    #                     'alpha', 'phi', 'eta_temp1', 'eta_temp2')
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
@@ -390,16 +390,21 @@ if (search_type == 'round2_CIs') {
     mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
 }
 
+# Remove eta_ah1, eta_ah2 from consideration?:
+if (no_ah) {
+  
+  estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
+  true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
+  shared_estpars <- shared_estpars[!(shared_estpars %in% c('eta_ah1', 'eta_ah2'))]
+  
+  start_values <- start_values[!(names(start_values) %in% c('eta_ah1', 'eta_ah2'))]
+  
+}
+
+# Check that starting values and estpars are correct:
 print(start_range)
 print(summary(start_values))
 print(estpars)
-
-# # Remove eta_ah1, eta_ah2 from consideration:
-# estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
-# true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
-# shared_estpars <- shared_estpars[!(shared_estpars %in% c('eta_ah1', 'eta_ah2'))]
-# 
-# start_values <- start_values[!(names(start_values) %in% c('eta_ah1', 'eta_ah2'))]
 
 # Get list of season-specific objective functions:
 obj_fun_list <- lapply(po_list, function(ix) {
