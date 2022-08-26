@@ -65,6 +65,7 @@ if (prof_lik) {
   }
   else {
     prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
+    # prof_val <- seq(0, 0.05, by = 0.0025)[jobid_orig]
   }
   print(prof_val)
   
