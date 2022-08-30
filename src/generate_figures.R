@@ -10,12 +10,7 @@ library(patchwork)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Figure 1: Model schematic
-# Not generated in R
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-# Figure 2: Visualize Hong Kong data
+# Figure 1: Visualize Hong Kong data
 dat_hk <- read_csv('data/formatted/dat_hk.csv')
 
 dat_hk <- dat_hk %>%
@@ -36,7 +31,7 @@ dat_pos <- dat_hk %>%
 
 x_lab_breaks <- dat_hk %>% filter(Week == 1) %>% pull(Time)
 
-p2a <- ggplot(data = dat_pos, aes(x = Time, y = perc_pos, col = virus)) +
+p1a <- ggplot(data = dat_pos, aes(x = Time, y = perc_pos, col = virus)) +
   geom_line() + theme_classic() +
   theme(legend.position = 'bottom',
         axis.title = element_text(size = 14),
@@ -48,8 +43,8 @@ p2a <- ggplot(data = dat_pos, aes(x = Time, y = perc_pos, col = virus)) +
   scale_x_continuous(breaks = x_lab_breaks, labels = 2014:2019) +
   scale_color_brewer(palette = 'Set1') +
   labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'A')
-p2a <- reposition_legend(p2a, position = 'top left', plot = FALSE)
-p2b <- ggplot(data = dat_hk, aes(x = Time, y = GOPC)) + geom_line() +
+p1a <- reposition_legend(p1a, position = 'top left', plot = FALSE)
+p1b <- ggplot(data = dat_hk, aes(x = Time, y = GOPC)) + geom_line() +
   theme_classic() + theme(axis.title = element_text(size = 14),
                           axis.text = element_text(size = 12),
                           plot.tag = element_text(size = 22),
@@ -60,11 +55,16 @@ p2b <- ggplot(data = dat_hk, aes(x = Time, y = GOPC)) + geom_line() +
 # fig2 = p2a + p2b + plot_layout(ncol = 1)
 # print(fig2)
 
-fig2 <- arrangeGrob(p2a, p2b, ncol = 1)
-plot(fig2)
+fig1 <- arrangeGrob(p1a, p1b, ncol = 1)
+plot(fig1)
 
-ggsave('results/plots/figures_for_manuscript/Figure2.svg', width = 9.5, height = 6, fig2)
-rm(dat_hk, dat_pos, p2a, p2b, x_lab_breaks)
+ggsave('results/plots/figures_for_manuscript/Figure1.svg', width = 9.5, height = 6, fig2)
+rm(dat_hk, dat_pos, p1a, p1b, x_lab_breaks)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Figure 2: Model schematic
+# Not generated in R
 
 # ---------------------------------------------------------------------------------------------------------------------
 
