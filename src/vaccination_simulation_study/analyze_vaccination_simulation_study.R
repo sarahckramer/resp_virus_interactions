@@ -39,7 +39,8 @@ file_list <- list.files('results/vaccine_simulation_study/simulations/main/', pa
 
 res_list <- vector('list', length(file_list))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 62, 67))
+  res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_split(file_list[i], '_')[[1]][5])
+  # res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 62, 67))
 }
 rm(i)
 
@@ -190,7 +191,8 @@ file_list <- list.files('results/vaccine_simulation_study/simulations/main/', pa
 
 res_list <- vector('list', length(file_list))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 62, 67))
+  res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_split(file_list[i], '_')[[1]][5])
+  # res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 62, 67))
 }
 rm(i)
 
