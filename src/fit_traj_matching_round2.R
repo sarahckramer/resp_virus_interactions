@@ -373,6 +373,14 @@ if (search_type == 'round2_CIs') {
   
   rm(start_range_thetarho)
   
+  if (no_ah) {
+    
+    estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
+    true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
+    shared_estpars <- shared_estpars[!(shared_estpars %in% c('eta_ah1', 'eta_ah2'))]
+    
+  }
+  
 } else {
   
   for (i in 1:length(seasons)) {
@@ -410,7 +418,7 @@ if (search_type == 'round2_CIs') {
 }
 
 # Remove eta_ah1, eta_ah2 from consideration?:
-if (no_ah) {
+if (no_ah & search_type != 'round2_CIs') {
   
   estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
   true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
