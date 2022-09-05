@@ -132,7 +132,7 @@ for (yr_index in 1:length(seasons)) {
   # Set seed:
   set.seed(10943765)
   
-  # Generate set of model parameters to try (Ri and I10 only):
+  # Generate set of model parameters to try (Ri and I0 only):
   param_bound <- cbind(c(1.1, 1.1, log(1e-7), log(1e-7)),
                        c(2.0, 2.0, log(1e-3), log(5e-3)))
   params_test <- lhs(n_lhs, param_bound) %>%

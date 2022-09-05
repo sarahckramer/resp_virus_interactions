@@ -212,7 +212,7 @@ gtsave(table_h1, filename = 'results/plots/table_CIs_h1.html')
 gtsave(table_b, filename = 'results/plots/table_CIs_b.html')
 
 # Check whether MLEs fall within CIs:
-ci_res %>% filter(mle <= lower) # several season-specific paramters for B (although they are close to the boundaries)
+ci_res %>% filter(mle <= lower) # several season-specific parameters for B (although they are close to the boundaries)
 ci_res %>% filter(mle >= upper)
 
 # Plot range of fit values for each parameter:
