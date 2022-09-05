@@ -29,7 +29,7 @@ no_ah <- as.logical(Sys.getenv("NOAH")); print(no_ah)
 # 
 # sobol_size <- 10
 # search_type <- 'round2_CIs'
-# int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
+# int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
 # no_ah <- FALSE
 
@@ -260,6 +260,15 @@ if (int_eff == 'susc') {
     shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
                         'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   }
+} else if (int_eff == 'both') {
+  if (prof_lik) {
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
+                        'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+    shared_estpars <- shared_estpars[shared_estpars != prof_param]
+  } else {
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
+                        'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+  }
 } else {
   stop('Unrecognized int_eff value.')
 }
@@ -347,6 +356,8 @@ rm(i)
 # Get data frame of all ranges:
 if (search_type == 'round2_CIs') {
   
+  start_range_thetarho <- start_range %>% select(theta_rho1:theta_rho2)
+  
   if (vir1 == 'flu_h1') {
     start_range <- read_rds('results/round2_CIs/round2CI_startvals_H1.rds')
   } else if (vir1 == 'flu_b') {
@@ -354,6 +365,13 @@ if (search_type == 'round2_CIs') {
   } else {
     stop('Unknown vir1!')
   }
+  
+  if (int_eff == 'both') {
+    start_range <- start_range %>%
+      bind_cols(start_range_thetarho)
+  }
+  
+  rm(start_range_thetarho)
   
 } else {
   
