@@ -182,6 +182,28 @@ for (seas in seasons) {
 }
 dev.off()
 
+# For each scenario, calculate correlations to determine consistency between seasons:
+vec_hk <- vector('list', length = length(unique(res$season)))
+for (i in 1:length(unique(res_metrics$season))) {
+  
+  seas <- unique(res_metrics$season)[i]
+  
+  vec_hk[[i]] <- res_metrics %>%
+    filter(season == seas,
+           metric == 'ar2_impact') %>%
+    arrange(vacc_cov, vacc_time) %>%
+    pull(val)
+  
+}
+
+corr_mat_hk <- matrix(NA, nrow = 5, ncol = 5)
+for (i in 1:5) {
+  for (j in 1:5) {
+    corr_mat_hk[i, j] <- cor.test(vec_hk[[i]], vec_hk[[j]], method = 'kendall')$estimate
+  }
+}
+rownames(corr_mat_hk) = colnames(corr_mat_hk) = unique(res_metrics$season)
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Compile results and assess impact ("temperate" scenario)
@@ -336,3 +358,25 @@ for (seas in seasons) {
   
 }
 dev.off()
+
+# For each scenario, calculate correlations to determine consistency between seasons:
+vec_temp <- vector('list', length = length(unique(res$season)))
+for (i in 1:length(unique(res_metrics$season))) {
+  
+  seas <- unique(res_metrics$season)[i]
+  
+  vec_temp[[i]] <- res_metrics %>%
+    filter(season == seas,
+           metric == 'ar2_impact') %>%
+    arrange(vacc_cov, vacc_time) %>%
+    pull(val)
+  
+}
+
+corr_mat_temp <- matrix(NA, nrow = 5, ncol = 5)
+for (i in 1:5) {
+  for (j in 1:5) {
+    corr_mat_temp[i, j] <- cor.test(vec_temp[[i]], vec_temp[[j]], method = 'kendall')$estimate
+  }
+}
+rownames(corr_mat_temp) = colnames(corr_mat_temp) = unique(res_metrics$season)
