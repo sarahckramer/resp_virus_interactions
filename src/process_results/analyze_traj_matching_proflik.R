@@ -70,6 +70,7 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
   # Set profpar to correct values:
   res_temp <- res_temp %>%
     mutate(profpar = seq(0.0, 0.2, by = 0.01)[profpar])
+    # mutate(profpar = seq(0, 0.05, by = 0.0025)[profpar])
   
   # Return formatted results:
   return(res_temp)
