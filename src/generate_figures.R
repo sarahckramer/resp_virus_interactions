@@ -65,7 +65,7 @@ fig1 <- arrangeGrob(p1a, p1b, p1c, ncol = 1)
 plot(fig1)
 
 ggsave('results/plots/figures_for_manuscript/Figure1.svg', width = 9.5, height = 8.5, fig1)
-rm(dat_hk, dat_pos, p1a, p1b, p1c, x_lab_breaks)
+rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -491,6 +491,8 @@ print(summary(prop_b_list))
 print(summary(prop_c_list))
 print(summary(prop_d_list))
 
+rm(list = ls())
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Figure 4: Plot heatmaps from simulation study
@@ -570,11 +572,12 @@ res_metrics <- res_metrics %>%
 
 upper_bound_ar <- max(res_metrics$ar2_impact)
 
-p4a <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
-              aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+p_legend1 <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
+                    aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
-  theme(axis.title = element_text(size = 14),
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
@@ -587,14 +590,14 @@ p4a <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'natu
                        values = c(0, 1 / upper_bound_ar, 1),
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
   labs(x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
+p_legend1 <- ggplotGrob(p_legend1)$grobs[[which(sapply(ggplotGrob(p_legend1)$grobs, function(x) x$name) == 'guide-box')]]
 
 # res_metrics %>%
 #   filter(climate == 'temp' & scenario == 'natural') %>%
 #   filter(ar2_impact == min(ar2_impact))
 
-res_insetA <- res %>%
+res_simA <- res %>%
   filter(climate == 'temp',
          scenario == 'natural',
          vacc_cov == '0.6',
@@ -603,26 +606,67 @@ res_insetA <- res %>%
   mutate(val = val * 100) %>%
   mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
 
-p4a_inset <- ggplot(data = res_insetA, aes(x = time, y = val, col = Virus, lty = .id)) +
+p_legend2 <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
-  geom_vline(xintercept = 0, lty = 2) +
   theme_classic() +
-  theme(axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
         legend.position = 'bottom') +
   scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
   scale_linetype(guide = 'none') +
-  labs(x = 'Time (Weeks)', y = 'Incidence (%)')
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
+p_legend2 <- ggplotGrob(p_legend2)$grobs[[which(sapply(ggplotGrob(p_legend2)$grobs, function(x) x$name) == 'guide-box')]]
 
-# p4a <- p4a + inset_element(p4a_inset, left = 0.50, right = 0.98, bottom = 0.58, top = 0.98)
+p4a <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
+              aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+  geom_tile() +
+  geom_point(x = 0, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.key.width = unit(1.2, 'cm'),
+        legend.key.height = unit(0.7, 'cm'),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_fill_distiller(palette = 'RdBu',
+                       values = c(0, 1 / upper_bound_ar, 1),
+                       limits = c(0, upper_bound_ar),
+                       breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
+  labs(title = expression(paste('Temperate (', theta[LAIV], '=', theta[lambda*1], ')')),
+       x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
+
+p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
+  geom_line() +
+  geom_vline(xintercept = 0, lty = 2) +
+  geom_point(x = 52, y = 1.13, shape = 16, size = 3, col = 'black') +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'none') +
+  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
+  scale_linetype(guide = 'none') +
+  scale_shape_discrete(guide = 'none') +
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
 p4b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'natural'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
+  geom_point(x = 15, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 60, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
-  theme(axis.title = element_text(size = 14),
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
@@ -634,65 +678,51 @@ p4b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'n
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
+  labs(title = expression(paste('Subtropical (', theta[LAIV], '=', theta[lambda*1], ')')),
+       x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
 # res_metrics %>%
 #   filter(climate == 'subtrop' & scenario == 'natural') %>%
 #   filter(ar2_impact == min(ar2_impact) |
 #            ar2_impact == max(ar2_impact))
 
-# res_insetB1 <- res %>%
-#   filter(climate == 'subtrop',
-#          scenario == 'natural',
-#          vacc_cov == '0.6',
-#          vacc_time == '0') %>%
-#   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
-#   mutate(val = val * 100) %>%
-#   mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
-# res_insetB2 <- res %>%
-#   filter(climate == 'subtrop',
-#          scenario == 'natural',
-#          vacc_cov == '0.6',
-#          vacc_time == '15') %>%
-#   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
-#   mutate(val = val * 100) %>%
-#   mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
+res_simB <- res %>%
+  filter(climate == 'subtrop',
+         scenario == 'natural',
+         vacc_cov == 0.6,
+         vacc_time %in% c('0', '15')) %>%
+  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
+  mutate(val = val * 100) %>%
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
+  mutate(vacc_time = factor(vacc_time, levels = c('15', '0')))
 
-
-# p4b_inset1 <- ggplot(data = res_insetB1, aes(x = time, y = val, col = Virus, lty = .id)) +
-#   geom_line() +
-#   geom_vline(xintercept = 0, lty = 2) +
-#   theme_classic() +
-#   theme(axis.title = element_text(size = 12),
-#         axis.text = element_text(size = 10),
-#         legend.title = element_text(size = 14),
-#         legend.text = element_text(size = 12),
-#         legend.position = 'none') +
-#   scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
-#   scale_linetype(guide = 'none') +
-#   labs(x = 'Time (Weeks)', y = 'Incidence (%)')
-# p4b_inset2 <- ggplot(data = res_insetB2, aes(x = time, y = val, col = Virus, lty = .id)) +
-#   geom_line() +
-#   geom_vline(xintercept = 15, lty = 2) +
-#   theme_classic() +
-#   theme(axis.title = element_text(size = 12),
-#         axis.text = element_text(size = 10),
-#         legend.title = element_text(size = 14),
-#         legend.text = element_text(size = 12),
-#         legend.position = 'none') +
-#   scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
-#   scale_linetype(guide = 'none') +
-#   labs(x = 'Time (Weeks)', y = 'Incidence (%)')
-
-# p4b <- p4b + inset_element(p4b_inset2, left = 0.50, right = 0.98, bottom = 0.58, top = 0.98) +
-#   inset_element(p4b_inset1, left = 0.50, right = 0.98, bottom = 0.16, top = 0.56)
+p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
+  geom_point(x = 52, y = 3.8, aes(shape = vacc_time), size = 3, col = 'black', fill = 'black') +
+  facet_wrap(~ vacc_time, ncol = 1) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'none',
+        strip.text = element_blank()) +
+  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
+  scale_linetype(guide = 'none') +
+  scale_shape_discrete(guide = 'none') +
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
 p4c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'half'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
+  geom_point(x = 0, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 20, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
-  theme(axis.title = element_text(size = 14),
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
@@ -704,64 +734,51 @@ p4c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'half
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
+  labs(title = expression(paste('Temperate (', theta[LAIV], '= 0.5)')),
+       x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
 
 # res_metrics %>%
 #   filter(climate == 'temp' & scenario == 'half') %>%
 #   filter(ar2_impact == min(ar2_impact) |
 #            ar2_impact == max(ar2_impact))
 
-res_insetC1 <- res %>%
+res_simC <- res %>%
   filter(climate == 'temp',
          scenario == 'half',
-         vacc_cov == '0.6',
+         vacc_cov %in% c('0.2', '0.6'),
          vacc_time == '0') %>%
   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
   mutate(val = val * 100) %>%
-  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
-res_insetC2 <- res %>%
-  filter(climate == 'temp',
-         scenario == 'half',
-         vacc_cov == '0.2',
-         vacc_time == '0') %>%
-  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
-  mutate(val = val * 100) %>%
-  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
+  mutate(vacc_cov = factor(vacc_cov, levels = c('0.6', '0.2')))
 
-p4c_inset1 <- ggplot(data = res_insetC1, aes(x = time, y = val, col = Virus, lty = .id)) +
+p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
-  geom_vline(xintercept = 0, lty = 2) +
+  geom_vline(aes(xintercept = vacc_time), lty = 2) +
+  geom_point(x = 52, y = 1.13, aes(shape = vacc_cov), size = 3, col = 'black') +
+  facet_wrap(~ vacc_cov, ncol = 1) +
   theme_classic() +
-  theme(axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
-        legend.position = 'none') +
+        legend.position = 'none',
+        strip.text = element_blank()) +
   scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
   scale_linetype(guide = 'none') +
-  labs(x = 'Time (Weeks)', y = 'Incidence (%)')
-p4c_inset2 <- ggplot(data = res_insetC2, aes(x = time, y = val, col = Virus, lty = .id)) +
-  geom_line() +
-  geom_vline(xintercept = 0, lty = 2) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'none') +
-  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
-  scale_linetype(guide = 'none') +
-  labs(x = 'Time (Weeks)', y = 'Incidence (%)')
-
-p4c <- p4c + inset_element(p4c_inset1, left = 0.50, right = 0.98, bottom = 0.58, top = 0.98) +
-  inset_element(p4c_inset2, left = 0.50, right = 0.98, bottom = 0.16, top = 0.56)
+  scale_shape_discrete(guide = 'none') +
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
 p4d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'half'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
+  geom_point(x = 19, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 40, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
-  theme(axis.title = element_text(size = 14),
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
@@ -773,62 +790,49 @@ p4d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'h
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
+  labs(title = expression(paste('Temperate (', theta[LAIV], '= 0.5)')),
+       x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
 # res_metrics %>%
 #   filter(climate == 'subtrop' & scenario == 'half') %>%
 #   filter(ar2_impact == min(ar2_impact) |
 #            ar2_impact == max(ar2_impact))
 
-res_insetD1 <- res %>%
+res_simD <- res %>%
   filter(climate == 'subtrop',
-         scenario == 'half',
-         vacc_cov == '0.4',
-         vacc_time == '0') %>%
+         scenario == 'half') %>%
+  filter((vacc_cov == '0.4' & vacc_time == '0') | (vacc_cov == '0.6' & vacc_time == '19')) %>%
   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
   mutate(val = val * 100) %>%
-  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
-res_insetD2 <- res %>%
-  filter(climate == 'subtrop',
-         scenario == 'half',
-         vacc_cov == '0.6',
-         vacc_time == '19') %>%
-  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
-  mutate(val = val * 100) %>%
-  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
+  mutate(vacc_cov = factor(vacc_cov, levels = c('0.6', '0.4')))
 
-p4d_inset1 <- ggplot(data = res_insetD1, aes(x = time, y = val, col = Virus, lty = .id)) +
+p4d_sim <- ggplot(data = res_simD, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
-  geom_vline(xintercept = 0, lty = 2) +
+  geom_vline(aes(xintercept = vacc_time), lty = 2) +
+  geom_point(x = 52, y = 3.8, aes(shape = vacc_cov), size = 3, col = 'black') +
+  facet_wrap(~ vacc_cov, ncol = 1) +
   theme_classic() +
-  theme(axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
-        legend.position = 'none') +
+        legend.position = 'none',
+        strip.text = element_blank()) +
   scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
   scale_linetype(guide = 'none') +
-  labs(x = 'Time (Weeks)', y = 'Incidence (%)')
-p4d_inset2 <- ggplot(data = res_insetD2, aes(x = time, y = val, col = Virus, lty = .id)) +
-  geom_line() +
-  geom_vline(xintercept = 19, lty = 2) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'none') +
-  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
-  scale_linetype(guide = 'none') +
-  labs(x = 'Time (Weeks)', y = 'Incidence (%)')
+  scale_shape_discrete(guide = 'none') +
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
-p4d <- p4d + inset_element(p4d_inset2, left = 0.50, right = 0.98, bottom = 0.58, top = 0.98) +
-  inset_element(p4d_inset1, left = 0.50, right = 0.98, bottom = 0.16, top = 0.56)
-
-fig4 <- (p4a + p4b) / (p4c + p4d) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-
+fig4 <- arrangeGrob(arrangeGrob(arrangeGrob(p4a, p4a_sim, layout_matrix = rbind(c(1, 2), c(1, NA)), heights = c(5.86, 4.14), widths = c(5.5, 4.5)),
+                                arrangeGrob(p4b, p4b_sim, nrow = 1, widths = c(5.5, 4.5)), nrow = 1),
+                    arrangeGrob(arrangeGrob(p4c, p4c_sim, nrow = 1, widths = c(5.5, 4.5)),
+                                arrangeGrob(p4d, p4d_sim, nrow = 1, widths = c(5.5, 4.5)), nrow = 1),
+                    arrangeGrob(p_legend1, p_legend2, layout_matrix = rbind(c(NA, 1, 2, NA)), widths = c(3, 2, 2, 3)),
+                    nrow = 3, heights = c(12, 12, 2.25))
 plot(fig4)
-# points indicating relevant boxes; move insets outside; add column (or just plot?) headers; facet_grid for "insets"
 
-ggsave('results/plots/figures_for_manuscript/Figure4_NEW.svg', fig4, width = 12, height = 9.5)
+ggsave('results/plots/figures_for_manuscript/Figure4.svg', fig4, width = 20, height = 10)
+rm(list = ls())
