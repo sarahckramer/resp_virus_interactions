@@ -640,7 +640,7 @@ p4a <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'natu
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[LAIV], '=', theta[lambda*1], ')')),
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], '=', theta[lambda*1], ')')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
 p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
@@ -679,7 +679,7 @@ p4b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'n
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[LAIV], '=', theta[lambda*1], ')')),
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], '=', theta[lambda*1], ')')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
 # res_metrics %>%
@@ -735,7 +735,7 @@ p4c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'half
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[LAIV], '= 0.5)')),
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], '= 0.5)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
 
 # res_metrics %>%
@@ -791,7 +791,7 @@ p4d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'h
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[LAIV], '= 0.5)')),
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], '= 0.5)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
 # res_metrics %>%

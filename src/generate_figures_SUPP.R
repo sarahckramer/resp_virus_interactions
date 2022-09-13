@@ -1057,7 +1057,7 @@ p10a <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'nat
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[LAIV], '=', theta[lambda*1], ')')),
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], '=', theta[lambda*1], ')')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
 p10b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'natural'),
@@ -1079,7 +1079,7 @@ p10b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == '
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[LAIV], '=', theta[lambda*1], ')')),
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], '=', theta[lambda*1], ')')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
 p10c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'half'),
@@ -1101,7 +1101,7 @@ p10c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'hal
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[LAIV], '= 0.5)')),
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], '= 0.5)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
 
 p10d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'half'),
@@ -1123,7 +1123,7 @@ p10d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == '
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[LAIV], '= 0.5)')),
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], '= 0.5)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
 fig10s <- (p10a + p10b) / (p10c + p10d) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
@@ -1214,7 +1214,7 @@ p11a <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'del
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', delta[LAIV], ' = 1 month)')),
+  labs(title = expression(paste('Temperate (', delta[vacc], ' = 1 month)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
 p11b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaShort'),
@@ -1235,7 +1235,7 @@ p11b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == '
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', delta[LAIV], ' = 1 month)')),
+  labs(title = expression(paste('Subtropical (', delta[vacc], ' = 1 month)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
 p11c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'deltaLong'),
@@ -1256,7 +1256,7 @@ p11c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'del
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', delta[LAIV], ' = 6 months)')),
+  labs(title = expression(paste('Temperate (', delta[vacc], ' = 6 months)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
 
 p11d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaLong'),
@@ -1277,7 +1277,7 @@ p11d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == '
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', delta[LAIV], ' = 6 months)')),
+  labs(title = expression(paste('Subtropical (', delta[vacc], ' = 6 months)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
 p11e <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'effLow'),
