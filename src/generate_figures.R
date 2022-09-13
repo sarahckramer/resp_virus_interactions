@@ -581,7 +581,7 @@ p_legend1 <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario ==
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
-        legend.key.width = unit(1.2, 'cm'),
+        legend.key.width = unit(1.5, 'cm'),
         legend.key.height = unit(0.7, 'cm'),
         legend.position = 'bottom',
         plot.tag = element_text(size = 22),
@@ -791,7 +791,7 @@ p4d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'h
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[LAIV], '= 0.5)')),
+  labs(title = expression(paste('Subtropical (', theta[LAIV], '= 0.5)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
 # res_metrics %>%
