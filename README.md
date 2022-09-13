@@ -25,11 +25,11 @@ Formatting data
 Model Code
 ----------
 
-* "resp_interaction_model.c":
-* "resp_interaction_model.R":
-* "functions/functions_flu_RSV.R":
-* "functions/test_code.R":
-* "functions/setup_global_likelihood.R"
+* "resp_interaction_model.c": C code used to run the model, including parameter transformations, observation model, and deterministic skeleton
+* "resp_interaction_model.R": Code to read in season- and virus-virus pair-specific data, create a pomp model, and run various model checks
+* "functions/functions_flu_RSV.R": Functions to create pomp objects used for running and fitting the model
+* "functions/test_code.R": Contains various functions used to check that model code is behaving as expected
+* "functions/setup_global_likelihood.R": Code to read in data from all seasons and load functions for evaluating the global log-likelihood
 
 Fitting the interaction model to data
 -------------------------------------
@@ -37,7 +37,7 @@ Fitting the interaction model to data
 1. Run "fit_traj_matching_round1.R" to obtain initial fits for all season-specific parameters. The parameter "fit_shared" should be set to FALSE. The ranges of values fit will be used to generate starting values for the next round of estimations.
     * Run "process_results/01_check_missing_files_traj_matching_r1.R" to check whether estimation failed for any virus, season, or starting parameter set.
     * Run "process_results/02_compile_results_traj_matching_r1.R" to format and compile individual results into comprehensive output files.
-2. Run "fit_traj_matching_round2.R" to fit all parameters, both shared and season-specific, and obtain maximum likelihood estimates. Parameter "search_type" should be set to "round1_CIs".
+2. Run "fit_traj_matching_round2.R" to fit all parameters, both shared and season-specific, and obtain maximum likelihood estimates. Parameter "search_type" should be set to "round1_CIs"; no_jobs should be set to 125 and sobol_size to 500.
     * Run "checks/check_no_states_below_0.R" to ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables.
     * If only one parameter set is statistically supported (has log-likelihood value falling within qchisq(0.95, df = 46) / 2 of the log-likelihood of the MLE) at this point, we assume that the MLE has not yet been reached, and run an additional round of fits.
     * Run "get_start_ranges_from_round2.R" to get range of starting parameter values for second run of round 2. The parameter "method" should be set to "perc".
@@ -48,35 +48,65 @@ Fitting the interaction model to data
     * Run "checks/check_no_states_below_0.R" to ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables.
     * Run "get_MLEs.R" to obtain the maximum likelihood estimates of each parameter and save them.
     * Run "get_start_ranges_from-round2.R", with "method" set to "ci", in order to get parameter start ranges for parametric bootstrapping.
-4. Run parametric bootstrapping to get 99% confidence intervals for all parameters.
+5. Run parametric bootstrapping to get 99% confidence intervals for all parameters.
     * First, run "bootstrap_01_generate_synthetic.R" to generate several synthetic datasets at the MLEs.
-    * Next, run "bootstrap_02_fit.R" to fit the model to each synthetic dataset.
+    * Next, run "bootstrap_02_fit.R" with no_jobs set to 1 and "sobol_size" set to 10 to fit the model to each synthetic dataset.
     * Finally, run "bootstrap_03_process_and_CIs.R" to compile results and calculate the 99% confidence intervals.
+6. Run profile likelihood on theta_lambda1 in order to check that model is converging to the MLE.
+    * Run "fit_traj_matching_round2.R" with no_jobs set to 5, "sobol_size" set to 50, and "prof_lik" set to TRUE.
+    * Run "process_results/analyze_traj_matching_proflik.R" to determine which values of theta_lambda1 are supported by the analysis and plot the results. Before running, set "res_dir" to the location of the profile likelihood results.
 
 Code to explore data/model fit
 ------------------------------
 
 * "explore_data/calculate_outbreak_metrics.R":
+  * Code to calculate several outbreak metrics for the influenza and RSV data, including attack rates, week of peak activity, and duration of outbreaks
 * "explore_data/explore_allcause_mortality_seasonality.R":
+  * Code to check for obvious seasonal patterns in all-cause mortality in Hong Kong
+* "explore_data/explore_data_smoothness.R":
+  * Code to calculate lag-one autocorrelation for all available data
 * "process_results/analyze_fit_parameter_vals_round1.R":
+  * Code to explore and plot best-fit values from round 1 fits. Before running, set "res_dir" to the location of the results of the "round 1" fits (step 1 above).
 * "process_results/analyze_traj_matching_round1.R":
+  * Code to explore fit values from round 1, and to check for convergence, correlations between fit parameter values, and agreement between data and simulations at the best-fit values. Before running, set "res_dir" to the location of the results of the "round 1" fits (step 1 above).
 * "process_results/analyze_traj_matching_round2.R":
-* "process_results/compare_AHvnoAH_and_lags.R":
+  * Code to explore fit values from round 2; to compare fit values to those from round 1; and to check for convergence, correlations between fit parameter values, and agreement between data and simulations at the best-fit values. Before running, set "res_dir_h1" and "res_dir_b" to the location of the results of the final "round 2" fits (step 4 above) for H1/RSV and B/RSV, respectively, and set "res_dir_round1" to the location of the results of the "round 1" fits.
+* "checks/calculate_PAF.R":
+  * Code to estimate how the seasonal attack rate of one virus would differ in the absence of the other virus
 * "checks/calculate_simulated_AR.R":
+  * Code to calculate attack rates of influenza and RSV when model is simulated at the MLE
 * "checks/explore_interaction_impact.R":
+  * Code to calculate the log-likelihood and run simulations at several combinations of interaction parameter values; intended mostly for exploration
 
 Check for lag on climate data, inclusion of humidity data
 ---------------------------------------------------------
 
+1. Run "fit_traj_matching_round2.R" with "search_type" set to "round1_CIs" as described above under "Fitting the interaction model to data," but with the parameter "no_ah" set to TRUE.
+2. Continue the model fitting process as described above, until the "final" estimates are obtained.
+3. Run "compare_AHvnoAH.R" (with lines 13-17 indicating the locations of all relevant results files) to evaluate whether there is a significant difference in model fit between models including and excluding an effect of absolute humidity.
+
 Age-Structured Sensitivity Analysis
 -----------------------------------
 
+1. Run "age_structured_SA/m-generate_covariate.R" to generate synthetic, age-structured covariate data (ILI rates and number of tests performed).
+2. Run "age_structured_SA/m-run_model.R" to generate synthetic, age-structured case data at the MLE of the model fits to the A(H1N1)-RSV virus-virus pair.
+3. To fit the model to the age-structured synthetic data, uncomment line 47 in "fit_traj_matching_round1.R," line 32 in "02_compile_results_traj_matching_r1.R," and line 77 in "fit_traj_matching_round2.R," so that "age_structured" is equal to TRUE. Then, simply follow the same fitting procedure as outlined in numbers 1-4 under "Fitting the interaction model to data" above.
+
 Simulation Study of Vaccine Impact
 ----------------------------------
+
+1.
+
+
+Generate publication-ready figures for manuscript
+-------------------------------------------------
+
+* Figures 1, 3, and 4 from the manuscript can be generated by running "generate_figures.R", which also calculates the $R^2$ between the data and the model simulations at the MLE.
+* All supplementary figures (except the schematic for the simulation study of LAIV) can be generated by running "generate_figures_SUPP.R."
 
 Data Sources
 ------------
 
 * Virologic data: https://www.chp.gov.hk/en/statistics/data/10/641/642/2274.html
 * ILI data: https://www.chp.gov.hk/en/static/24015.html
-* Population data: https://data.gov.hk/en-data/dataset/hk-censtatd-tablechart-popn/resource/75ca854e-d06d-48f4-a565-e136f0d46db3
+* Population data: https://www.censtatd.gov.hk/en/web_table.html?id=1A
