@@ -66,7 +66,6 @@ check_correct_N_CONST_VACC <- function(sim_res, true_n) {
     unique()
   expect_true(length(check_n) == 1)
   expect_true(check_n == true_n)
-  
 }
 
 
@@ -111,6 +110,7 @@ check_obs_lessthan_samples <- function(pomp_object, n_sim = 10) {
 check_independent_dynamics <- function(pomp_object) {
   # Function to check that, when no interaction is specified, virus dynamics are independent
   # params pomp_object: The pomp model object to be checked
+  # returns: Plot of epidemic dynamics with and without interaction
   
   p_mat <- parmat(params = coef(pomp_object), nrep = 3)
   p_mat['I10', ] <- c(1e-5, 1e-5, 0)
@@ -140,6 +140,11 @@ check_independent_dynamics <- function(pomp_object) {
 
 
 quick_explore_interaction <- function(pomp_object, int_vals, n_sim = 10) {
+  # Function to get a quick idea of how the interaction strength impacts dynamics
+  # params pomp_object: The pomp model object to use for simulations
+  # params int_vals: A vector containing values of interaction strength to test
+  # params n_sim: The number of stochastic simulations to run
+  # returns: List of plots showing the effect of interactions of different strengths
   
   int_parms <- c('theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2')
   p_list <- vector('list', length(int_parms))
@@ -208,7 +213,6 @@ check_independent_dynamics_VACC <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_
     theme_classic()
   
   return(p_temp)
-  
 }
 
 
@@ -250,5 +254,4 @@ check_single_virus_impact <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, 
     theme_classic()
   
   return(p_temp)
-  
 }
