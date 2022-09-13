@@ -139,11 +139,39 @@ hist(res_df_b$loglik, breaks = 50)
 # }) %>%
 #   unlist()))
 
+# Calculate composite parameters:
+res_df_h1 <- res_df_h1 %>%
+  mutate(delta2 = d2 * delta1,
+         `s13-14_R10 + R120` = `s13-14_R10` + `s13-14_R120`,
+         `s15-16_R10 + R120` = `s15-16_R10` + `s15-16_R120`,
+         `s16-17_R10 + R120` = `s16-17_R10` + `s16-17_R120`,
+         `s17-18_R10 + R120` = `s17-18_R10` + `s17-18_R120`,
+         `s18-19_R10 + R120` = `s18-19_R10` + `s18-19_R120`,
+         `s13-14_R20 + R120` = `s13-14_R20` + `s13-14_R120`,
+         `s15-16_R20 + R120` = `s15-16_R20` + `s15-16_R120`,
+         `s16-17_R20 + R120` = `s16-17_R20` + `s16-17_R120`,
+         `s17-18_R20 + R120` = `s17-18_R20` + `s17-18_R120`,
+         `s18-19_R20 + R120` = `s18-19_R20` + `s18-19_R120`) %>%
+  select(rho1:`s18-19_R120`, delta2:`s18-19_R20 + R120`, loglik:dataset)
+res_df_b <- res_df_b %>%
+  mutate(delta2 = d2 * delta1,
+         `s13-14_R10 + R120` = `s13-14_R10` + `s13-14_R120`,
+         `s14-15_R10 + R120` = `s14-15_R10` + `s14-15_R120`,
+         `s15-16_R10 + R120` = `s15-16_R10` + `s15-16_R120`,
+         `s17-18_R10 + R120` = `s17-18_R10` + `s17-18_R120`,
+         `s18-19_R10 + R120` = `s18-19_R10` + `s18-19_R120`,
+         `s13-14_R20 + R120` = `s13-14_R20` + `s13-14_R120`,
+         `s14-15_R20 + R120` = `s14-15_R20` + `s14-15_R120`,
+         `s15-16_R20 + R120` = `s15-16_R20` + `s15-16_R120`,
+         `s17-18_R20 + R120` = `s17-18_R20` + `s17-18_R120`,
+         `s18-19_R20 + R120` = `s18-19_R20` + `s18-19_R120`) %>%
+  select(rho1:`s18-19_R120`, delta2:`s18-19_R20 + R120`, loglik:dataset)
+
 # Calculate 99% confidence intervals for each parameter:
 res_df_h1_long <- res_df_h1 %>%
   select(-c(loglik, dataset)) %>%
   pivot_longer(cols = everything(), names_to = 'parameter', values_to = 'value') %>%
-  mutate(parameter = factor(parameter, levels = names(res_df_h1)[1:47]))
+  mutate(parameter = factor(parameter, levels = names(res_df_h1)[1:58]))
 
 ci_res <- res_df_h1_long %>%
   group_by(parameter) %>%
@@ -159,7 +187,7 @@ ci_res <- res_df_h1_long %>%
 res_df_b_long <- res_df_b %>%
   select(-c(loglik, dataset)) %>%
   pivot_longer(cols = everything(), names_to = 'parameter', values_to = 'value') %>%
-  mutate(parameter = factor(parameter, levels = names(res_df_b)[1:47]))
+  mutate(parameter = factor(parameter, levels = names(res_df_b)[1:58]))
 
 ci_res <- ci_res %>%
   bind_rows(res_df_b_long %>%
@@ -181,6 +209,31 @@ write_csv(ci_res, file = 'results/99CI_from_boostrapping_HPDI.csv')
 mle_h1 <- read_rds('results/MLEs_flu_h1.rds')
 mle_b <- read_rds('results/MLEs_flu_b.rds')
 
+mle_h1 <- mle_h1 %>%
+  mutate(delta2 = d2 * delta1,
+         `s13-14_R10 + R120` = `s13-14_R10` + `s13-14_R120`,
+         `s15-16_R10 + R120` = `s15-16_R10` + `s15-16_R120`,
+         `s16-17_R10 + R120` = `s16-17_R10` + `s16-17_R120`,
+         `s17-18_R10 + R120` = `s17-18_R10` + `s17-18_R120`,
+         `s18-19_R10 + R120` = `s18-19_R10` + `s18-19_R120`,
+         `s13-14_R20 + R120` = `s13-14_R20` + `s13-14_R120`,
+         `s15-16_R20 + R120` = `s15-16_R20` + `s15-16_R120`,
+         `s16-17_R20 + R120` = `s16-17_R20` + `s16-17_R120`,
+         `s17-18_R20 + R120` = `s17-18_R20` + `s17-18_R120`,
+         `s18-19_R20 + R120` = `s18-19_R20` + `s18-19_R120`)
+mle_b <- mle_b %>%
+  mutate(delta2 = d2 * delta1,
+         `s13-14_R10 + R120` = `s13-14_R10` + `s13-14_R120`,
+         `s14-15_R10 + R120` = `s14-15_R10` + `s14-15_R120`,
+         `s15-16_R10 + R120` = `s15-16_R10` + `s15-16_R120`,
+         `s17-18_R10 + R120` = `s17-18_R10` + `s17-18_R120`,
+         `s18-19_R10 + R120` = `s18-19_R10` + `s18-19_R120`,
+         `s13-14_R20 + R120` = `s13-14_R20` + `s13-14_R120`,
+         `s14-15_R20 + R120` = `s14-15_R20` + `s14-15_R120`,
+         `s15-16_R20 + R120` = `s15-16_R20` + `s15-16_R120`,
+         `s17-18_R20 + R120` = `s17-18_R20` + `s17-18_R120`,
+         `s18-19_R20 + R120` = `s18-19_R20` + `s18-19_R120`)
+
 mle <- bind_rows(mle_h1[1, ], mle_b[1, ]) %>%
   mutate(vir1 = c('flu_h1', 'flu_b')) %>%
   pivot_longer(cols = !vir1,
@@ -190,6 +243,9 @@ mle <- bind_rows(mle_h1[1, ], mle_b[1, ]) %>%
 ci_res <- ci_res %>%
   left_join(mle, by = c('vir1', 'parameter')) %>%
   select(parameter, mle, lower:vir1)
+
+# Write results to file:
+write_csv(ci_res, file = 'results/MLE_plus_99CI_from_boostrapping_HPDI.csv')
 
 # Generate tables of results:
 table_h1 <- ci_res %>%
@@ -217,6 +273,7 @@ ci_res %>% filter(mle >= upper)
 
 # Plot range of fit values for each parameter:
 res_df_h1_NOSHARED <- res_df_h1_long %>%
+  filter(!(parameter %in% levels(parameter)[48:58])) %>%
   filter(!(parameter %in% c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2'))) %>%
   mutate(season = str_sub(parameter, 1, 6),
          parameter = str_remove(parameter, paste0(season, '_'))) %>%
@@ -235,6 +292,7 @@ print(p1_h1)
 print(p2_h1)
 
 res_df_b_NOSHARED <- res_df_b_long %>%
+  filter(!(parameter %in% levels(parameter)[48:58])) %>%
   filter(!(parameter %in% c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2'))) %>%
   mutate(season = str_sub(parameter, 1, 6),
          parameter = str_remove(parameter, paste0(season, '_'))) %>%

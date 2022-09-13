@@ -176,6 +176,9 @@ hk_dat <- hk_dat %>%
   select(time:Year, Week:season, i_ILI, n_T, i_ILI1:n_T2_s2)
 
 # Save covariate "data":
+if (!dir.exists('data/age_structured_SA/')) {
+  dir.create('data/age_structured_SA/')
+}
 write_csv(hk_dat, file = 'data/age_structured_SA/synthetic_covariate_data.csv')
 
 # Clean up:

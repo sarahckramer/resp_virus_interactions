@@ -12,26 +12,28 @@ hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
 hk_dat <- hk_dat$h1_rsv %>%
   rename(n_h1 = n_P1,
          n_rsv = n_P2) %>%
-  select(time, Year, Week, season, n_h1, n_rsv, n_T, GOPC) %>%
+  select(time, Year, Week, season, n_h1, n_rsv, n_T, GOPC, pop) %>%
   full_join(hk_dat$b_rsv %>%
               rename(n_b = n_P1,
                      n_rsv = n_P2) %>%
-              select(time, season, n_b, n_rsv, n_T, GOPC),
+              select(time, season, n_b, n_rsv, n_T, GOPC, pop),
             by = c('time', 'season')) %>%
   mutate(n_rsv = if_else(is.na(n_rsv.x), n_rsv.y, n_rsv.x),
          n_T = if_else(is.na(n_T.x), n_T.y, n_T.x),
-         GOPC = if_else(is.na(GOPC.x), GOPC.y, GOPC.x)) %>%
-  select(time:n_h1, n_b, n_rsv:GOPC) %>%
+         GOPC = if_else(is.na(GOPC.x), GOPC.y, GOPC.x),
+         pop = if_else(is.na(pop.x), pop.y, pop.x)) %>%
+  select(time:n_h1, n_b, n_rsv:pop) %>%
   arrange(season)
 
 # Calculate peak timing and attack rate metrics:
 metrics_pt_ar <- hk_dat %>%
   pivot_longer(n_h1:n_rsv, names_to = 'vir', values_to = 'number') %>%
-  mutate(prop = number / n_T) %>%
+  mutate(prop = number / pop,
+         prop_pos = number / n_T) %>%
   select(-GOPC) %>%
   group_by(vir, season) %>%
-  summarise(pt = which.max(prop) + 45,
-            ar = sum(number, na.rm = TRUE),
+  summarise(pt = which.max(prop_pos) + 45,
+            ar = sum(prop, na.rm = TRUE),
             ar_prop = sum(number, na.rm = TRUE) / sum(n_T, na.rm = TRUE))
 
 # Calculate peak timing differences:
@@ -97,7 +99,9 @@ metrics <- metrics_pt_ar %>%
   left_join(metrics_conc, by = c('vir', 'season')) %>%
   select(vir:season, ar:ar_prop, pt, pt_diff, duration, consecutive) %>%
   mutate(duration = as.numeric(duration),
-         consecutive = as.numeric(as.logical(consecutive)))
+         consecutive = as.numeric(as.logical(consecutive))) %>%
+  mutate(ar = ar * 100,
+         ar_prop = ar_prop * 100)
 rm(metrics_pt_ar, metrics_pt_diff, metrics_conc)
 
 # Print values:
@@ -114,6 +118,12 @@ metrics %>%
             sum = sum(val)) %>%
   print()
 metrics %>%
+  filter(vir == 'n_h1', metric == 'pt') %>%
+  mutate(val = if_else(season == 's16-17', val - 53, val - 52)) %>%
+  pull(val) %>%
+  summary()
+
+metrics %>%
   filter(vir == 'n_b') %>%
   group_by(metric) %>%
   summarise(mean = mean(val),
@@ -123,6 +133,12 @@ metrics %>%
             sum = sum(val)) %>%
   print()
 metrics %>%
+  filter(vir == 'n_b', metric == 'pt') %>%
+  mutate(val = if_else(season == 's16-17', val - 53, val - 52)) %>%
+  pull(val) %>%
+  summary()
+
+metrics %>%
   filter(vir == 'n_rsv') %>%
   group_by(metric) %>%
   summarise(mean = mean(val),
@@ -131,6 +147,11 @@ metrics %>%
             max = max(val),
             sum = sum(val)) %>%
   print()
+metrics %>%
+  filter(vir == 'n_rsv', metric == 'pt') %>%
+  mutate(val = if_else(season == 's16-17', val - 53, val - 52)) %>%
+  pull(val) %>%
+  summary()
 
 # Plot "realistic" values:
 p1 <- ggplot(data = metrics %>% filter(metric != 'consecutive'),
