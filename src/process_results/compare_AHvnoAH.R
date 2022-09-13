@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------------------------------------
-# Format and plot results from "round 2" of trajectory matching (using mega-likelihood)
+# Check whether including effect on absolute humidity significantly improves model fit
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Setup
@@ -72,7 +72,7 @@ load_and_format_mega_results <- function(filepath, cond) {
 
 # Read in results for all runs
 
-# For "full" models, lag 0:
+# For "full" models:
 res_h1_full <- load_and_format_mega_results(res_dir_h1, cond = 'full')
 res_b_full <- load_and_format_mega_results(res_dir_b, cond = 'full')
 
