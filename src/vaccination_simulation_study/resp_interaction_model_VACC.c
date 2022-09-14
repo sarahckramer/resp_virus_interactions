@@ -180,11 +180,11 @@ if (xss0 < 0) {
   X_IS = nearbyint(I10 * N);
   X_TS = 0;
   X_RS = nearbyint((1.0 - p_vacc) * R10 * N);
-  X_SI = nearbyint(I20 * N);
+  X_SI = nearbyint((1.0 - p_vacc) * I20 * N);
   X_II = 0;
   X_TI = 0;
   X_RI = 0;
-  X_ST = 0;
+  X_ST = nearbyint((1.0 - p_vacc) * 0 * N);
   X_IT = 0;
   X_TT = 0;
   X_RT = 0;
@@ -197,8 +197,10 @@ if (xss0 < 0) {
   V_SS1 = nearbyint(p_vacc * (1.0 - I10 - I20 - R10 - R20 - R120) * N);
   V_SR = nearbyint(p_vacc * R20 * N);
   V_RS = nearbyint(p_vacc * R10 * N);
+  V_SI = nearbyint(p_vacc * I20 * N);
+  V_ST = 0;
   
-  X_SS_offset = X_IS + X_RS + X_SI + X_SR + X_RR + V_SS1 + V_SR + V_RS;
+  X_SS_offset = X_IS + X_RS + X_SI + X_SR + X_RR + V_SS1 + V_SR + V_RS + V_SI;
   if ((X_SS + X_SS_offset) != N) {
     X_SS = nearbyint(N - X_SS_offset);
   }
@@ -209,11 +211,11 @@ if (xss0 < 0) {
   X_IS = xis0;
   X_TS = xts0;
   X_RS = (1.0 - p_vacc) * xrs0;
-  X_SI = xsi0;
+  X_SI = (1.0 - p_vacc) * xsi0;
   X_II = xii0;
   X_TI = xti0;
   X_RI = xri0;
-  X_ST = xst0;
+  X_ST = (1.0 - p_vacc) * xst0;
   X_IT = xit0;
   X_TT = xtt0;
   X_RT = xrt0;
@@ -225,8 +227,10 @@ if (xss0 < 0) {
   V_SS1 = p_vacc * xss0;
   V_SR = p_vacc * xsr0;
   V_RS = p_vacc * xrs0;
+  V_SI = p_vacc * xsi0;
+  V_ST = p_vacc * xst0;
   
-  X_SS_offset = X_IS + X_TS + X_RS + X_SI + X_II + X_TI + X_RI + X_ST + X_IT + X_TT + X_RT + X_SR + X_IR + X_TR + X_RR + V_SS1 + V_SR + V_RS;
+  X_SS_offset = X_IS + X_TS + X_RS + X_SI + X_II + X_TI + X_RI + X_ST + X_IT + X_TT + X_RT + X_SR + X_IR + X_TR + X_RR + V_SS1 + V_SR + V_RS + V_SI + V_ST;
   if ((X_SS + X_SS_offset) != N) {
     //Rprintf("X_SS=%.11f, sum=%.11f, N=%.1f\n", X_SS, X_SS + X_SS_offset, N);
     //X_SS = N - round((X_IS + X_TS + X_RS + X_SI + X_II + X_TI + X_RI + X_ST + X_IT + X_TT + X_RT + X_SR + X_IR + X_TR + X_RR + V_SS1 + V_SR + V_RS) * 100000000) / 100000000;
@@ -240,8 +244,8 @@ H1 = 0;
 H2 = 0;
 
 V_SS2 = 0;
-V_SI = 0;
-V_ST = 0;
+//V_SI = 0;
+//V_ST = 0;
 
 if ((X_SS + X_SS_offset) != N) {
   Rprintf("sum=%.10f, N=%.1f\n", X_SS + X_SS_offset, N);
@@ -249,7 +253,7 @@ if ((X_SS + X_SS_offset) != N) {
 
 if(debug) {
   Rprintf("%f, %f, %f, %f, %f, %f, %f\n", Ri1, Ri2, I10, I20, R10, R20, R120);
-  Rprintf("%f, %f, %f, %f\n", V_SS1, V_SR, V_RS, N);
+  Rprintf("%f, %f, %f, %f, %f, %f\n", V_SS1, V_SR, V_RS, V_SI, V_ST, N);
 }
 
 //end_rinit

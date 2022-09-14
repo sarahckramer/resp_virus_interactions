@@ -52,7 +52,7 @@ model_params <- mle %>%
   unlist()
 
 model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
-# model_params <- c(model_params, 1.0, unname(model_params['delta1']), vacc_eff)
+# model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
 # model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 182, vacc_eff)
 names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
 

@@ -177,6 +177,7 @@ if (nrow(dat_pomp) > 0) {
     print(paste0('VSS1 should be: ', round(unique(dat_pomp$pop) * model_params['p_vacc'] * (1.0 - sum(coef(resp_mod, c('I10', 'I20', 'R10', 'R20', 'R120')))))))
     print(paste0('VSR should be: ', round(unique(dat_pomp$pop) * model_params['p_vacc'] * coef(resp_mod, 'R20'))))
     print(paste0('VRS should be: ', round(unique(dat_pomp$pop) * model_params['p_vacc'] * coef(resp_mod, 'R10'))))
+    print(paste0('VSI should be: ', round(unique(dat_pomp$pop) * model_params['p_vacc'] * coef(resp_mod, 'I20'))))
   }
   
   # Check that population size is constant:
@@ -263,8 +264,17 @@ if (nrow(dat_pomp) > 0) {
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
   
-  if (exists('mle') & yr == 's13-14') {
-    model_params['R20', ] <- round(mle$`s13-14_R20`, 7)
+  if (exists('mle')) {
+    if (yr == 's13-14') {
+      model_params['R20', ] <- round(mle$`s13-14_R20`, 7)
+      model_params['I20', ] <- round(mle$`s13-14_I20`, 7)
+    } else if (yr == 's15-16') {
+      model_params['I20', ] <- round(mle$`s15-16_I20`, 6)
+    } else if (yr == 's16-17') {
+      model_params['I20', ] <- round(mle$`s16-17_I20`, 6)
+    } else if (yr == 's17-18') {
+      model_params['I20', ] <- round(mle$`s17-18_I20`, 7)
+    }
   }
   
   p7 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
