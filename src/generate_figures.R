@@ -6,7 +6,6 @@
 library(tidyverse)
 library(lemon)
 library(gridExtra)
-library(patchwork)
 library(RColorBrewer)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -27,7 +26,7 @@ dat_pos <- dat_hk %>%
                names_to = 'virus',
                values_to = 'perc_pos') %>%
   mutate(virus = factor(virus, levels = c('n_h1', 'n_b', 'n_rsv'))) %>%
-  mutate(virus = recode(virus, n_h1 = 'Influenza (H1)', n_b = 'Influenza (B)', n_rsv = 'RSV'))
+  mutate(virus = recode(virus, n_h1 = 'Influenza A(H1N1)', n_b = 'Influenza B', n_rsv = 'RSV'))
 
 x_lab_breaks <- dat_hk %>% filter(Week == 1) %>% pull(Time)
 
@@ -357,10 +356,6 @@ p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
   scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
   labs(title = 'RSV (B-RSV)', x = 'Simulated Cases', y = 'Observed Cases',color = 'Season', tag = 'D')
 
-# p_column_title1 <- tableGrob('Influenza', theme = ttheme_minimal(core = list(fg_params = list(fontsize = 16))))
-# p_column_title2 <- tableGrob('RSV', theme = ttheme_minimal(core = list(fg_params = list(fontsize = 16))))
-
-# fig3 <- arrangeGrob(arrangeGrob(p_column_title1, p_column_title2, ncol = 2), arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 3, heights = c(1, 15, 1))
 fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 2, heights = c(15, 1))
 plot(fig3)
 
@@ -559,10 +554,6 @@ res_metrics <- res_metrics %>%
   filter(vacc_cov <= 0.60) %>%
   mutate(vacc_cov = vacc_cov * 100)
 
-# res_metrics_AVG <- res_metrics %>%
-#   group_by(climate, scenario, vacc_cov, vacc_time) %>%
-#   summarise(ar2_impact = median(ar2_impact))
-
 res <- res %>%
   filter((climate == 'subtrop' & season == 's18-19') |
            (climate == 'temp' & season == 's17-18'))
@@ -572,7 +563,7 @@ res_metrics <- res_metrics %>%
 
 upper_bound_ar <- max(res_metrics$ar2_impact)
 
-p_legend1 <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
+p_legend1 <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
                     aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -620,7 +611,7 @@ p_legend2 <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 p_legend2 <- ggplotGrob(p_legend2)$grobs[[which(sapply(ggplotGrob(p_legend2)$grobs, function(x) x$name) == 'guide-box')]]
 
-p4a <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
+p4a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   geom_point(x = 0, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
@@ -640,7 +631,7 @@ p4a <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'natu
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], '=', theta[lambda*1], ')')),
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ' = ', theta[lambda*1], ')')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
 p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
@@ -659,7 +650,7 @@ p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
-p4b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'natural'),
+p4b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'natural'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   geom_point(x = 15, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
@@ -679,7 +670,7 @@ p4b <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'n
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], '=', theta[lambda*1], ')')),
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ' = ', theta[lambda*1], ')')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
 # res_metrics %>%
@@ -715,7 +706,7 @@ p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
-p4c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'half'),
+p4c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'half'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   geom_point(x = 0, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
@@ -735,7 +726,7 @@ p4c <- ggplot(data= res_metrics %>% filter(climate == 'temp' & scenario == 'half
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], '= 0.5)')),
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ' = 0.5)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
 
 # res_metrics %>%
@@ -771,7 +762,7 @@ p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
-p4d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'half'),
+p4d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'half'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   geom_point(x = 19, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
@@ -791,7 +782,7 @@ p4d <- ggplot(data= res_metrics %>% filter(climate == 'subtrop' & scenario == 'h
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], '= 0.5)')),
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ' = 0.5)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
 # res_metrics %>%
