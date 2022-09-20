@@ -95,8 +95,13 @@ Age-Structured Sensitivity Analysis
 Simulation Study of Vaccine Impact
 ----------------------------------
 
-1.
+1. Run "vaccination_simulation_study/choose_temperate_parameters.R" to select and save initial conditions yielding temperate-like outbreaks.
+2. Run "vaccination_simulation_study/run_vaccination_simulation_study.R" to get simulations for all seasons, vaccine coverage levels, and vaccine timings. By default, this is the scenario where vaccination confers the same protection against RSV as does natural influenza infection. To change this, uncomment lines 55/177. To run sensitivity analyses regarding vaccine efficacy against influenza and duration of protection against RSV, lines 15 or 56/178, respectively, can be changed accordingly.
+3. Run "vaccination_simulation_study/analyze_vaccination_simulation_study.R" to explore and plot results for both the temperate and subtropical scenarios.
 
+Related code:
+
+* If desired, "vaccination_simulation_study/explore_drivers_of_seasonal_differences.R" can be run to explore potential drivers of the varying results by season.
 
 Generate publication-ready figures for manuscript
 -------------------------------------------------
