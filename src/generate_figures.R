@@ -255,7 +255,7 @@ res_b <- bind_rows(sim_list) %>%
   select(-c(n_T, GOPC, pop)) %>%
   mutate(vir1 = 'B')
 
-# Plot means and 95% CIs from binomial distribution:
+# Format tibble for analyses/plotting:
 res <- bind_rows(res_h1, res_b)
 res <- res %>%
   select(time:Week, vir1, mean1:mean2, lower1:upper2, n_P1:n_P2) %>%
@@ -273,98 +273,14 @@ res <- res %>%
   select(-c(virus1, virus2, virus3)) %>%
   mutate(virus = if_else(virus == 1, 'Influenza', 'RSV'))
 
-p_legend <- ggplot(data = res, aes(x = mean, y = obs, color = season)) +
-  geom_point() +
-  facet_grid(vir1 ~ virus) +
-  theme_classic() +
-  theme(legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'bottom') +
-  guides(color = guide_legend(nrow = 1)) +
-  scale_color_viridis(discrete = TRUE) +
-  labs(color = 'Season')
-p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
-
-p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
-  # geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
-  #             inherit.aes = FALSE, color = 'black', se = FALSE) +
-  theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        # legend.title = element_text(size = 14),
-        # legend.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(title = 'Influenza (A(H1N1)-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
-       color = 'Season', tag = 'A')
-
-p3b <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'RSV'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
-  theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(title = 'RSV (A(H1N1)-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
-       color = 'Season', tag = 'B')
-
-p3c <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'Influenza'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
-  theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(title = 'Influenza (B-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
-       color = 'Season', tag = 'C')
-
-p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
-  theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(title = 'RSV (B-RSV)', x = 'Simulated Cases', y = 'Observed Cases',color = 'Season', tag = 'D')
-
-fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 2, heights = c(15, 1))
-plot(fig3)
-
-ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 8)
-
 # For each virus, virus-virus pair, and season, calculate coefficient of efficiency:
 # https://stats.stackexchange.com/questions/185898/difference-between-nash-sutcliffe-efficiency-and-coefficient-of-determination
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+
 r2a_list = r2b_list = r2c_list = r2d_list = c()
+r2a_num = r2b_num = r2c_num = r2d_num = 0
+r2a_denom = r2b_denom = r2c_denom = r2d_denom = 0
+
 for (yr in seasons) {
   
   res_temp <- res %>%
@@ -378,7 +294,10 @@ for (yr in seasons) {
              total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
       summarise(ss_error = sum(resid_sq, na.rm = TRUE),
                 ss_total = sum(total_sq, na.rm = TRUE)) %>%
-      mutate(r2 = 1 - ss_error / ss_total) %>%
+      mutate(r2 = 1 - ss_error / ss_total)
+    r2a_num <- r2a_num + r2_a$ss_error
+    r2a_denom <- r2a_denom + r2_a$ss_total
+    r2_a <- r2_a %>%
       pull(r2)
     
     r2_b <- res_temp %>%
@@ -387,7 +306,10 @@ for (yr in seasons) {
              total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
       summarise(ss_error = sum(resid_sq, na.rm = TRUE),
                 ss_total = sum(total_sq, na.rm = TRUE)) %>%
-      mutate(r2 = 1 - ss_error / ss_total) %>%
+      mutate(r2 = 1 - ss_error / ss_total)
+    r2b_num <- r2b_num + r2_b$ss_error
+    r2b_denom <- r2b_denom + r2_b$ss_total
+    r2_b <- r2_b %>%
       pull(r2)
     
     r2a_list <- c(r2a_list, r2_a)
@@ -409,7 +331,10 @@ for (yr in seasons) {
              total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
       summarise(ss_error = sum(resid_sq, na.rm = TRUE),
                 ss_total = sum(total_sq, na.rm = TRUE)) %>%
-      mutate(r2 = 1 - ss_error / ss_total) %>%
+      mutate(r2 = 1 - ss_error / ss_total)
+    r2c_num <- r2c_num + r2_c$ss_error
+    r2c_denom <- r2c_denom + r2_c$ss_total
+    r2_c <- r2_c %>%
       pull(r2)
     
     r2_d <- res_temp %>%
@@ -418,7 +343,10 @@ for (yr in seasons) {
              total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
       summarise(ss_error = sum(resid_sq, na.rm = TRUE),
                 ss_total = sum(total_sq, na.rm = TRUE)) %>%
-      mutate(r2 = 1 - ss_error / ss_total) %>%
+      mutate(r2 = 1 - ss_error / ss_total)
+    r2d_num <- r2d_num + r2_d$ss_error
+    r2d_denom <- r2d_denom + r2_d$ss_total
+    r2_d <- r2_d %>%
       pull(r2)
     
     r2c_list <- c(r2c_list, r2_c)
@@ -437,6 +365,11 @@ print(summary(r2a_list))
 print(summary(r2b_list))
 print(summary(r2c_list))
 print(summary(r2d_list))
+
+r2a <- 1 - (r2a_num / r2a_denom)
+r2b <- 1 - (r2b_num / r2b_denom)
+r2c <- 1 - (r2c_num / r2c_denom)
+r2d <- 1 - (r2d_num / r2d_denom)
 
 # For each virus, virus-virus pair, and season, calculate the proportion of observations falling within confidence intervals:
 prop_a_list = prop_b_list = prop_c_list = prop_d_list = c()
@@ -486,6 +419,115 @@ print(summary(prop_b_list))
 print(summary(prop_c_list))
 print(summary(prop_d_list))
 
+# Plot means and 95% CIs from binomial distribution:
+p_legend <- ggplot(data = res, aes(x = mean, y = obs, color = season)) +
+  geom_point() +
+  facet_grid(vir1 ~ virus) +
+  theme_classic() +
+  theme(legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'bottom') +
+  guides(color = guide_legend(nrow = 1)) +
+  scale_color_viridis(discrete = TRUE) +
+  labs(color = 'Season')
+p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
+
+label_a <- paste0(' = ', round(r2a, 2), ' (', round(min(r2a_list, na.rm = TRUE), 2), '-', round(max(r2a_list, na.rm = TRUE), 2), ')')
+label_b <- paste0(' = ', round(r2b, 2), ' (', round(min(r2b_list, na.rm = TRUE), 2), '-', round(max(r2b_list, na.rm = TRUE), 2), ')')
+label_c <- paste0(' = ', round(r2c, 2), ' (', round(min(r2c_list, na.rm = TRUE), 2), '-', round(max(r2c_list, na.rm = TRUE), 2), ')')
+label_d <- paste0(' = ', round(r2d, 2), ' (', round(min(r2d_list, na.rm = TRUE), 2), '-', round(max(r2d_list, na.rm = TRUE), 2), ')')
+
+p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
+              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
+  geom_pointrange(size = 0.2, alpha = 0.6) +
+  # geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
+  #             inherit.aes = FALSE, color = 'black', se = FALSE) +
+  annotate (
+    geom = 'text', x = 500, y = 100, hjust = 0, vjust = 1, size = 5.5,
+    label = as.expression(bquote(paste(R^2, .(label_a))))
+  ) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        # legend.title = element_text(size = 14),
+        # legend.text = element_text(size = 12),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
+  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
+  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
+  labs(title = 'Influenza (A(H1N1)-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
+       color = 'Season', tag = 'A')
+
+p3b <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'RSV'),
+              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
+  geom_pointrange(size = 0.2, alpha = 0.6) +
+  annotate (
+    geom = 'text', x = 200, y = 50, hjust = 0, vjust = 1, size = 5.5,
+    label = as.expression(bquote(paste(R^2, .(label_b))))
+  ) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
+  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
+  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
+  labs(title = 'RSV (A(H1N1)-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
+       color = 'Season', tag = 'B')
+
+p3c <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'Influenza'),
+              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
+  geom_pointrange(size = 0.2, alpha = 0.6) +
+  annotate (
+    geom = 'text', x = 500, y = 100, hjust = 0, vjust = 1, size = 5.5,
+    label = as.expression(bquote(paste(R^2, .(label_c))))
+  ) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
+  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
+  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
+  labs(title = 'Influenza (B-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
+       color = 'Season', tag = 'C')
+
+p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
+              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
+  geom_pointrange(size = 0.2, alpha = 0.6) +
+  annotate (
+    geom = 'text', x = 190, y = 35, hjust = 0, vjust = 1, size = 5.5,
+    label = as.expression(bquote(paste(R^2, .(label_d))))
+  ) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
+  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
+  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
+  labs(title = 'RSV (B-RSV)', x = 'Simulated Cases', y = 'Observed Cases',color = 'Season', tag = 'D')
+
+fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 2, heights = c(15, 1))
+plot(fig3)
+
+ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 8)
 rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
