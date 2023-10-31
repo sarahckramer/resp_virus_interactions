@@ -7,6 +7,7 @@ library(tidyverse)
 
 # Read in data:
 mortality_dat <- read_csv('data/raw/hk_all-cause_mortality.csv')
+# Source: https://www.censtatd.gov.hk/en/data/stat_report/product/FA100094/att/B72111FA2021XXXXB01.xlsx
 
 # Format data:
 mortality_dat <- mortality_dat %>%
