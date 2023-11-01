@@ -4,6 +4,7 @@
 
 # Load libraries:
 library(tidyverse)
+library(testthat)
 
 # Read in data:
 hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
@@ -17,11 +18,18 @@ hk_dat <- hk_dat$h1_rsv %>%
               rename(n_b = n_P1,
                      n_rsv = n_P2) %>%
               select(time, season, n_b, n_rsv, n_T, GOPC, pop),
-            by = c('time', 'season')) %>%
-  mutate(n_rsv = if_else(is.na(n_rsv.x), n_rsv.y, n_rsv.x),
-         n_T = if_else(is.na(n_T.x), n_T.y, n_T.x),
-         GOPC = if_else(is.na(GOPC.x), GOPC.y, GOPC.x),
-         pop = if_else(is.na(pop.x), pop.y, pop.x)) %>%
+            by = c('time', 'season'))
+
+expect_true(all.equal(hk_dat$n_rsv.x, hk_dat$n_rsv.y))
+expect_true(all.equal(hk_dat$n_T.x, hk_dat$n_T.y))
+expect_true(all.equal(hk_dat$GOPC.x, hk_dat$GOPC.y))
+expect_true(all.equal(hk_dat$pop.x, hk_dat$pop.y))
+
+hk_dat <- hk_dat %>%
+  mutate(n_rsv = n_rsv.x,
+         n_T = n_T.x,
+         GOPC = GOPC.x,
+         pop = pop.x) %>%
   select(time:n_h1, n_b, n_rsv:pop) %>%
   arrange(season)
 
@@ -155,7 +163,7 @@ metrics %>%
 
 # Plot "realistic" values:
 p1 <- ggplot(data = metrics %>% filter(metric != 'consecutive'),
-       aes(x = vir, y = val, fill = metric)) +
+             aes(x = vir, y = val, fill = metric)) +
   geom_violin() +
   facet_wrap(~ metric, scales = 'free_y') +
   theme_classic() +

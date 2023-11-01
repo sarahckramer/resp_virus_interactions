@@ -82,14 +82,6 @@ for (vir1_nm in vir_list[1:3]) {
       rename_with(~ 'n_P1', .cols = contains(vir1_nm)) %>%
       rename_with(~ 'n_P2', .cols = contains(vir2_nm))
     
-    # Remove seasons where a given threshold for flu is not exceeded:
-    dat_out <- dat_out %>%
-      group_by(season) %>%
-      mutate(tot_pos = sum(n_P1)) %>%
-      ungroup() %>%
-      filter(tot_pos > 2000) %>%
-      select(-tot_pos)
-    
     # Store data in list:
     dat_hk_pomp[[counter]] <- dat_out
     

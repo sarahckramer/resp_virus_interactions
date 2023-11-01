@@ -237,9 +237,8 @@ for (yr_index in 1:length(seasons)) {
   
 }
 
-# Remove empty elements:
-seasons <- seasons[lapply(po_list, length) > 0]
-po_list <- po_list[lapply(po_list, length) > 0]
+# Check that there are no empty elements:
+expect_true(all(!lapply(po_list, length) == 0))
 
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
@@ -310,7 +309,7 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R20 = c(0, 0.3),
                                R120 = c(0, 0.3))
 
-# Get 99% CI from round 1 for unit params:
+# Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
 tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
 

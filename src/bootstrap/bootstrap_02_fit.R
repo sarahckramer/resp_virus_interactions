@@ -198,9 +198,8 @@ for (yr_index in 1:length(seasons)) {
   
 }
 
-# Remove empty elements:
-seasons <- seasons[lapply(po_list, length) > 0]
-po_list <- po_list[lapply(po_list, length) > 0]
+# Check that there are no empty elements:
+expect_true(all(!lapply(po_list, length) == 0))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
