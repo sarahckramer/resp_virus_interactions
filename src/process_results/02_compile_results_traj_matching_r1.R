@@ -128,6 +128,7 @@ for (vir1 in unique(which_flu)) {
         pull(.id) %>%
         unique() %>%
         as.integer()
+      print(length(rows_to_remove))
       
       # Remove parameter sets that go negative:
       nrow_check <- nrow(pars_temp) - length(rows_to_remove)
@@ -142,8 +143,11 @@ for (vir1 in unique(which_flu)) {
       res_list_full[[counter]] <- pars_temp
       
       # Get only best estimates:
-      no_best <- nrow(subset(pars_temp, 2 * (max(loglik) - loglik) <= qchisq(p = 0.99, df = length(estpars))))
-      no_best <- max(no_best, 50) # get top 50 if less than 50
+      no_best <- nrow(subset(pars_temp, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = length(estpars))))
+      # no_best <- max(no_best, 50) # get top 50 if less than 50
+      if (no_best < 50) {
+        print('Fewer than 50 top results!')
+      }
       print(no_best)
       
       pars_temp <- pars_temp[1:no_best, ]
