@@ -19,7 +19,7 @@
  
 # --- start from a clean state and load necessary environment modules ---
 module purge
-module load R/4.0.2
+module load R/4.2
 
 # --- run your executable via srun ---
 R --no-save --no-restore <src/vaccination_simulation_study/run_vaccination_simulation_study.R >results/Rout/R-tm-vacc_sim_study-${SLURM_ARRAY_TASK_ID}.Rout
