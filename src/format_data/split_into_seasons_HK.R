@@ -34,10 +34,13 @@ dat_hk %>% pull(season) %>% is.na() %>% any() %>% expect_false()
 
 # Get population sizes:
 pop_dat <- read_csv('data/raw/hk/pop_dat_hk.csv', skip = 4) %>%
-  rename('X1' = 'Year') %>%
+  rename('X1' = 'Year',
+         'X2' = '...2') %>%
+  select_if(~ .[1] %in% c('Mid-year', 'Reference time-point') | is.na(.[1])) %>%
   filter(X1 == 'Both sexes',
          X2 == 'All age groups') %>%
-  select(!contains('_1')) %>%
+  select_if(~ .[1] != '100.0') %>%
+  rename_with(~ str_sub(., 1, 4)) %>%
   select(all_of(as.character(unique(dat_hk$Year))))
 
 pop_dat <- pop_dat %>%
