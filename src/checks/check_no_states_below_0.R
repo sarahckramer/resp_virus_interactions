@@ -10,10 +10,10 @@ library(testthat)
 res_dir <- 'results/round2_4_fluH1_FULL/'
 
 # Check for missing results files:
-res_files <- list.files(path = res_dir, full.names = TRUE)
+res_files <- list.files(path = res_dir, full.names = FALSE)
 res_exist <- res_files %>%
   str_split('_') %>%
-  map(~ .x[9]) %>%
+  map(~ .x[6]) %>%
   str_split(fixed('.')) %>%
   map(~ .x[1]) %>%
   unlist() %>%
@@ -22,6 +22,7 @@ res_exist <- res_files %>%
 print(which(!(1:500 %in% res_exist)))
 
 # Read in and compile all results:
+res_files <- list.files(path = res_dir, full.names = TRUE)
 res_full = list()
 for (i in seq_along(res_files)) {
   res_full[[i]] <- read_rds(res_files[[i]])
@@ -43,8 +44,8 @@ shared_estpars <- pars_df %>% select(!contains(unit_estpars) & !'loglik') %>% na
 expect_equal(length(shared_estpars), 12)
 true_estpars <- c(shared_estpars, unit_estpars)
 
-df_use <- length(shared_estpars) + 5 * length(unit_estpars)
-expect_equal(df_use, 47)
+df_use <- pars_df %>% select(-loglik) %>% names() %>% length()
+expect_equal(df_use, 54)
 
 no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
 no_best <- max(no_best, 50)
@@ -54,8 +55,10 @@ pars_top <- pars_df[1:no_best, ]
 # Get/set relevant model parameters:
 if (str_detect(res_dir, 'H1')) {
   vir1 <- 'flu_h1'
-} else {
+} else if (str_detect(res_dir, 'B')) {
   vir1 <- 'flu_b'
+} else {
+  print('Invalid flu subtype!')
 }
 
 prof_lik <- FALSE

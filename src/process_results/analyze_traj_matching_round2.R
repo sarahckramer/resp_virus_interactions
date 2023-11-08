@@ -60,7 +60,7 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
     arrange(desc(loglik))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  expect_equal(df_use, 47)
+  expect_equal(df_use, 54)
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   print(no_best)
@@ -186,7 +186,7 @@ res <- bind_rows(pars_top_long_LIST) %>%
   mutate(vir1 = str_sub(method, 1, 2))
 rm(res_r1)
 res$param <- factor(res$param)
-res$param <- factor(res$param, levels = levels(res$param)[c(14:15, 18:19, 3, 2, 1, 10, 6:7, 4:5, 16:17, 8:9, 11, 13, 12)])
+res$param <- factor(res$param, levels = c(shared_estpars, unit_estpars))
 
 res_h1 <- res %>% filter(vir1 == 'H1')
 res_b <- res %>% filter(vir1 == 'B_') %>% mutate(vir1 = 'B')
@@ -246,7 +246,7 @@ lag_val <- 0
 for (i in 1:length(pars_top_LIST)) {
   
   # Set estpars:
-  estpars <- names(pars_top_LIST[[i]])[1:(length(shared_estpars) + length(unit_estpars) * 5)]
+  estpars <- names(pars_top_LIST[[i]])[1:(length(names(pars_top_LIST[[i]])) - 1)]
   
   # Set vir1:
   if (str_detect(names(pars_top_LIST)[i], 'h1')) {
@@ -262,7 +262,7 @@ for (i in 1:length(pars_top_LIST)) {
   par(mfrow = c(10, 6), bty = 'l')
   
   for (j in 1:5) {
-    mle <- setNames(object = as.numeric(pars_top_LIST[[i]][j, 1:(length(shared_estpars) + length(unit_estpars) * 5)]),
+    mle <- setNames(object = as.numeric(pars_top_LIST[[i]][j, 1:(length(names(pars_top_LIST[[i]])) - 1)]),
                     nm = estpars)
     
     slices <- slice_design(center = mle,
@@ -281,7 +281,7 @@ for (i in 1:length(pars_top_LIST)) {
       mutate(ll = NA)
     
     for (k in 1:nrow(slices)) {
-      x0 <- slices[k, 1:(length(shared_estpars) + length(unit_estpars) * 5)]
+      x0 <- slices[k, 1:(length(names(pars_top_LIST[[i]])) - 1)]
       expect_true(all(names(x0) == estpars))
       x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
       slices$ll[k] <- -1 * calculate_global_loglik(x0_trans)

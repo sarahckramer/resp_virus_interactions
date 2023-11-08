@@ -46,9 +46,9 @@ load_and_format_mega_results <- function(filepath, cond) {
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
   if (cond == 'full') {
-    expect_equal(df_use, 47)
+    expect_equal(df_use, 54)
   } else if (cond == 'noAH') {
-    expect_equal(df_use, 45)
+    expect_equal(df_use, 52)
   }
 
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
@@ -105,11 +105,10 @@ p1 <- ggplot(data = res_h1, aes(x = condition, y = loglik, group = condition)) +
 p2 <- ggplot(data = res_b, aes(x = condition, y = loglik, group = condition)) + geom_jitter() + theme_classic()# + geom_boxplot()
 grid.arrange(p1, p2, ncol = 2)
 
+# Check for significance:
 # full is significantly better than noAH if 2 * (loglik_full - loglik_noAH) > qchisq(p = 0.95, df = 2)
-qchisq(p = 0.95, df = 2)
-
-2 * (min(res_h1$loglik[res_h1$condition == 'full']) - max(res_h1$loglik[res_h1$condition == 'noAH']))
-2 * (min(res_b$loglik[res_b$condition == 'full']) - max(res_b$loglik[res_b$condition == 'noAH']))
+print(2 * (min(res_h1$loglik[res_h1$condition == 'full']) - max(res_h1$loglik[res_h1$condition == 'noAH'])) > qchisq(p = 0.95, df = 2))
+print(2 * (min(res_b$loglik[res_b$condition == 'full']) - max(res_b$loglik[res_b$condition == 'noAH'])) > qchisq(p = 0.95, df = 2))
 
 # ---------------------------------------------------------------------------------------------------------------------
 

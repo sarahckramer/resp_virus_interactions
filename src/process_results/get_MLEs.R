@@ -45,7 +45,7 @@ load_and_format_mega_results <- function(filepath) {
   print(names(pars_df))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  expect_equal(df_use, 47)
+  expect_equal(df_use, 54)
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   pars_top <- pars_df[1:no_best, ]
