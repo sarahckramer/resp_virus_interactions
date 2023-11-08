@@ -11,7 +11,7 @@ library(patchwork)
 library(viridis)
 
 # List seasons:
-seasons <- c('s13-14', 's15-16', 's16-17', 's17-18', 's18-19')
+seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
 # Set vaccination coverage levels and time points:
 vacc_cov_vec <- round(seq(0.05, 1.0, by = 0.05), digits = 2) # seq(0.1, 1.0, by = 0.1)
@@ -40,7 +40,6 @@ file_list <- list.files('results/vaccine_simulation_study/simulations/main/', pa
 res_list <- vector('list', length(file_list))
 for (i in 1:length(res_list)) {
   res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_split(file_list[i], '_')[[1]][5])
-  # res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 62, 67))
 }
 rm(i)
 
@@ -57,19 +56,6 @@ res_metrics <- res %>%
   summarise(ar1_impact = ar1[.id == 2] / ar1[.id == 1],
             ar2_impact = ar2[.id == 2] / ar2[.id == 1]) %>%
   ungroup()
-
-# Want vacc_time relative to timing of flu/RSV peak?
-# Get peak timing of flu and RSV without vaccination:
-pt_novacc <- res %>%
-  filter(.id == 1) %>%
-  group_by(season, vacc_cov, vacc_time) %>%
-  summarise(pt1 = which.max(H1), pt2 = which.max(H2)) %>%
-  ungroup() %>%
-  select(!vacc_cov) %>%
-  unique()
-expect_true(nrow(pt_novacc) == length(seasons) * length(vacc_time_vec))
-expect_true(nrow(pt_novacc %>% select(!vacc_time) %>% unique()) == length(seasons))
-rm(pt_novacc)
 
 # Write results to file:
 write_rds(res_metrics, 'results/vaccine_simulation_study/res_METRICS_simulation_study_SUBTROPICAL.rds')
@@ -214,7 +200,6 @@ file_list <- list.files('results/vaccine_simulation_study/simulations/main/', pa
 res_list <- vector('list', length(file_list))
 for (i in 1:length(res_list)) {
   res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_split(file_list[i], '_')[[1]][5])
-  # res_list[[i]] <- read_rds(file_list[i]) %>% mutate(season = str_sub(file_list[i], 62, 67))
 }
 rm(i)
 

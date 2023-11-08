@@ -17,7 +17,7 @@ n_lhs <- 1000
 # Set parameters for run:
 vir1 <- 'flu_h1'
 vir2 <- 'rsv'
-seasons <- c('s13-14', 's15-16', 's16-17', 's17-18', 's18-19')
+seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
@@ -51,7 +51,7 @@ hk_dat <- hk_dat %>%
          season = ifelse((Year == 2019 & Week >= start_week) | (Year == 2020 & Week < start_week), 's19-20', season),
          season = ifelse(Year == 2014 & Week < start_week, 's13-14', season)) %>%
   filter(!is.na(season)) %>%
-  filter(season != 's14-15', season != 's19-20') %>%
+  filter(season != 's19-20') %>%
   group_by(season) %>%
   mutate(pop = max(pop)) %>%
   mutate(n_T = NA, n_P1 = NA, n_P2 = NA, GOPC = NA) %>%
@@ -88,7 +88,7 @@ rm(dat_clim)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# For each season, try selecting values of I10/I20 that yield temperate patterns
+# For each season, try selecting values of Ri1/Ri2/I10/I20 that yield temperate patterns
 # Want: pt_flu 53-60 (14-21), pt_rsv 46-55 (7-16), pt_diff -2-10
 
 # Loop through seasons:
@@ -228,22 +228,10 @@ print(p_list)
 # Select parameter sets to use (FR climate data):
 res_to_use <- bind_rows(res_list[[1]] %>% filter(.id == 970) %>% mutate(season = seasons[1]),
                         res_list[[2]] %>% filter(.id == 509) %>% mutate(season = seasons[2]),
-                        res_list[[3]] %>% filter(.id == 988) %>% mutate(season = seasons[3]),
-                        res_list[[4]] %>% filter(.id == 520) %>% mutate(season = seasons[4]), # or 520 - smaller RSV outbreak, but only difference of 5 vs. 7 weeks
-                        res_list[[5]] %>% filter(.id == 846) %>% mutate(season = seasons[5])) %>%
+                        res_list[[3]] %>% filter(.id == 509) %>% mutate(season = seasons[3]),
+                        res_list[[4]] %>% filter(.id == 988) %>% mutate(season = seasons[4]),
+                        res_list[[5]] %>% filter(.id == 520) %>% mutate(season = seasons[5]), # or 520 - smaller RSV outbreak, but only difference of 5 vs. 7 weeks
+                        res_list[[6]] %>% filter(.id == 846) %>% mutate(season = seasons[6])) %>%
   arrange(season)
 
 write_csv(res_to_use, file = 'results/vaccine_simulation_study/temperate_params_to_use.csv')
-
-# # Select parameter sets to use (HK climate data):
-# res_to_use <- res_list[[3]] %>%
-#   mutate(season = seasons[3])
-# 
-# res_to_use <- res_to_use %>%
-#   bind_rows(res_list[[1]] %>% filter(.id == 782) %>% mutate(season = seasons[1]),
-#             res_list[[2]] %>% filter(.id == 267) %>% mutate(season = seasons[2]),
-#             res_list[[4]] %>% filter(.id == 868) %>% mutate(season = seasons[4]),
-#             res_list[[5]] %>% filter(.id == 482) %>% mutate(season = seasons[5])) %>%
-#   arrange(season)
-# 
-# write_csv(res_to_use, file = 'results/vaccine_simulation_study/temperate_params_to_use.csv')
