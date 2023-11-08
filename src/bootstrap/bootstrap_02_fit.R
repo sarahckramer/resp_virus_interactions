@@ -14,6 +14,7 @@ library(nloptr)
 jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
 no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
+final_round <- as.integer(Sys.getenv("FINALROUND")); print(final_round)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 
@@ -247,8 +248,10 @@ estpars <- c(shared_estpars, unit_sp_estpars)
 # Get start ranges for all parameters:
 if (vir1 == 'flu_h1') {
   start_range <- read_rds('results/round2_CIs/round2CI_startvals_H1.rds')
+  start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_H1.rds'))
 } else if (vir1 == 'flu_b') {
   start_range <- read_rds('results/round2_CIs/round2CI_startvals_B.rds')
+  start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_B.rds'))
 } else {
   stop('Unknown vir1!')
 }
