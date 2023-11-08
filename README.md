@@ -40,14 +40,14 @@ Fitting the interaction model to data
 2. Run "fit_traj_matching_round2.R" to fit all parameters, both shared and season-specific, and obtain maximum likelihood estimates. Parameter "search_type" should be set to "round1_CIs"; "sobol_size" should be set to 500, "interaction_effect" to "susc", and both "prof_lik" and "no_ah" to FALSE.
     * Run "checks/check_no_states_below_0.R" to ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables. Update line 10 to the location of the results of interest.
     * If only one parameter set is statistically supported (has log-likelihood value falling within qchisq(0.95, df = 46) / 2 of the log-likelihood of the MLE) at this point, we assume that the MLE has not yet been reached, and run an additional round of fits.
-    * Run "get_start_ranges_from_round2.R" to get range of starting parameter values for second run of round 2. The parameter "method" should be set to "perc". Ensure that lines 10 and 11 reflect the locations of the most recent set of fit results.
+    * Run "get_start_ranges_from_round2.R" to get range of starting parameter values for second run of round 2. Ensure that lines 10 and 11 reflect the locations of the most recent set of fit results.
 3. Rerun "fit_traj_matching_round2.R", this time with "search_type" set to "round2_CIs".
     * Run "checks/check_no_states_below_0.R" to ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables.
     * Again, if only one parameter set is supported, repeat the procedure under point 2 above and run again.
-4. Once multiple parameter sets are supported, run "get_start_ranges_from_round2.R," this time with "method" set to "ci." Then, perform one final round of model fits by running "fit_traj_matching_round2.R," again with "search_type" set to "round2_CIs".
+4. Once multiple parameter sets are supported, run "get_start_ranges_from_round2.R" again. Then, perform one final round of model fits by running "fit_traj_matching_round2.R," again with "search_type" set to "round2_CIs".
     * Run "checks/check_no_states_below_0.R" to ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables.
     * Run "get_MLEs.R" to obtain the maximum likelihood estimates of each parameter and save them. Ensure that lines 10 and 11 are updated to the location of the final results.
-    * Run "get_start_ranges_from-round2.R", with "method" set to "ci", in order to get parameter start ranges for parametric bootstrapping.
+    * Run "get_start_ranges_from-round2.R" in order to get parameter start ranges for parametric bootstrapping.
 5. Run parametric bootstrapping to get 99% confidence intervals for all parameters.
     * First, run "bootstrap_01_generate_synthetic.R" to generate several synthetic datasets at the MLEs.
     * Next, run "bootstrap_02_fit.R" with "sobol_size" set to 10 and "interaction_effect" to "susc" to fit the model to each synthetic dataset.

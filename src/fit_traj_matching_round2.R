@@ -15,6 +15,7 @@ library(nloptr)
 jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
 no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
+which_round <- as.integer(Sys.getenv("WHICHROUND")); print(which_round)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
@@ -28,6 +29,7 @@ no_ah <- as.logical(Sys.getenv("NOAH")); print(no_ah)
 # vir1 <- 'flu_h1'
 # 
 # sobol_size <- 10
+# which_round <- 2
 # search_type <- 'round2_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
@@ -358,7 +360,7 @@ if (search_type == 'round2_CIs') {
   start_range_thetarho <- start_range %>% select(theta_rho1:theta_rho2)
   
   if (vir1 == 'flu_h1') {
-    start_range <- read_rds('results/round2_CIs/round2CI_startvals_H1.rds')
+    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1.rds'))
   } else if (vir1 == 'flu_b') {
     start_range <- read_rds('results/round2_CIs/round2CI_startvals_B.rds')
   } else {
