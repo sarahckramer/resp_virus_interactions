@@ -53,8 +53,11 @@ n_ages <- nrow(CM)
 N <- CM_all$demography$population
 
 # age1 represents the reporter age, age2 the contact age
-CM_long <- CM %>% 
-  melt(varnames = c("age1", "age2"), value.name = "contacts")
+CM_long <- CM %>%
+  melt() %>%
+  rename('age1' = 1,
+         'age2' = 2,
+         'contacts' = 3)
 
 # Plot matrix; x-axis: contact age, y-axis: reporter age
 # CAUTION: rates are per day!
@@ -68,7 +71,7 @@ pl <- ggplot(data = CM_long,
 if (debug_bool) print(pl)
 
 # Loop through seasons to generate synthetic data -----------------------------
-seasons <- c('s13-14', 's15-16', 's16-17', 's17-18', 's18-19')
+seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 fit_params_names <- c('delta1', 'd2', 'theta_lambda1', 'theta_lambda2', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
 res_all_ages = res_combined = vector('list', length = length(seasons))
