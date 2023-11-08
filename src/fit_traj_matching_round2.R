@@ -15,6 +15,7 @@ library(nloptr)
 jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
 no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
+which_round <- as.integer(Sys.getenv("WHICHROUND")); print(which_round)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
@@ -28,6 +29,7 @@ no_ah <- as.logical(Sys.getenv("NOAH")); print(no_ah)
 # vir1 <- 'flu_h1'
 # 
 # sobol_size <- 10
+# which_round <- 2
 # search_type <- 'round2_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
@@ -237,9 +239,8 @@ for (yr_index in 1:length(seasons)) {
   
 }
 
-# Remove empty elements:
-seasons <- seasons[lapply(po_list, length) > 0]
-po_list <- po_list[lapply(po_list, length) > 0]
+# Check that there are no empty elements:
+expect_true(all(!lapply(po_list, length) == 0))
 
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
@@ -310,7 +311,7 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R20 = c(0, 0.3),
                                R120 = c(0, 0.3))
 
-# Get 99% CI from round 1 for unit params:
+# Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
 tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
 
@@ -359,9 +360,9 @@ if (search_type == 'round2_CIs') {
   start_range_thetarho <- start_range %>% select(theta_rho1:theta_rho2)
   
   if (vir1 == 'flu_h1') {
-    start_range <- read_rds('results/round2_CIs/round2CI_startvals_H1.rds')
+    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1.rds'))
   } else if (vir1 == 'flu_b') {
-    start_range <- read_rds('results/round2_CIs/round2CI_startvals_B.rds')
+    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_B.rds'))
   } else {
     stop('Unknown vir1!')
   }

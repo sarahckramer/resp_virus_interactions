@@ -17,7 +17,7 @@ vacc_eff <- 0.8
 # Set parameters for run:
 vir1 <- 'flu_h1'
 vir2 <- 'rsv'
-seasons <- c('s13-14', 's15-16', 's16-17', 's17-18', 's18-19')
+seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
@@ -127,7 +127,7 @@ hk_dat <- hk_dat %>%
          season = ifelse((Year == 2019 & Week >= start_week) | (Year == 2020 & Week < start_week), 's19-20', season),
          season = ifelse(Year == 2014 & Week < start_week, 's13-14', season)) %>%
   filter(!is.na(season)) %>%
-  filter(season != 's14-15', season != 's19-20') %>%
+  filter(season != 's19-20') %>%
   group_by(season) %>%
   mutate(pop = max(pop)) %>%
   mutate(n_T = NA, n_P1 = NA, n_P2 = NA, GOPC = NA) %>%

@@ -3,7 +3,7 @@
 # Note: Adapted from code of Dr. Matthieu Domenech de Celles
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Load packages
+# Load packages:
 library(tidyverse)
 library(pomp)
 library(viridis)

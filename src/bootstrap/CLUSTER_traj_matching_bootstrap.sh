@@ -21,7 +21,7 @@ export VIRUS1=$VIRUS1
 
 # --- start from a clean state and load necessary environment modules ---
 module purge
-module load R/4.0.2
+module load R/4.2
 
 # --- run your executable via srun ---
 R --no-save --no-restore <src/bootstrap_02_fit.R >results/Rout/R-tm-$VIRUS1-${SLURM_ARRAY_TASK_ID}.Rout

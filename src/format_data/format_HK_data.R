@@ -63,7 +63,7 @@ data_list_rsv <- lapply(data_list_rsv, function(ix) {
   
   locate_diff <- ix[1, ] %>% unlist() %>% as.vector()
   locate_diff <- which(locate_diff == 'Differentiation performed')
-  select_cols <- paste0('X', seq(locate_diff, locate_diff + 2))
+  select_cols <- paste0('...', seq(locate_diff, locate_diff + 2))
   
   ix <- ix[-1, ] %>%
     rename('Week' = 'Week.number',

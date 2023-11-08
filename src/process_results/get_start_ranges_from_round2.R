@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Set directory where results from round2 fits are stored:
-res_dir_h1 <- 'results/round2_4_fluH1_FULL/'
+res_dir_h1 <- 'results/round2_1_fluH1/'
 res_dir_b <- 'results/round2_3_fluB_FULL/'
 
 # Check that directory for storing results exists, and create if not:
@@ -18,11 +18,14 @@ if (!dir.exists('results/round2_CIs/')) {
   dir.create('results/round2_CIs/')
 }
 
-# Use 95% CI or top 5% of fits?:
-method <- 'perc' # 'ci' or 'perc'
+which_round <- str_split(res_dir_h1, '_')[[1]][2] # which round's results are we using here?
+new_dir <- paste0('results/round2_CIs/from_2_', which_round, '/')
+if (!dir.exists(new_dir)) {
+  dir.create(new_dir)
+}
 
 # Function to read in and format results:
-load_and_format_mega_results <- function(filepath, method) {
+load_and_format_mega_results <- function(filepath) {
   
   # Get list of results files:
   res_files <- list.files(path = filepath, full.names = TRUE)
@@ -48,15 +51,17 @@ load_and_format_mega_results <- function(filepath, method) {
     arrange(desc(loglik))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  expect_equal(df_use, 47)
+  expect_equal(df_use, 54)
   
-  if (method == 'ci') {
-    no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
-    # no_best <- max(no_best, 50)
-  } else if (method == 'perc') {
+  no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
+  
+  # If only one parameter set is in this range, MLE has not yet been reached; take top 5% of fits instead:
+  if (no_best == 1) {
+    print('MLE not reached!')
     no_best <- 25
   }
   
+  # Get tibble of top fits:
   pars_top <- pars_df[1:no_best, ]
   
   # Remove where no convergence occurs:
@@ -86,16 +91,16 @@ load_and_format_mega_results <- function(filepath, method) {
 }
 
 # Read in results:
-res_h1 <- load_and_format_mega_results(res_dir_h1, method) %>%
+res_h1 <- load_and_format_mega_results(res_dir_h1) %>%
   select(-loglik)
-res_b <- load_and_format_mega_results(res_dir_b, method) %>%
+res_b <- load_and_format_mega_results(res_dir_b) %>%
   select(-loglik)
 
 # Get minimum and maximum start values:
-ci_start_h1 <- as.data.frame(rbind(summarise(res_h1, across(.cols = everything(), min, na.rm = TRUE)),
-                                   summarise(res_h1, across(.cols = everything(), max, na.rm = TRUE))))
-ci_start_b <- as.data.frame(rbind(summarise(res_b, across(.cols = everything(), min, na.rm = TRUE)),
-                                  summarise(res_b, across(.cols = everything(), max, na.rm = TRUE))))
+ci_start_h1 <- as.data.frame(rbind(summarise(res_h1, across(.cols = everything(), \(x) min(x, na.rm = TRUE))),
+                                   summarise(res_h1, across(.cols = everything(), \(x) max(x, na.rm = TRUE)))))
+ci_start_b <- as.data.frame(rbind(summarise(res_b, across(.cols = everything(), \(x) min(x, na.rm = TRUE))),
+                                  summarise(res_b, across(.cols = everything(), \(x) max(x, na.rm = TRUE)))))
 
 # Possible that d2 ranges are missing if all top fits were > 10; if so, replace:
 if (any(ci_start_h1 == Inf)) {
@@ -201,8 +206,8 @@ if (any(sums_b %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
 }
 
 # Write start ranges to file:
-write_rds(ci_start_h1, file = 'results/round2_CIs/round2CI_startvals_H1.rds')
-write_rds(ci_start_b, file = 'results/round2_CIs/round2CI_startvals_B.rds')
+write_rds(ci_start_h1, file = paste0(new_dir, 'round2CI_startvals_H1.rds'))
+write_rds(ci_start_b, file = paste0(new_dir, 'round2CI_startvals_B.rds'))
 
 # Clean up:
 rm(list = ls())

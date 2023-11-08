@@ -34,10 +34,13 @@ dat_hk %>% pull(season) %>% is.na() %>% any() %>% expect_false()
 
 # Get population sizes:
 pop_dat <- read_csv('data/raw/hk/pop_dat_hk.csv', skip = 4) %>%
-  rename('X1' = 'Year') %>%
+  rename('X1' = 'Year',
+         'X2' = '...2') %>%
+  select_if(~ .[1] %in% c('Mid-year', 'Reference time-point') | is.na(.[1])) %>%
   filter(X1 == 'Both sexes',
          X2 == 'All age groups') %>%
-  select(!contains('_1')) %>%
+  select_if(~ .[1] != '100.0') %>%
+  rename_with(~ str_sub(., 1, 4)) %>%
   select(all_of(as.character(unique(dat_hk$Year))))
 
 pop_dat <- pop_dat %>%
@@ -81,14 +84,6 @@ for (vir1_nm in vir_list[1:3]) {
              'n_T' = 'n_samp') %>%
       rename_with(~ 'n_P1', .cols = contains(vir1_nm)) %>%
       rename_with(~ 'n_P2', .cols = contains(vir2_nm))
-    
-    # Remove seasons where a given threshold for flu is not exceeded:
-    dat_out <- dat_out %>%
-      group_by(season) %>%
-      mutate(tot_pos = sum(n_P1)) %>%
-      ungroup() %>%
-      filter(tot_pos > 2000) %>%
-      select(-tot_pos)
     
     # Store data in list:
     dat_hk_pomp[[counter]] <- dat_out

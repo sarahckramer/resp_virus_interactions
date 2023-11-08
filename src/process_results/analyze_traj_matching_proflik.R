@@ -102,7 +102,7 @@ maxloglik <- res %>%
   unlist()
 
 # Calculate cutoff value for 99% CI and add to tibbles:
-ci_cutoff <- maxloglik - 0.5 * qchisq(df = 1, p = 0.99)
+ci_cutoff <- maxloglik - 0.5 * qchisq(df = 1, p = 0.95)
 res <- res %>%
   mutate(ci = if_else(vir1 == 'H1', ci_cutoff[1], ci_cutoff[2]))
 
@@ -123,7 +123,7 @@ p1 <- ggplot(res %>%
         plot.tag = element_text(size = 22),
         plot.tag.position = c(0.09, 0.98)) +
   geom_smooth(method = 'loess', span = 0.75, color = 'black') +
-  geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
+  geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
   labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'A') +
   scale_x_continuous(n.breaks = 10)
 p2 <- ggplot(res %>%
@@ -136,7 +136,7 @@ p2 <- ggplot(res %>%
         plot.tag = element_text(size = 22),
         plot.tag.position = c(0.09, 0.98)) +
   geom_smooth(method = 'loess', span = 0.75, color = 'black') +
-  geom_hline(color = 'black', aes(yintercept = ci), size = 1, lty = 2) +
+  geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
   labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'B') +
   scale_x_continuous(n.breaks = 10) + scale_y_continuous(breaks = seq(-3975, -3935, by = 10))
 

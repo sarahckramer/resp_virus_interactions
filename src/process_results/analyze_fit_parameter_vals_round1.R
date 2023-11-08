@@ -33,14 +33,8 @@ seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 # Read in full results:
 pars_list <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_FULL.rds'))
 
-# Get best-fit values and values within 95% CI:
-pars_top <- vector('list', length = length(pars_list))
-names(pars_top) <- names(pars_list)
-
-for (i in 1:length(pars_list)) {
-  no_best <- nrow(subset(pars_list[[i]], 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = length(estpars))))
-  pars_top[[i]] <- pars_list[[i]][1:no_best, ]
-}
+# Read in top results:
+pars_top <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_TOP.rds'))
 
 # Combine results into data frame:
 pars_df <- pars_top %>%
