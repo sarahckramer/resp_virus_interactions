@@ -362,7 +362,7 @@ if (search_type == 'round2_CIs') {
   if (vir1 == 'flu_h1') {
     start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1.rds'))
   } else if (vir1 == 'flu_b') {
-    start_range <- read_rds('results/round2_CIs/round2CI_startvals_B.rds')
+    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_B.rds'))
   } else {
     stop('Unknown vir1!')
   }
