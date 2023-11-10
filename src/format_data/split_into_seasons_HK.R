@@ -17,6 +17,9 @@ dat_hk <- dat_hk %>%
   select(Time:n_rsv, n_rhino_est_rnd, GOPC:PMP.Clinics) %>%
   rename('n_rhino' = 'n_rhino_est_rnd')
 
+# Rename H1+B column for now:
+dat_hk <- dat_hk %>% rename('n_sum' = 'n_h1_b')
+
 # Label with northern-hemisphere seasons:
 dat_hk <- dat_hk %>%
   mutate(season = NA) %>%
@@ -60,12 +63,12 @@ dat_hk <- dat_hk %>%
   ungroup()
 
 # Break down by virus pairs and rename columns:
-vir_list <- c('h1', 'h3', 'b', 'rsv', 'rhino')
-dat_hk_pomp <- vector('list', length = 6)
+vir_list <- c('h1', 'h3', 'b', 'sum', 'rsv', 'rhino')
+dat_hk_pomp <- vector('list', length = 8)
 
 counter <- 1
-for (vir1_nm in vir_list[1:3]) {
-  for (vir2_nm in vir_list[4:5]) {
+for (vir1_nm in vir_list[1:4]) {
+  for (vir2_nm in vir_list[5:6]) {
     
     # Rename list element:
     names(dat_hk_pomp)[counter] <- paste(vir1_nm, vir2_nm, sep = '_')
@@ -93,6 +96,9 @@ for (vir1_nm in vir_list[1:3]) {
     
   }
 }
+
+# Rename 'sum' to 'h1_plus_b1':
+names(dat_hk_pomp)[7:8] <- c('h1_plus_b_rsv', 'h1_plus_b_rhino')
 
 # Clean up:
 rm(counter, vir1_nm, vir2_nm, dat_out)
