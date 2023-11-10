@@ -11,7 +11,11 @@ library(nloptr)
 debug_bool <- FALSE
 # vir1 <- 'flu_b'
 vir2 <- 'rsv'
+
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+if (!any(str_detect(names(pars_top), 's13-14'))) {
+  seasons <- c('s17-18', 's18-19')
+}
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0

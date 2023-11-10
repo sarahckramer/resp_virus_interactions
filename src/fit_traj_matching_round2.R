@@ -21,7 +21,7 @@ int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
-no_ah <- as.logical(Sys.getenv("NOAH")); print(no_ah)
+sens <- as.character(Sys.getenv("SENS")); print(sens)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -33,12 +33,17 @@ no_ah <- as.logical(Sys.getenv("NOAH")); print(no_ah)
 # search_type <- 'round2_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
-# no_ah <- FALSE
+# sens <- 'less_circ_h3'
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
+
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+if (sens == 'less_circ_h3' | vir1 == 'flu_h1_plus_b') {
+  seasons <- c('s17-18', 's18-19')
+}
+
 time_max <- 14.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
@@ -313,13 +318,15 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
 
 # Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
-tj_res_list <- tj_res_list[str_detect(names(tj_res_list), vir1)]
+tj_res_list <- tj_res_list[str_detect(names(tj_res_list), paste0(vir1, '_s'))]
 
 ci_list <- vector('list', length(seasons))
 
 for (i in 1:length(ci_list)) {
-  tj_res_temp <- tj_res_list[[i]] %>%
-    select(all_of(unit_estpars))
+  yr <- seasons[i]
+  
+  tj_res_temp <- tj_res_list[[which(str_detect(names(tj_res_list), yr))]] %>%
+    select(all_of(unit_estpars)) %>% na.omit()
   
   ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
                                  summarise(tj_res_temp, across(.cols = everything(), max))))
@@ -363,6 +370,8 @@ if (search_type == 'round2_CIs') {
     start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1.rds'))
   } else if (vir1 == 'flu_b') {
     start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_B.rds'))
+  } else if (vir1 =='flu_h1_plus_b') {
+    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1_plus_B.rds'))
   } else {
     stop('Unknown vir1!')
   }
@@ -374,7 +383,7 @@ if (search_type == 'round2_CIs') {
   
   rm(start_range_thetarho)
   
-  if (no_ah) {
+  if (sens == 'no_ah') {
     
     estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
     true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
@@ -419,7 +428,7 @@ if (search_type == 'round2_CIs') {
 }
 
 # Remove eta_ah1, eta_ah2 from consideration?:
-if (no_ah & search_type != 'round2_CIs') {
+if (sens == 'no_ah' & search_type != 'round2_CIs') {
   
   estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
   true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]

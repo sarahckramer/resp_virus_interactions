@@ -13,7 +13,7 @@ res_dir <- 'results/round2_4_fluH1_FULL/'
 res_files <- list.files(path = res_dir, full.names = FALSE)
 res_exist <- res_files %>%
   str_split('_') %>%
-  map(~ .x[6]) %>%
+  map(~ .x[length(.x)]) %>%
   str_split(fixed('.')) %>%
   map(~ .x[1]) %>%
   unlist() %>%
@@ -53,7 +53,9 @@ no_best <- max(no_best, 50)
 pars_top <- pars_df[1:no_best, ]
 
 # Get/set relevant model parameters:
-if (str_detect(res_dir, 'H1')) {
+if (str_detect(res_dir, 'H1_plus_B')) {
+  vir1 <- 'flu_h1_plus_b'
+} else if (str_detect(res_dir, 'H1')) {
   vir1 <- 'flu_h1'
 } else if (str_detect(res_dir, 'B')) {
   vir1 <- 'flu_b'
