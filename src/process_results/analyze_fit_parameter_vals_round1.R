@@ -30,9 +30,6 @@ seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
 # Read in and format results
 
-# Read in full results:
-pars_list <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_FULL.rds'))
-
 # Read in top results:
 pars_top <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_TOP.rds'))
 
@@ -40,7 +37,8 @@ pars_top <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_TOP.rds'))
 pars_df <- pars_top %>%
   bind_rows() %>%
   pivot_longer(all_of(estpars), names_to = 'param', values_to = 'val') %>%
-  mutate(param = factor(param, levels = estpars))
+  mutate(param = factor(param, levels = estpars)) %>%
+  filter(virus1 %in% flu_types)
 
 # Get MLEs and ranges for each season/parameter:
 mle_ranges_df <- pars_df %>%
