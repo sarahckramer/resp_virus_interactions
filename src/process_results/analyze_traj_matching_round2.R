@@ -10,8 +10,8 @@ library(testthat)
 library(gridExtra)
 
 # Set directory where final results from round2 fits are stored:
-res_dir_h1 <- 'results/round2_4_fluH1_FULL/'
-res_dir_b <- 'results/round2_3_fluB_FULL/'
+res_dir_h1 <- 'results/round2_fit/round2_3_fluH1/'
+res_dir_b <- 'results/round2_fit/round2_3_fluB/'
 res_dir_round1 <- 'results/round1_fitsharedFALSE/'
 
 # Check that directory for storing plots exists, and create if not:
@@ -192,10 +192,7 @@ res_h1 <- res %>% filter(vir1 == 'H1')
 res_b <- res %>% filter(vir1 == 'B_') %>% mutate(vir1 = 'B')
 
 res_h1$method <- factor(res_h1$method)
-res_h1$method <- factor(res_h1$method, levels = levels(res_h1$method)[2:1])
-
 res_b$method <- factor(res_b$method)
-res_b$method <- factor(res_b$method, levels = levels(res_b$method)[2:1])
 
 p1 <- ggplot(data = res_h1, aes(x = year, y = value, fill = method)) + geom_boxplot() +
   facet_wrap(~ param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
