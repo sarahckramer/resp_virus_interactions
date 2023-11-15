@@ -8,7 +8,7 @@ library(viridis)
 library(gridExtra)
 
 # Read in MLEs:
-mle_h1 <- read_rds('results/MLEs_flu_h1.rds')
+mle_h1 <- read_rds('results/MLEs_flu_h1.rds')[1, ]
 
 # Read in data:
 hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
@@ -39,7 +39,6 @@ seasons <- unique(mle_h1$season)
 
 # Calculate beta over time based on fit parameter values:
 beta_t <- vector('list', length = length(seasons))
-
 for (yr_index in 1:length(seasons)) {
   
   seas <- seasons[yr_index]
@@ -54,45 +53,37 @@ for (yr_index in 1:length(seasons)) {
   mle_temp <- mle_h1 %>%
     filter(season == seas)
   
-  # beta1_temp <- unlist(mle_temp['Ri1']) / (1.0 - (unlist(mle_temp['R10']) + unlist(mle_temp['R120']))) * exp(unlist(mle_temp['eta_ah1']) * dat_temp$ah + unlist(mle_temp['eta_temp1']) * dat_temp$temp) * gamma1
-  # beta2_temp <- unlist(mle_temp['Ri2']) / (1.0 - (unlist(mle_temp['R20']) + unlist(mle_temp['R120']))) * exp(unlist(mle_temp['eta_ah2']) * dat_temp$ah + unlist(mle_temp['eta_temp2']) * dat_temp$temp) * gamma2
+  beta1_temp <- unlist(mle_temp['Ri1']) / (1.0 - (unlist(mle_temp['R10']) + unlist(mle_temp['R120']))) * exp(unlist(mle_temp['eta_ah1']) * dat_temp$ah + unlist(mle_temp['eta_temp1']) * dat_temp$temp) * gamma1
+  beta2_temp <- unlist(mle_temp['Ri2']) / (1.0 - (unlist(mle_temp['R20']) + unlist(mle_temp['R120']))) * exp(unlist(mle_temp['eta_ah2']) * dat_temp$ah + unlist(mle_temp['eta_temp2']) * dat_temp$temp) * gamma2
   
-  beta_temp_list <- vector('list', length = nrow(mle_temp))
+  force1_temp <- exp(unlist(mle_temp['eta_ah1']) * dat_temp$ah + unlist(mle_temp['eta_temp1']) * dat_temp$temp)
+  force2_temp <- exp(unlist(mle_temp['eta_ah2']) * dat_temp$ah + unlist(mle_temp['eta_temp2']) * dat_temp$temp)
   
-  for (i in 1:length(beta_temp_list)) {
-    
-    beta1_temp <- unlist(mle_temp[i, ]['Ri1']) / (1.0 - (unlist(mle_temp[i, ]['R10']) + unlist(mle_temp[i, ]['R120']))) * exp(unlist(mle_temp[i, ]['eta_ah1']) * dat_temp$ah + unlist(mle_temp[i, ]['eta_temp1']) * dat_temp$temp) * gamma1
-    beta2_temp <- unlist(mle_temp[i, ]['Ri2']) / (1.0 - (unlist(mle_temp[i, ]['R20']) + unlist(mle_temp[i, ]['R120']))) * exp(unlist(mle_temp[i, ]['eta_ah2']) * dat_temp$ah + unlist(mle_temp[i, ]['eta_temp2']) * dat_temp$temp) * gamma2
-    
-    beta1_temp <- bind_cols(1:max(dat_temp$time), beta1_temp, seas, i)
-    beta2_temp <- bind_cols(1:max(dat_temp$time), beta2_temp, seas, i)
-    
-    names(beta1_temp) <- c('time', 'beta1', 'season', 'result')
-    names(beta2_temp) <- c('time', 'beta2', 'season', 'result')
-    
-    beta_temp <- beta1_temp %>%
-      inner_join(beta2_temp,
-                 by = c('time', 'season', 'result')) %>%
-      select(time, beta1, beta2, season, result)
-    
-    beta_temp_list[[i]] <- beta_temp
-    
-  }
+  beta1_temp <- bind_cols(1:max(dat_temp$time), beta1_temp, force1_temp, seas)
+  beta2_temp <- bind_cols(1:max(dat_temp$time), beta2_temp, force2_temp, seas)
   
-  beta_t[[yr_index]] <- bind_rows(beta_temp_list)
+  names(beta1_temp) <- c('time', 'beta1', 'force1', 'season')
+  names(beta2_temp) <- c('time', 'beta2', 'force2', 'season')
+  
+  beta_temp <- beta1_temp %>%
+    inner_join(beta2_temp,
+               by = c('time', 'season')) %>%
+    select(time, beta1, beta2, force1, force2, season)
+  
+  beta_t[[yr_index]] <- beta_temp
   
 }
-rm(yr_index, seas, dat_temp, mle_temp, beta_temp_list, beta1_temp, beta2_temp, beta_temp, i)
+rm(yr_index, seas, dat_temp, mle_temp, beta1_temp, beta2_temp, force1_temp, force2_temp, beta_temp, hk_dat, dat_clim)
 
 # Combine results into tibble:
 beta_t <- bind_rows(beta_t)
 
 # Get minimum and maximum values for plotting:
-min_val <- min(c(min(beta_t$beta1), min(beta_t$beta2)))
-max_val <- max(c(max(beta_t$beta1), max(beta_t$beta2)))
+min_val <- min(c(min(beta_t$force1), min(beta_t$force2)))
+max_val <- max(c(max(beta_t$force1), max(beta_t$force2)))
 
 # Plot climate forcing over time for all seasons:
-p_a <- ggplot(data = beta_t, aes(x = time, y = beta1, col = season, group = paste(season, result))) +
+p_a <- ggplot(data = beta_t, aes(x = time, y = force1, col = season)) +
   geom_line() +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
@@ -102,11 +93,11 @@ p_a <- ggplot(data = beta_t, aes(x = time, y = beta1, col = season, group = past
         plot.tag.position = c(0.02, 0.97)) +
   scale_x_continuous(breaks = seq(1, 52, by = 5),
                      labels = c(46, 51, seq(4, 45, by = 5))) +
-  # scale_y_continuous(limits = c(min_val, max_val)) +
-  scale_y_log10(limits = c(min_val, max_val)) +
+  scale_y_continuous(limits = c(min_val, max_val)) +
+  # scale_y_log10(limits = c(min_val, max_val)) +
   scale_color_manual(values = viridis(6)) +
-  labs(x = 'Week Number', y = expression(beta[1]))
-p_b <- ggplot(data = beta_t, aes(x = time, y = beta2, col = season, group = paste(season, result))) +
+  labs(x = 'Week Number', y = 'Climate Forcing')
+p_b <- ggplot(data = beta_t, aes(x = time, y = force2, col = season)) +
   geom_line() +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
@@ -116,11 +107,12 @@ p_b <- ggplot(data = beta_t, aes(x = time, y = beta2, col = season, group = past
         plot.tag.position = c(0.02, 0.97)) +
   scale_x_continuous(breaks = seq(1, 52, by = 5),
                      labels = c(46, 51, seq(4, 45, by = 5))) +
-  scale_y_log10(limits = c(min_val, max_val)) +
+  scale_y_continuous(limits = c(min_val, max_val)) +
+  # scale_y_log10(limits = c(min_val, max_val)) +
   scale_color_manual(values = viridis(6)) +
-  labs(x = 'Week Number', y = expression(beta[2]))
+  labs(x = 'Week Number', y = 'Climate Forcing')
 
-p_legend <- ggplot(data = beta_t, aes(x = time, y = beta1, col = season)) +
+p_legend <- ggplot(data = beta_t, aes(x = time, y = force1, col = season)) +
   geom_line() +
   theme_classic() +
   theme(legend.title = element_text(size = 14),
@@ -135,6 +127,37 @@ p_beta <- arrangeGrob(arrangeGrob(p_a, p_b, ncol = 1), p_legend, nrow = 2, heigh
 plot(p_beta)
 
 # Fit sine wave to each seasonal beta and get range of amplitudes:
+amp1_vec = amp2_vec = c()
+for (seas in seasons) {
+  
+  beta_temp <- beta_t %>%
+    filter(season == seas) %>%
+    arrange(time)
+  force1_temp <- beta_temp$force1
+  force2_temp <- beta_temp$force2
+  
+  m1 <- lm(force1 ~ sin(2 * pi * time / 52.25) + cos(2 * pi * time / 52.25), data = beta_temp)
+  m2 <- lm(force2 ~ sin(2 * pi * time / 52.25) + cos(2 * pi * time / 52.25), data = beta_temp)
+  
+  amp1 <- sqrt(unname(m1$coefficients[2]) ** 2 + unname(m1$coefficients[3]) ** 2)
+  amp2 <- sqrt(unname(m2$coefficients[2]) ** 2 + unname(m2$coefficients[3]) ** 2)
+  
+  # phi1 <- atan2(unname(m1$coefficients[3]), unname(m1$coefficients[2])) * 52.25 / (2 * pi)
+  # phi2 <- atan2(unname(m2$coefficients[3]), unname(m2$coefficients[2])) * 52.25 / (2 * pi)
+  # 
+  # par(mfrow = c(1, 2))
+  # plot(beta_temp$time, beta_temp$force1, pch = 20)
+  # lines(beta_temp$time, m1$coefficients[1] + amp1 * sin((2 * pi / 52.25) * (beta_temp$time + phi1)))
+  # 
+  # plot(beta_temp$time, beta_temp$force2, pch = 20)
+  # lines(beta_temp$time, m2$coefficients[1] + amp2 * sin((2 * pi / 52.25) * (beta_temp$time + phi2)))
+  
+  amp1_vec <- c(amp1_vec, amp1)
+  amp2_vec <- c(amp2_vec, amp2)
+}
+
+print(summary(amp1_vec))
+print(summary(amp2_vec))
 
 # Clean up:
 rm(list = ls())
