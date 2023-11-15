@@ -45,6 +45,14 @@ if (age_structured) {
   nrow_check <- nrow(dat_pomp)
   print(dat_pomp)
   
+} else {
+  
+  dat_pomp <- dat_pomp %>%
+    rename('i_ILI' = 'GOPC') %>%
+    mutate(i_ILI = i_ILI / 1000)
+  # https://www.censtatd.gov.hk/en/
+  # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
+  
 }
 
 # Get climate data:
@@ -62,17 +70,26 @@ dat_pomp <- dat_pomp %>%
 expect_true(nrow(dat_pomp) == nrow_check)
 rm(dat_clim)
 
+# Get H3 incidence data (as covariate):
+dat_h3 <- hk_dat$h3_rsv %>%
+  rename('i_ILI' = 'GOPC') %>%
+  mutate(i_ILI = i_ILI / 1000,
+         h3_inc_raw = (n_P1 / n_T) * i_ILI,
+         h3_inc = scale(h3_inc_raw)[, 1]) %>%
+  select(time:Year, Week:season, h3_inc)
+expect_equal(mean(dat_h3$h3_inc, na.rm = TRUE), 0)
+expect_equal(sd(dat_h3$h3_inc, na.rm = TRUE), 1)
+
+dat_pomp <- dat_pomp %>%
+  inner_join(dat_h3,
+             by = c('time', 'Year', 'Week', 'season')) %>%
+  select(time:Year, Week:season, n_T:i_ILI, pop:h3_inc) %>%
+  mutate(h3_inc = if_else(is.na(h3_inc), 0, h3_inc))
+expect_true(nrow(dat_pomp) == nrow_check)
+rm(dat_h3)
+
 # If no data for this season, skip:
 if (nrow(dat_pomp) > 0) {
-  
-  # Format data:
-  if (!age_structured) {
-    dat_pomp <- dat_pomp %>%
-      rename('i_ILI' = 'GOPC') %>%
-      mutate(i_ILI = i_ILI / 1000)
-    # https://www.censtatd.gov.hk/en/
-    # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
-  }
   
   # Plot data:
   if (debug_bool) {
@@ -98,7 +115,8 @@ if (nrow(dat_pomp) > 0) {
                                    Ri1_max = Ri_max1,
                                    Ri2_max = Ri_max2,
                                    d2_max = d2_max,
-                                   debug_bool = debug_bool)
+                                   debug_bool = debug_bool,
+                                   sens = sens)
   
   # Check transformations:
   check_transformations(resp_mod)

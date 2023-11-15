@@ -53,6 +53,11 @@ T_eta_temp1 = eta_temp1;
 T_eta_temp2 = eta_temp2;
 T_eta_ah1 = eta_ah1;
 T_eta_ah2 = eta_ah2;
+T_b1 = logit(b1);
+T_b2 = logit(b2);
+T_phi1 = logitCons(phi1, 0.0, 52.25);
+T_phi2 = logitCons(phi2, 0.0, 52.25);
+T_beta_h3 = beta_h3;
 T_N = N;
 T_beta_sd1 = log(beta_sd1);
 T_beta_sd2 = log(beta_sd2);
@@ -95,6 +100,11 @@ eta_temp1 = T_eta_temp1;
 eta_temp2 = T_eta_temp2;
 eta_ah1 = T_eta_ah1;
 eta_ah2 = T_eta_ah2;
+b1 = expit(T_b1);
+b2 = expit(T_b2);
+phi1 = expitCons(T_phi1, 0.0, 52.25);
+phi2 = expitCons(T_phi2, 0.0, 52.25);
+beta_h3 = T_beta_h3;
 N = T_N;
 beta_sd1 = exp(T_beta_sd1);
 beta_sd2 = exp(T_beta_sd2);
@@ -197,16 +207,28 @@ if(debug) {
 
 //end_rinit
 
-//start_skel
+//start_skel_main
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
+double omega = (2 * M_PI) / 52.25;
+
 double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
 double beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+
+// Modelling seasonality with a sinusoidal wave:
+// double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + b1 * cos(omega * (t - phi1))) * gamma1;
+// double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + b2 * cos(omega * (t - phi2))) * gamma1;
+
+// Include H3 as a covariate modulating RSV transmission
+// double beta_h3_t = fmax2(0.0, 1.0 + beta_h3 * h3_inc);
+// double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1;
+// double beta2 = Ri2 / (1.0 - (R20 + R120)) * beta_h3_t * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2;
+
+// Linear (vs. exponential) impact of climate:
 // double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
 // double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
-//double beta1 = Ri1 * gamma1; // R0 instead of initial Reff
-//double beta2 = Ri2 * gamma2; // same
+
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 
@@ -234,7 +256,84 @@ DH1_tot = gamma1 * p1; // Incidence rate of virus 1 infections (total)
 DH2_tot = gamma2 * p2; // Incidence rate of virus 2 infections (total)
 DH1 = gamma1 * (X_IS + theta_rho2 * X_II + X_IT + X_IR) / N; // Incidence rate of reported virus 1 infections
 DH2 = gamma2 * (X_SI + theta_rho1 * X_II + X_TI + X_RI) / N; // Incidence rate of reported virus 2 infections 
-//end_skel
+//end_skel_main
+
+//start_skel_sinusoidal
+double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
+double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
+
+double omega = (2 * M_PI) / 52.25;
+
+// Modelling seasonality with a sinusoidal wave:
+double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + b1 * cos(omega * (t - phi1))) * gamma1;
+double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + b2 * cos(omega * (t - phi2))) * gamma1;
+
+double lambda1 = beta1 * p1; // Force of infection with virus 1
+double lambda2 = beta2 * p2; // Force of infection with virus 2
+
+double delta2 = d2 * delta1; // 1 / duration of refractory period (virus2 -> virus1)
+
+// ODEs
+DX_SS = -(lambda1 + lambda2) * X_SS; 
+DX_IS = lambda1 * X_SS - (gamma1 + theta_lambda1 * lambda2) * X_IS; 
+DX_TS = gamma1 * X_IS - (delta1 + theta_lambda1 * lambda2) * X_TS;
+DX_RS = delta1 * X_TS - lambda2 * X_RS; 
+DX_SI = lambda2 * X_SS - (theta_lambda2 * lambda1 + gamma2) * X_SI;
+DX_II = theta_lambda1 * lambda2 * X_IS + theta_lambda2 * lambda1 * X_SI - (gamma1 + gamma2) * X_II; 
+DX_TI = theta_lambda1 * lambda2 * X_TS + gamma1 * X_II - (delta1 + gamma2) * X_TI;
+DX_RI = lambda2 * X_RS + delta1 * X_TI - gamma2 * X_RI; 
+DX_ST = gamma2 * X_SI - (theta_lambda2 * lambda1 + delta2) * X_ST; 
+DX_IT = gamma2 * X_II + theta_lambda2 * lambda1 * X_ST - (gamma1 + delta2) * X_IT; 
+DX_TT = gamma2 * X_TI + gamma1 * X_IT - (delta1 + delta2) * X_TT;
+DX_RT = gamma2 * X_RI + delta1 * X_TT - delta2 * X_RT;
+DX_SR = delta2 * X_ST - lambda1 * X_SR; 
+DX_IR = delta2 * X_IT + lambda1 * X_SR - gamma1 * X_IR; 
+DX_TR = delta2 * X_TT + gamma1 * X_IR - delta1 * X_TR; 
+DX_RR = delta2 * X_RT + delta1 * X_TR;
+
+DH1_tot = gamma1 * p1; // Incidence rate of virus 1 infections (total)
+DH2_tot = gamma2 * p2; // Incidence rate of virus 2 infections (total)
+DH1 = gamma1 * (X_IS + theta_rho2 * X_II + X_IT + X_IR) / N; // Incidence rate of reported virus 1 infections
+DH2 = gamma2 * (X_SI + theta_rho1 * X_II + X_TI + X_RI) / N; // Incidence rate of reported virus 2 infections 
+//end_skel_sinusoidal
+
+//start_skel_h3
+double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
+double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
+
+// Include H3 as a covariate modulating RSV transmission
+double beta_h3_t = fmax2(0.0, 1.0 + beta_h3 * h3_inc);
+double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1;
+double beta2 = Ri2 / (1.0 - (R20 + R120)) * beta_h3_t * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2;
+
+double lambda1 = beta1 * p1; // Force of infection with virus 1
+double lambda2 = beta2 * p2; // Force of infection with virus 2
+
+double delta2 = d2 * delta1; // 1 / duration of refractory period (virus2 -> virus1)
+
+// ODEs
+DX_SS = -(lambda1 + lambda2) * X_SS; 
+DX_IS = lambda1 * X_SS - (gamma1 + theta_lambda1 * lambda2) * X_IS; 
+DX_TS = gamma1 * X_IS - (delta1 + theta_lambda1 * lambda2) * X_TS;
+DX_RS = delta1 * X_TS - lambda2 * X_RS; 
+DX_SI = lambda2 * X_SS - (theta_lambda2 * lambda1 + gamma2) * X_SI;
+DX_II = theta_lambda1 * lambda2 * X_IS + theta_lambda2 * lambda1 * X_SI - (gamma1 + gamma2) * X_II; 
+DX_TI = theta_lambda1 * lambda2 * X_TS + gamma1 * X_II - (delta1 + gamma2) * X_TI;
+DX_RI = lambda2 * X_RS + delta1 * X_TI - gamma2 * X_RI; 
+DX_ST = gamma2 * X_SI - (theta_lambda2 * lambda1 + delta2) * X_ST; 
+DX_IT = gamma2 * X_II + theta_lambda2 * lambda1 * X_ST - (gamma1 + delta2) * X_IT; 
+DX_TT = gamma2 * X_TI + gamma1 * X_IT - (delta1 + delta2) * X_TT;
+DX_RT = gamma2 * X_RI + delta1 * X_TT - delta2 * X_RT;
+DX_SR = delta2 * X_ST - lambda1 * X_SR; 
+DX_IR = delta2 * X_IT + lambda1 * X_SR - gamma1 * X_IR; 
+DX_TR = delta2 * X_TT + gamma1 * X_IR - delta1 * X_TR; 
+DX_RR = delta2 * X_RT + delta1 * X_TR;
+
+DH1_tot = gamma1 * p1; // Incidence rate of virus 1 infections (total)
+DH2_tot = gamma2 * p2; // Incidence rate of virus 2 infections (total)
+DH1 = gamma1 * (X_IS + theta_rho2 * X_II + X_IT + X_IR) / N; // Incidence rate of reported virus 1 infections
+DH2 = gamma2 * (X_SI + theta_rho1 * X_II + X_TI + X_RI) / N; // Incidence rate of reported virus 2 infections 
+//end_skel_h3
 
 //start_rsim
 
