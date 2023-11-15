@@ -214,12 +214,8 @@ double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with vir
 
 double omega = (2 * M_PI) / 52.25;
 
-double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
-double beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
-
-// Linear (vs. exponential) impact of climate:
-// double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
-// double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
+double beta1;
+double beta2;
 
 if (strcmp("sinusoidal_forcing", sens) == 0) {
   
@@ -233,6 +229,15 @@ if (strcmp("sinusoidal_forcing", sens) == 0) {
   double beta_h3_t = fmax2(0.0, 1.0 + beta_h3 * h3_inc);
   beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1;
   beta2 = Ri2 / (1.0 - (R20 + R120)) * beta_h3_t * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2;
+  
+} else {
+  
+  beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
+  beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+  
+  // Linear (vs. exponential) impact of climate:
+  // beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
+  // beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
   
 }
 
