@@ -32,7 +32,7 @@ res_df_h1 <- lapply(res_full_h1, getElement, 'estpars') %>%
   bind_rows() %>%
   bind_cols('loglik' = lapply(res_full_h1, getElement, 'll') %>%
               unlist()) %>%
-  mutate(dataset = str_split(file_list_h1, '_') %>% purrr::map(~ .x[6]) %>% unlist()) %>%
+  mutate(dataset = str_split(file_list_h1, '_') %>% purrr::map(~ .x[which(!is.na(as.numeric(str_split(file_list_h1, '_')[[1]])))]) %>% unlist()) %>%
   bind_cols('conv' = lapply(res_full_h1, getElement, 'message') %>%
               unlist())
 expect_true(nrow(res_df_h1) == length(file_list_h1))
@@ -42,7 +42,7 @@ res_df_b <- lapply(res_full_b, getElement, 'estpars') %>%
   bind_rows() %>%
   bind_cols('loglik' = lapply(res_full_b, getElement, 'll') %>%
               unlist()) %>%
-  mutate(dataset = str_split(file_list_b, '_') %>% purrr::map(~ .x[6]) %>% unlist()) %>%
+  mutate(dataset = str_split(file_list_b, '_') %>% purrr::map(~ .x[which(!is.na(as.numeric(str_split(file_list_b, '_')[[1]])))]) %>% unlist()) %>%
   bind_cols('conv' = lapply(res_full_b, getElement, 'message') %>%
               unlist())
 expect_true(nrow(res_df_b) == length(file_list_b))

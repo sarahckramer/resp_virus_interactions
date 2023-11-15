@@ -17,18 +17,26 @@ sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 final_round <- as.integer(Sys.getenv("FINALROUND")); print(final_round)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
+sens <- as.character(Sys.getenv("SENS")); print(sens)
 
 # # Set parameters for local run:
 # jobid <- 1
 # no_jobs <- 1
 # vir1 <- 'flu_h1' # 'flu_h1', 'flu_b'
 # sobol_size <- 10
+# final_round <- 3
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
+# sens <- 'main'
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
+
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+if (sens == 'less_circ_h3') {
+  seasons <- c('s17-18', 's18-19')
+}
+
 time_max <- 14.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
@@ -225,8 +233,21 @@ rm(synth_LIST)
 
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
-  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                      'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+  
+  if (sens == 'sinusoidal_forcing') {
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+  } else if (sens == 'h3_covar') {
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+                        'beta_h3')
+  } else if (sens == 'no_int') {
+    shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+  } else {
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+  }
+  
 } else if (int_eff == 'sev') {
   shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
                       'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
@@ -247,11 +268,11 @@ estpars <- c(shared_estpars, unit_sp_estpars)
 
 # Get start ranges for all parameters:
 if (vir1 == 'flu_h1') {
-  start_range <- read_rds('results/round2_CIs/round2CI_startvals_H1.rds')
   start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_H1.rds'))
 } else if (vir1 == 'flu_b') {
-  start_range <- read_rds('results/round2_CIs/round2CI_startvals_B.rds')
   start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_B.rds'))
+} else if (vir1 == 'flu_h1_plus_b') {
+  start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_H1_plus_B.rds'))
 } else {
   stop('Unknown vir1!')
 }
