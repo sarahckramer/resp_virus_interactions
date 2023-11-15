@@ -13,7 +13,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
   
   # Read model C code:
   mod_code <- readLines('src/resp_interaction_model.c')
-  components_nm <- c('globs', 'toest', 'fromest', 'dmeas', 'rmeas', 'rinit', 'skel_main', 'skel_sinusoidal', 'skel_h3', 'rsim')
+  components_nm <- c('globs', 'toest', 'fromest', 'dmeas', 'rmeas', 'rinit', 'skel', 'rsim')
   components_l <- vector(mode = 'list', length = length(components_nm))
   names(components_l) <- components_nm
   
@@ -23,11 +23,12 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
     
     if(nm == 'globs') {
       components_l[[nm]] <- paste(components_l[[nm]], 
-                                  sprintf('static int debug = %d; \nstatic double Ri1_max = %f; \nstatic double Ri2_max = %f; \nstatic double d2_max = %f;', 
+                                  sprintf('static int debug = %d; \nstatic double Ri1_max = %f; \nstatic double Ri2_max = %f; \nstatic double d2_max = %f; \nstatic char sens[] = "%s";', 
                                           as.integer(debug_bool),
                                           as.numeric(Ri1_max),
                                           as.numeric(Ri2_max),
-                                          as.numeric(d2_max)), 
+                                          as.numeric(d2_max),
+                                          as.character(sens)),
                                   sep = '\n')
     }
     
@@ -36,14 +37,6 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
   
   # Check that population size is the same at all timepoints:
   expect_true(length(unique(dat$pop)) == 1)
-  
-  # Choose deterministic skeleton to use:
-  choose_skel <- 'skel_main'
-  if (sens == 'sinusoidal_forcing') {
-    choose_skel <- 'skel_sinusoidal'
-  } else if (sens == 'h3_covar') {
-    choose_skel <- 'skel_h3'
-  }
   
   # Create pomp object:
   po <- pomp(data = dat[, c('time', 'n_P1', 'n_P2')],
@@ -93,7 +86,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
              globals = components_l[['globs']],
              dmeasure = components_l[['dmeas']],
              rmeasure = components_l[['rmeas']],
-             skeleton = vectorfield(components_l[[choose_skel]]),
+             skeleton = vectorfield(components_l[['skel']]),
              rprocess = euler(step.fun = components_l[['rsim']], delta.t = 0.01),
              partrans = parameter_trans(toEst = components_l[['toest']], fromEst = components_l[['fromest']]),
              rinit = components_l[['rinit']]
