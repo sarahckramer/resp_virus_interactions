@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Specify location of results to check:
-res_dir <- 'results/round2_4_fluH1_FULL/'
+res_dir <- 'results/round2_fit/round2_3_fluH1/'
 
 # Check for missing results files:
 res_files <- list.files(path = res_dir, full.names = FALSE)
@@ -45,7 +45,7 @@ expect_equal(length(shared_estpars), 12)
 true_estpars <- c(shared_estpars, unit_estpars)
 
 df_use <- pars_df %>% select(-loglik) %>% names() %>% length()
-expect_equal(df_use, 54)
+# expect_equal(df_use, 54)
 
 no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
 no_best <- max(no_best, 50)
@@ -67,6 +67,9 @@ prof_lik <- FALSE
 lag_val <- 0
 
 # Load pomp objects:
+if (!any(str_detect(names(pars_df), 's13-14'))) {
+  sens <- 'less_circ_h3'
+}
 source('src/functions/setup_global_likelilhood.R')
 
 # Run trajectories for all seasons:

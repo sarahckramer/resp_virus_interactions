@@ -7,8 +7,8 @@ library(tidyverse)
 library(testthat)
 
 # Set directory where results from round2 fits are stored:
-res_dir_h1 <- 'results/round2_1_fluH1/'
-res_dir_b <- 'results/round2_3_fluB_FULL/'
+res_dir_h1 <- 'results/round2_fit/round2_3_fluH1/'
+res_dir_b <- 'results/round2_fit/round2_3_fluB/'
 
 # Are results from a sensitivity analysis?:
 sens <- 'main'
@@ -21,8 +21,8 @@ if (!dir.exists('results/round2_CIs/')) {
   dir.create('results/round2_CIs/')
 }
 
-which_round_h1 <- str_split(res_dir_h1, '_')[[1]][3] # which round's results are we using here?
-which_round_b <- str_split(res_dir_b, '_')[[1]][3]
+which_round_h1 <- str_split(res_dir_h1, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir_h1, '_')[[1]])))] # which round's results are we using here?
+which_round_b <- str_split(res_dir_b, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir_b, '_')[[1]])))]
 
 if (sens == 'main') {
   
@@ -240,77 +240,77 @@ if (any(sums_b %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
 write_rds(ci_start_h1, file = paste0(new_dir_h1, 'round2CI_startvals_H1.rds'))
 write_rds(ci_start_b, file = paste0(new_dir_b, 'round2CI_startvals_B.rds'))
 
-# Also find start ranges for H1+B sensitivity analysis?
-res_dir_h1_plus_b <- 'results/round2_fit/sens/round2_1_fluH1_plus_B/'
-which_round_h1_plus_b <- str_split(res_dir_h1_plus_b, '_')[[1]][3]
-
-if(!dir.exists('results/round2_CIs/sens/')) {
-  dir.create('results/round2_CIs/sens/')
-}
-if(!dir.exists('results/round2_CIs/sens/flu_h1_plus_b/')) {
-  dir.create('results/round2_CIs/sens/flu_h1_plus_b/')
-}
-
-new_dir_h1_plus_b <- paste0('results/round2_CIs/sens/flu_h1_plus_b/from_2_', which_round_h1_plus_b, '/')
-if (!dir.exists(new_dir_h1_plus_b)) {
-  dir.create(new_dir_h1_plus_b)
-}
-
-res_h1_plus_b <- load_and_format_mega_results(res_dir_h1_plus_b) %>%
-  select(-loglik)
-ci_start_h1_plus_b <- as.data.frame(rbind(summarise(res_h1_plus_b, across(.cols = everything(), \(x) min(x, na.rm = TRUE))),
-                                          summarise(res_h1_plus_b, across(.cols = everything(), \(x) max(x, na.rm = TRUE)))))
-if (any(ci_start_h1_plus_b == Inf)) {
-  ci_start_h1_plus_b$d2 <- c(0, 10)
-}
-
-sums_h1_plus_b <- ci_start_h1_plus_b %>%
-  mutate(minmax = c('min', 'max')) %>%
-  select(contains(init_cond_estpars), minmax) %>%
-  pivot_longer(-minmax) %>%
-  mutate(season = str_sub(name, 1, 6)) %>%
-  group_by(season, minmax) %>%
-  summarise(sum = sum(value))
-if (any(sums_h1_plus_b %>% filter(minmax == 'min') %>% pull(sum) > 1.0)) {
-  print('Lower bounds sum to more than 1!')
-}
-
-if (any(sums_h1_plus_b %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
-  seasons <- sums_h1_plus_b %>%
-    filter(minmax == 'max',
-           sum > 1.0) %>%
-    pull(season)
-  
-  for (yr in seasons) {
-    
-    # Reduce upper bounds proportionally:
-    orig_upper_bounds <- ci_start_h1_plus_b[2, ] %>%
-      select(contains(c('R10', 'R20', 'R120'))) %>%
-      select(contains(yr))
-    red_needed <- sums_h1_plus_b %>%
-      filter(season == yr,
-             minmax == 'max') %>%
-      pull(sum) - 0.9999999
-    new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
-    
-    # Ensure upper bounds still greater than lower:
-    orig_lower_bounds <- ci_start_h1_plus_b[1, ] %>%
-      select(contains(c('R10', 'R20', 'R120'))) %>%
-      select(contains(yr))
-    expect_true(all(new_upper_bounds > orig_lower_bounds))
-    
-    # Check that upper bounds now sum to 1 or less:
-    ci_start_h1_plus_b[2, which(str_detect(names(ci_start_h1_plus_b), yr) &
-                                  (str_detect(names(ci_start_h1_plus_b), 'R10') |
-                                     str_detect(names(ci_start_h1_plus_b), 'R20') |
-                                     str_detect(names(ci_start_h1_plus_b), 'R120')))] <- new_upper_bounds
-    expect_lt(ci_start_h1_plus_b[2, ] %>% select(contains(yr)) %>% select(contains(init_cond_estpars)) %>% sum(), 1.0)
-    
-  }
-  rm(yr)
-}
-
-write_rds(ci_start_h1_plus_b, file = paste0(new_dir_h1_plus_b, 'round2CI_startvals_H1_plus_B.rds'))
+# # Also find start ranges for H1+B sensitivity analysis?
+# res_dir_h1_plus_b <- 'results/round2_fit/sens/h1_plus_b/round2_5_fluH1_plus_B/'
+# which_round_h1_plus_b <- str_split(res_dir_h1_plus_b, '_')[[1]][3]
+# 
+# if(!dir.exists('results/round2_CIs/sens/')) {
+#   dir.create('results/round2_CIs/sens/')
+# }
+# if(!dir.exists('results/round2_CIs/sens/flu_h1_plus_b/')) {
+#   dir.create('results/round2_CIs/sens/flu_h1_plus_b/')
+# }
+# 
+# new_dir_h1_plus_b <- paste0('results/round2_CIs/sens/flu_h1_plus_b/from_2_', which_round_h1_plus_b, '/')
+# if (!dir.exists(new_dir_h1_plus_b)) {
+#   dir.create(new_dir_h1_plus_b)
+# }
+# 
+# res_h1_plus_b <- load_and_format_mega_results(res_dir_h1_plus_b) %>%
+#   select(-loglik)
+# ci_start_h1_plus_b <- as.data.frame(rbind(summarise(res_h1_plus_b, across(.cols = everything(), \(x) min(x, na.rm = TRUE))),
+#                                           summarise(res_h1_plus_b, across(.cols = everything(), \(x) max(x, na.rm = TRUE)))))
+# if (any(ci_start_h1_plus_b == Inf)) {
+#   ci_start_h1_plus_b$d2 <- c(0, 10)
+# }
+# 
+# sums_h1_plus_b <- ci_start_h1_plus_b %>%
+#   mutate(minmax = c('min', 'max')) %>%
+#   select(contains(init_cond_estpars), minmax) %>%
+#   pivot_longer(-minmax) %>%
+#   mutate(season = str_sub(name, 1, 6)) %>%
+#   group_by(season, minmax) %>%
+#   summarise(sum = sum(value))
+# if (any(sums_h1_plus_b %>% filter(minmax == 'min') %>% pull(sum) > 1.0)) {
+#   print('Lower bounds sum to more than 1!')
+# }
+# 
+# if (any(sums_h1_plus_b %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
+#   seasons <- sums_h1_plus_b %>%
+#     filter(minmax == 'max',
+#            sum > 1.0) %>%
+#     pull(season)
+#   
+#   for (yr in seasons) {
+#     
+#     # Reduce upper bounds proportionally:
+#     orig_upper_bounds <- ci_start_h1_plus_b[2, ] %>%
+#       select(contains(c('R10', 'R20', 'R120'))) %>%
+#       select(contains(yr))
+#     red_needed <- sums_h1_plus_b %>%
+#       filter(season == yr,
+#              minmax == 'max') %>%
+#       pull(sum) - 0.9999999
+#     new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
+#     
+#     # Ensure upper bounds still greater than lower:
+#     orig_lower_bounds <- ci_start_h1_plus_b[1, ] %>%
+#       select(contains(c('R10', 'R20', 'R120'))) %>%
+#       select(contains(yr))
+#     expect_true(all(new_upper_bounds > orig_lower_bounds))
+#     
+#     # Check that upper bounds now sum to 1 or less:
+#     ci_start_h1_plus_b[2, which(str_detect(names(ci_start_h1_plus_b), yr) &
+#                                   (str_detect(names(ci_start_h1_plus_b), 'R10') |
+#                                      str_detect(names(ci_start_h1_plus_b), 'R20') |
+#                                      str_detect(names(ci_start_h1_plus_b), 'R120')))] <- new_upper_bounds
+#     expect_lt(ci_start_h1_plus_b[2, ] %>% select(contains(yr)) %>% select(contains(init_cond_estpars)) %>% sum(), 1.0)
+#     
+#   }
+#   rm(yr)
+# }
+# 
+# write_rds(ci_start_h1_plus_b, file = paste0(new_dir_h1_plus_b, 'round2CI_startvals_H1_plus_B.rds'))
 
 # Clean up:
 rm(list = ls())

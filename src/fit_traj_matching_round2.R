@@ -33,14 +33,14 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # search_type <- 'round2_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
-# sens <- 'less_circ_h3'
+# sens <- 'main' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'h3_covar'
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
 
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
-if (sens == 'less_circ_h3' | vir1 == 'flu_h1_plus_b') {
+if (sens == 'less_circ_h3') {
   seasons <- c('s17-18', 's18-19')
 }
 
@@ -254,8 +254,19 @@ if (int_eff == 'susc') {
                         'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
-    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+    
+    if (sens == 'sinusoidal_forcing') {
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                          'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+    } else if (sens == 'h3_covar') {
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+                          'beta_h3')
+    } else {
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+    }
+    
   }
 } else if (int_eff == 'sev') {
   if (prof_lik) {
@@ -305,7 +316,12 @@ start_range <- data.frame(rho1 = c(0, 1.0),
                           eta_temp1 = c(-0.5, 0.5),
                           eta_temp2 = c(-0.5, 0.5),
                           eta_ah1 = c(-0.5, 0.5),
-                          eta_ah2 = c(-0.5, 0.5))
+                          eta_ah2 = c(-0.5, 0.5),
+                          b1 = c(0, 0.5),
+                          b2 = c(0, 0.5),
+                          phi1 = c(0, 52.25),
+                          phi2 = c(0, 52.25),
+                          beta_h3 = c(0, 10.0))
 
 # Set upper/lower values for unit params (broad):
 unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
@@ -383,14 +399,6 @@ if (search_type == 'round2_CIs') {
   
   rm(start_range_thetarho)
   
-  if (sens == 'no_ah') {
-    
-    estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
-    true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
-    shared_estpars <- shared_estpars[!(shared_estpars %in% c('eta_ah1', 'eta_ah2'))]
-    
-  }
-  
 } else {
   
   for (i in 1:length(seasons)) {
@@ -427,8 +435,19 @@ if (search_type == 'round2_CIs') {
     mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
 }
 
+# Force no interaction?:
+if (sens == 'no_int') {
+  
+  estpars <- estpars[!(estpars %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
+  true_estpars <- true_estpars[!(true_estpars %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
+  shared_estpars <- shared_estpars[!(shared_estpars %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
+  
+  start_values <- start_values[!(names(start_values) %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
+  
+}
+
 # Remove eta_ah1, eta_ah2 from consideration?:
-if (sens == 'no_ah' & search_type != 'round2_CIs') {
+if (sens == 'no_ah') {
   
   estpars <- estpars[!(estpars %in% c('eta_ah1', 'eta_ah2'))]
   true_estpars <- true_estpars[!(true_estpars %in% c('eta_ah1', 'eta_ah2'))]
