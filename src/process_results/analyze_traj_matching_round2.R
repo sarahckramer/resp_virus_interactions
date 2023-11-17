@@ -10,8 +10,7 @@ library(testthat)
 library(gridExtra)
 
 # Set directory where final results from round2 fits are stored:
-res_dir_h1 <- 'results/round2_fit/round2_3_fluH1/'
-res_dir_b <- 'results/round2_fit/round2_3_fluB/'
+res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_round1 <- 'results/round1_fitsharedFALSE/'
 
 # Check that directory for storing plots exists, and create if not:
@@ -108,34 +107,11 @@ shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 
                     'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
-# H1, all estpars:
-res_h1 <- load_and_format_mega_results(filepath = res_dir_h1,
-                                       shared_estpars = shared_estpars,
-                                       unit_estpars = unit_estpars,
-                                       run_name = 'H1_FULL')
-
-# B, all estpars:
-res_b <- load_and_format_mega_results(filepath = res_dir_b,
-                                      shared_estpars = shared_estpars,
-                                      unit_estpars = unit_estpars,
-                                      run_name = 'B_FULL')
-
-# Extract results:
-res_LIST <- list(res_h1, res_b)
-pars_top_LIST = pars_top_long_LIST = pars_corr_LIST = vector('list', length = length(res_LIST))
-for (i in 1:length(res_LIST)) {
-  pars_top_LIST[[i]] <- res_LIST[[i]][[1]]
-  pars_top_long_LIST[[i]] <- res_LIST[[i]][[2]]
-  pars_corr_LIST[[i]] <- res_LIST[[i]][[3]]
-}
-rm(i)
-
-names(pars_top_LIST) <- c('flu_h1_FULL', 'flu_b_FULL')
-names(pars_top_long_LIST) <- c('flu_h1_FULL', 'flu_b_FULL')
-names(pars_corr_LIST) <- c('flu_h1_FULL', 'flu_b_FULL')
-
-# Clean up:
-try(rm(res_LIST, res_h1, res_b))
+# H1 + B:
+res_h1_plus_b <- load_and_format_mega_results(filepath = res_dir,
+                                              shared_estpars = shared_estpars,
+                                              unit_estpars = unit_estpars,
+                                              run_name = 'H1_plus_B')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -159,9 +135,7 @@ res_r1 <- res_r1 %>%
          eta_temp2 = NA,
          eta_ah1 = NA,
          eta_ah2 = NA,
-         method = if_else(virus1 == 'flu_b',
-                          'B_round1_noInt',
-                          'H1_round1_noInt')) %>%
+         method = 'round1_noInt') %>%
   select(year:method) %>%
   pivot_longer(-c(year, loglik, method),
                names_to = 'param') %>%
@@ -176,31 +150,19 @@ pdf(paste0('results/plots/', date, '_trajectory_matching_round2.pdf'),
     width = 22, height = 12)
 
 # Pairs plots:
-lapply(pars_corr_LIST, function(ix) {
-  pairs(ix[, c(shared_estpars, unit_estpars, 'loglik')], pch = 20, main = unique(ix$method))
-})
+pairs(res_h1_plus_b[[3]][, c(shared_estpars, unit_estpars, 'loglik')], pch = 20, main = unique(res_h1_plus_b[[3]]$method))
 
 # Compare estimates across methods/subtypes:
-res <- bind_rows(pars_top_long_LIST) %>%
-  bind_rows(res_r1) %>%
-  mutate(vir1 = str_sub(method, 1, 2))
+res <- res_h1_plus_b[[2]] %>%
+  bind_rows(res_r1)
 rm(res_r1)
 res$param <- factor(res$param)
 res$param <- factor(res$param, levels = c(shared_estpars, unit_estpars))
+res$method <- factor(res$method)
 
-res_h1 <- res %>% filter(vir1 == 'H1')
-res_b <- res %>% filter(vir1 == 'B_') %>% mutate(vir1 = 'B')
-
-res_h1$method <- factor(res_h1$method)
-res_b$method <- factor(res_b$method)
-
-p1 <- ggplot(data = res_h1, aes(x = year, y = value, fill = method)) + geom_boxplot() +
+p1 <- ggplot(data = res, aes(x = year, y = value, fill = method)) + geom_boxplot() +
   facet_wrap(~ param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
-p2 <- ggplot(data = res_b, aes(x = year, y = value, fill = method)) + geom_boxplot() +
-  facet_wrap(~ param, scales = 'free_y') + theme_classic() + scale_fill_brewer(palette = 'Set1')
-
 print(p1)
-print(p2)
 
 dev.off()
 
@@ -208,28 +170,22 @@ dev.off()
 pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr.pdf'),
     width = 18, height = 10)
 
-for (i in 1:length(pars_top_LIST)) {
-  for (param in unit_estpars) {
-    pars_top_LIST[[i]] %>%
-      select(all_of(shared_estpars),
-             contains(param)) %>%
-      plot(pch = 20,
-           main = paste(unique(pars_top_long_LIST[[i]]$method),
-                        param,
-                        sep = '_'))
-  }
+for (param in unit_estpars) {
+  res_h1_plus_b[[1]] %>%
+    select(all_of(shared_estpars),
+           contains(param)) %>%
+    plot(pch = 20,
+         main = param)
 }
-rm(i)
 
 # And calculate correlation between estimates of eta_temp and eta_ah:
-par(mfrow = c(2, 2), mar = c(4, 4, 1, 0.5))
-for (i in 1:length(pars_top_LIST)) {
-  pars_temp <- pars_top_LIST[[i]] %>% select(eta_temp1:eta_ah2)
-  plot(pars_temp$eta_temp1, pars_temp$eta_ah1, pch = 20)
-  plot(pars_temp$eta_temp2, pars_temp$eta_ah2, pch = 20)
-  cor.test(pars_temp$eta_temp1, pars_temp$eta_ah1) %>% print()
-  cor.test(pars_temp$eta_temp2, pars_temp$eta_ah2) %>% print()
-}
+par(mfrow = c(2, 1), mar = c(4, 4, 1, 0.5))
+pars_temp <- res_h1_plus_b[[1]] %>% select(eta_temp1:eta_ah2)
+plot(pars_temp$eta_temp1, pars_temp$eta_ah1, pch = 20)
+plot(pars_temp$eta_temp2, pars_temp$eta_ah2, pch = 20)
+cor.test(pars_temp$eta_temp1, pars_temp$eta_ah1) %>% print()
+cor.test(pars_temp$eta_temp2, pars_temp$eta_ah2) %>% print()
+
 dev.off()
 
 # Plot slices:
@@ -240,65 +196,56 @@ true_estpars <- c(shared_estpars, unit_estpars)
 prof_lik <- FALSE
 lag_val <- 0
 
-for (i in 1:length(pars_top_LIST)) {
+# Set estpars:
+estpars <- names(res_h1_plus_b[[1]])[1:(length(names(res_h1_plus_b[[1]])) - 1)]
+
+# Set vir1:
+vir1 <- 'flu_h1_plus_b'
+
+# Read in pomp models:
+source('src/functions/setup_global_likelilhood.R')
+
+# Loop through top 5 parameter sets and calculate/plot slices over global params:
+par(mfrow = c(10, 6), bty = 'l')
+
+for (j in 1:5) {
+  mle <- setNames(object = as.numeric(res_h1_plus_b[[1]][j, 1:(length(names(res_h1_plus_b[[1]])) - 1)]),
+                  nm = estpars)
   
-  # Set estpars:
-  estpars <- names(pars_top_LIST[[i]])[1:(length(names(pars_top_LIST[[i]])) - 1)]
+  slices <- slice_design(center = mle,
+                         rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
+                         rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20),
+                         theta_lambda1 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda1'], to = 1.1 * mle['theta_lambda1'], length.out = 20),
+                         theta_lambda2 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda2'], to = 1.1 * mle['theta_lambda2'], length.out = 20),
+                         delta1 = seq(from = 0.9 * mle['delta1'], to = 1.1 * mle['delta1'], length.out = 20),
+                         d2 = seq(from = 0.9 * mle['d2'], to = 1.1 * mle['d2'], length.out = 20),
+                         alpha = seq(from = 0.9 * mle['alpha'], to = 1.1 * mle['alpha'], length.out = 20),
+                         phi = seq(from = 0, to = 52, length.out = 20),#seq(from = 0.9 * mle['phi'], to = 1.1 * mle['phi'], length.out = 20),
+                         eta_temp1 = seq(from = 0.9 * mle['eta_temp1'], to = 1.1 * mle['eta_temp1'], length.out = 20),
+                         eta_temp2 = seq(from = 0.9 * mle['eta_temp2'], to = 1.1 * mle['eta_temp2'], length.out = 20),
+                         eta_ah1 = seq(from = 0.9 * mle['eta_ah1'], to = 1.1 * mle['eta_ah2'], length.out = 20),
+                         eta_ah2 = seq(from = 0.9 * mle['eta_ah2'], to = 1.1 * mle['eta_ah2'], length.out = 20)) %>%
+    mutate(ll = NA)
   
-  # Set vir1:
-  if (str_detect(names(pars_top_LIST)[i], 'h1')) {
-    vir1 <- 'flu_h1'
-  } else {
-    vir1 <- 'flu_b'
+  for (k in 1:nrow(slices)) {
+    x0 <- slices[k, 1:(length(names(res_h1_plus_b[[1]])) - 1)]
+    expect_true(all(names(x0) == estpars))
+    x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
+    slices$ll[k] <- -1 * calculate_global_loglik(x0_trans)
   }
+  rm(k, x0, x0_trans)
   
-  # Read in pomp models:
-  source('src/functions/setup_global_likelilhood.R')
-  
-  # Loop through top 5 parameter sets and calculate/plot slices over global params:
-  par(mfrow = c(10, 6), bty = 'l')
-  
-  for (j in 1:5) {
-    mle <- setNames(object = as.numeric(pars_top_LIST[[i]][j, 1:(length(names(pars_top_LIST[[i]])) - 1)]),
-                    nm = estpars)
-    
-    slices <- slice_design(center = mle,
-                           rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
-                           rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20),
-                           theta_lambda1 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda1'], to = 1.1 * mle['theta_lambda1'], length.out = 20),
-                           theta_lambda2 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda2'], to = 1.1 * mle['theta_lambda2'], length.out = 20),
-                           delta1 = seq(from = 0.9 * mle['delta1'], to = 1.1 * mle['delta1'], length.out = 20),
-                           d2 = seq(from = 0.9 * mle['d2'], to = 1.1 * mle['d2'], length.out = 20),
-                           alpha = seq(from = 0.9 * mle['alpha'], to = 1.1 * mle['alpha'], length.out = 20),
-                           phi = seq(from = 0, to = 52, length.out = 20),#seq(from = 0.9 * mle['phi'], to = 1.1 * mle['phi'], length.out = 20),
-                           eta_temp1 = seq(from = 0.9 * mle['eta_temp1'], to = 1.1 * mle['eta_temp1'], length.out = 20),
-                           eta_temp2 = seq(from = 0.9 * mle['eta_temp2'], to = 1.1 * mle['eta_temp2'], length.out = 20),
-                           eta_ah1 = seq(from = 0.9 * mle['eta_ah1'], to = 1.1 * mle['eta_ah2'], length.out = 20),
-                           eta_ah2 = seq(from = 0.9 * mle['eta_ah2'], to = 1.1 * mle['eta_ah2'], length.out = 20)) %>%
-      mutate(ll = NA)
-    
-    for (k in 1:nrow(slices)) {
-      x0 <- slices[k, 1:(length(names(pars_top_LIST[[i]])) - 1)]
-      expect_true(all(names(x0) == estpars))
-      x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
-      slices$ll[k] <- -1 * calculate_global_loglik(x0_trans)
-    }
-    rm(k, x0, x0_trans)
-    
-    for (par in shared_estpars) {
-      slices_cur <- filter(slices, slice == par)
-      plot(slices_cur[[par]], slices_cur$ll, type = 'l',
-           xlab = par, ylab = 'Log-Likelihood',
-           main = par)
-      
-    }
-    rm(par, slices_cur)
+  for (par in shared_estpars) {
+    slices_cur <- filter(slices, slice == par)
+    plot(slices_cur[[par]], slices_cur$ll, type = 'l',
+         xlab = par, ylab = 'Log-Likelihood',
+         main = par)
     
   }
-  rm(j, mle, slices)
+  rm(par, slices_cur)
   
 }
-rm(i)
+rm(j, mle, slices)
 
 dev.off()
 
@@ -306,63 +253,53 @@ dev.off()
 pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations.pdf'),
     width = 18, height = 10)
 
-for (i in 1:length(pars_top_LIST)) {
+# # Read in pomp models:
+# source('src/functions/setup_global_likelilhood.R')
+
+# Create list to store plots:
+plot_list <- list()
+
+# Simulate/plot each season:
+for (j in 1:length(seasons)) {
   
-  # Set vir1:
-  if (str_detect(names(pars_top_LIST)[i], 'h1')) {
-    vir1 <- 'flu_h1'
-  } else {
-    vir1 <- 'flu_b'
+  # Get year:
+  yr <- seasons[j]
+  
+  # Get pomp object:
+  resp_mod <- po_list[[j]]
+  
+  # Get parameter values:
+  pars_temp <- res_h1_plus_b[[1]] %>%
+    select(all_of(shared_estpars),
+           contains(yr))
+  names(pars_temp)[(length(names(pars_temp)) - 6):length(names(pars_temp))] <- unit_estpars
+  
+  # Plot top 5 parameter sets:
+  for (k in 1:5) {
+    coef(resp_mod, c(shared_estpars, unit_estpars)) <- pars_temp[k, ]
+    
+    sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
+    # traj_temp <- trajectory(resp_mod, format = 'data.frame')
+    
+    sim_temp <- sim_temp %>%
+      as_tibble() %>%
+      select(time:.id, n_P1:n_P2) %>%
+      arrange(.id) %>%
+      cbind(t(resp_mod@data))
+    names(sim_temp)[5:6] <- c('obs1', 'obs2')
+    
+    p_temp <- ggplot(data = sim_temp) + geom_line(aes(x = time, y = n_P1, group = .id), col = 'black') +
+      geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') + 
+      geom_point(aes(x = time, y = obs1, group = .id)) + geom_point(aes(x = time, y = obs2, group = .id), col = 'coral') +
+      theme_classic() +
+      labs(x = 'Time', y = '# Positive Tests', title = paste('H1_plus_B', k, sep = '_'))
+    plot_list[[j * 5 - 4 + k - 1]] <- p_temp
+    
   }
-  
-  # Read in pomp models:
-  source('src/functions/setup_global_likelilhood.R')
-  
-  # Create list to store plots:
-  plot_list <- list()
-  
-  # Simulate/plot each season:
-  for (j in 1:length(seasons)) {
-    
-    # Get year:
-    yr <- seasons[j]
-    
-    # Get pomp object:
-    resp_mod <- po_list[[j]]
-    
-    # Get parameter values:
-    pars_temp <- pars_top_LIST[[i]] %>%
-      select(all_of(shared_estpars),
-             contains(yr))
-    names(pars_temp)[(length(names(pars_temp)) - 6):length(names(pars_temp))] <- unit_estpars
-    
-    # Plot top 5 parameter sets:
-    for (k in 1:5) {
-      coef(resp_mod, c(shared_estpars, unit_estpars)) <- pars_temp[k, ]
-      
-      sim_temp <- simulate(resp_mod, nsim = 5, format = 'data.frame')
-      # traj_temp <- trajectory(resp_mod, format = 'data.frame')
-      
-      sim_temp <- sim_temp %>%
-        as_tibble() %>%
-        select(time:.id, n_P1:n_P2) %>%
-        arrange(.id) %>%
-        cbind(t(resp_mod@data))
-      names(sim_temp)[5:6] <- c('obs1', 'obs2')
-      
-      p_temp <- ggplot(data = sim_temp) + geom_line(aes(x = time, y = n_P1, group = .id), col = 'black') +
-        geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') + 
-        geom_point(aes(x = time, y = obs1, group = .id)) + geom_point(aes(x = time, y = obs2, group = .id), col = 'coral') +
-        theme_classic() +
-        labs(x = 'Time', y = '# Positive Tests', title = paste(unique(pars_top_long_LIST[[i]]$method), k, sep = '_'))
-      plot_list[[j * 5 - 4 + k - 1]] <- p_temp
-      
-    }
-  }
-  
-  # Print plots:
-  do.call('grid.arrange', c(plot_list, ncol = 5))
 }
+
+# Print plots:
+do.call('grid.arrange', c(plot_list, ncol = 5))
 
 dev.off()
 

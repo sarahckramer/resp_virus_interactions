@@ -9,7 +9,6 @@ library(nloptr)
 
 # Set parameters for run:
 debug_bool <- FALSE
-# vir1 <- 'flu_b'
 vir2 <- 'rsv'
 
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')

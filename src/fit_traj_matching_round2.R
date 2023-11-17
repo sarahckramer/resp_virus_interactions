@@ -26,7 +26,7 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # # Set parameters for local run:
 # jobid <- 1
 # no_jobs <- 1
-# vir1 <- 'flu_h1'
+# vir1 <- 'flu_h1_plus_b'
 # 
 # sobol_size <- 10
 # which_round <- 2
@@ -334,8 +334,6 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
 
 # Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
-tj_res_list <- tj_res_list[str_detect(names(tj_res_list), paste0(vir1, '_s'))]
-
 ci_list <- vector('list', length(seasons))
 
 for (i in 1:length(ci_list)) {
@@ -382,15 +380,7 @@ if (search_type == 'round2_CIs') {
   
   start_range_thetarho <- start_range %>% select(theta_rho1:theta_rho2)
   
-  if (vir1 == 'flu_h1') {
-    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1.rds'))
-  } else if (vir1 == 'flu_b') {
-    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_B.rds'))
-  } else if (vir1 =='flu_h1_plus_b') {
-    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1_plus_B.rds'))
-  } else {
-    stop('Unknown vir1!')
-  }
+  start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1_plus_B.rds'))
   
   if (int_eff == 'both') {
     start_range <- start_range %>%

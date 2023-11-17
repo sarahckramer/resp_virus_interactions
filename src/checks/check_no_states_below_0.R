@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Specify location of results to check:
-res_dir <- 'results/round2_fit/round2_3_fluH1/'
+res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 
 # Check for missing results files:
 res_files <- list.files(path = res_dir, full.names = FALSE)
@@ -53,16 +53,7 @@ no_best <- max(no_best, 50)
 pars_top <- pars_df[1:no_best, ]
 
 # Get/set relevant model parameters:
-if (str_detect(res_dir, 'H1_plus_B')) {
-  vir1 <- 'flu_h1_plus_b'
-} else if (str_detect(res_dir, 'H1')) {
-  vir1 <- 'flu_h1'
-} else if (str_detect(res_dir, 'B')) {
-  vir1 <- 'flu_b'
-} else {
-  print('Invalid flu subtype!')
-}
-
+vir1 <- 'flu_h1_plus_b'
 prof_lik <- FALSE
 lag_val <- 0
 
