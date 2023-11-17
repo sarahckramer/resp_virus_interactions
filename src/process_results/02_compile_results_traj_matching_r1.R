@@ -43,9 +43,14 @@ which_flu <- str_split(res_files, pattern = '_') %>%
   map(~ .x[3]) %>%
   unlist()
 which_flu <- paste('flu', which_flu, sep = '_')
+which_flu[str_detect(res_files, 'plus')] <- 'flu_h1_plus_b'
 yrs <- str_split(res_files, pattern = '_') %>%
   map(~ .x[5]) %>%
   unlist()
+yrs_h1_plus_b <- str_split(res_files, pattern = '_') %>%
+  map(~ .x[7]) %>%
+  unlist
+yrs[yrs == 'b'] <- yrs_h1_plus_b[yrs == 'b']
 
 # Read in all results:
 res_full = list()

@@ -32,7 +32,7 @@ res_df_h1 <- lapply(res_full_h1, getElement, 'estpars') %>%
   bind_rows() %>%
   bind_cols('loglik' = lapply(res_full_h1, getElement, 'll') %>%
               unlist()) %>%
-  mutate(dataset = str_split(file_list_h1, '_') %>% purrr::map(~ .x[6]) %>% unlist()) %>%
+  mutate(dataset = str_split(file_list_h1, '_') %>% purrr::map(~ .x[which(!is.na(as.numeric(str_split(file_list_h1, '_')[[1]])))]) %>% unlist()) %>%
   bind_cols('conv' = lapply(res_full_h1, getElement, 'message') %>%
               unlist())
 expect_true(nrow(res_df_h1) == length(file_list_h1))
@@ -42,7 +42,7 @@ res_df_b <- lapply(res_full_b, getElement, 'estpars') %>%
   bind_rows() %>%
   bind_cols('loglik' = lapply(res_full_b, getElement, 'll') %>%
               unlist()) %>%
-  mutate(dataset = str_split(file_list_b, '_') %>% purrr::map(~ .x[6]) %>% unlist()) %>%
+  mutate(dataset = str_split(file_list_b, '_') %>% purrr::map(~ .x[which(!is.na(as.numeric(str_split(file_list_b, '_')[[1]])))]) %>% unlist()) %>%
   bind_cols('conv' = lapply(res_full_b, getElement, 'message') %>%
               unlist())
 expect_true(nrow(res_df_b) == length(file_list_b))
@@ -120,12 +120,12 @@ hist(res_df_b$loglik, breaks = 50)
 #   pars_temp <- res_df_h1 %>%
 #     select(all_of(shared_estpars), contains(seasons[ix]))
 #   names(pars_temp) <- true_estpars
-#   
+# 
 #   p_mat <- parmat(coef(po_list[[ix]]), nrep = nrow(pars_temp))
 #   for (param in names(pars_temp)) {
 #     p_mat[param, ] <- pars_temp %>% pull(param)
 #   }
-#   
+# 
 #   trajectory(object = po_list[[ix]],
 #              params = p_mat,
 #              format = 'data.frame') %>%
@@ -276,7 +276,7 @@ gtsave(table_h1, filename = 'results/plots/table_CIs_h1.html')
 gtsave(table_b, filename = 'results/plots/table_CIs_b.html')
 
 # Check whether MLEs fall within CIs:
-ci_res %>% filter(mle <= lower) # several season-specific parameters for B (although they are close to the boundaries)
+ci_res %>% filter(mle <= lower)
 ci_res %>% filter(mle >= upper)
 
 # Plot range of fit values for each parameter:

@@ -125,6 +125,9 @@ dat_hk <- dat_hk %>%
   mutate(Time = 1:nrow(dat_hk)) %>%
   filter(Time < Time[Year == 2020 & Week == 8])
 
+# Sum flu H1 and B:
+dat_hk <- dat_hk %>% mutate(n_h1_b = n_h1 + n_b, .after = n_b)
+
 # Estimate number of rhino/entero cases based on proportion of differentiated samples that are rhino vs. entero:
 dat_hk <- dat_hk %>%
   mutate(n_rhino_est = (n_rhino / n_diff) * n_rhino_entero,

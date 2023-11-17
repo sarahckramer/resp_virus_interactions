@@ -7,8 +7,8 @@ library(tidyverse)
 library(testthat)
 
 # Set directory where final results from round2 fits are stored:
-res_dir_h1 <- 'results/round2_4_fluH1_FULL/'
-res_dir_b <- 'results/round2_3_fluB_FULL/'
+res_dir_h1 <- 'results/round2_fit/round2_3_fluH1/'
+res_dir_b <- 'results/round2_fit/round2_3_fluB/'
 
 # Check that directory for storing results exists, and create if not:
 if (!dir.exists('results/')) {
@@ -45,7 +45,7 @@ load_and_format_mega_results <- function(filepath) {
   print(names(pars_df))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  expect_equal(df_use, 54)
+  # expect_equal(df_use, 54)
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   pars_top <- pars_df[1:no_best, ]
@@ -69,5 +69,20 @@ res_b <- load_and_format_mega_results(res_dir_b) %>%
   select(-loglik)
 
 # Save MLEs:
-write_rds(res_h1, file = paste0('results/MLEs_flu_h1.rds'))
-write_rds(res_b, file = paste0('results/MLEs_flu_b.rds'))
+if (str_detect(res_dir_h1, 'sens')) {
+  
+  write_rds(res_h1, file = paste0(paste(str_split(res_dir_h1, '/')[[1]][1:(length(str_split(res_dir_h1, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1.rds'))
+  write_rds(res_b, file = paste0(paste(str_split(res_dir_b, '/')[[1]][1:(length(str_split(res_dir_b, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_b.rds'))
+  
+} else {
+  
+  write_rds(res_h1, file = 'results/MLEs_flu_h1.rds')
+  write_rds(res_b, file = 'results/MLEs_flu_b.rds')
+  
+}
+
+# # Also get MLEs for H1+B sensitivity analysis?
+# res_dir_h1_plus_b <- 'results/round2_fit/sens/round2_5_fluH1_plus_B/'
+# res_h1_plus_b <- load_and_format_mega_results(res_dir_h1_plus_b) %>%
+#   select(-loglik)
+# write_rds(res_h1_plus_b, file = 'results/round2_fit/sens/MLEs_flu_h1_plus_b.rds')

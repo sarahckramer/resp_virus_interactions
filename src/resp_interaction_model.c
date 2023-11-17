@@ -25,6 +25,7 @@ static double pTrans(double r, double delta_t) {
   double out = 1.0 - exp(-r * delta_t);
   return out;
 }
+
 //end_globs
 
 //start_toest
@@ -53,6 +54,11 @@ T_eta_temp1 = eta_temp1;
 T_eta_temp2 = eta_temp2;
 T_eta_ah1 = eta_ah1;
 T_eta_ah2 = eta_ah2;
+T_b1 = logit(b1);
+T_b2 = logit(b2);
+T_phi1 = logitCons(phi1, 0.0, 52.25);
+T_phi2 = logitCons(phi2, 0.0, 52.25);
+T_beta_h3 = beta_h3;
 T_N = N;
 T_beta_sd1 = log(beta_sd1);
 T_beta_sd2 = log(beta_sd2);
@@ -95,6 +101,11 @@ eta_temp1 = T_eta_temp1;
 eta_temp2 = T_eta_temp2;
 eta_ah1 = T_eta_ah1;
 eta_ah2 = T_eta_ah2;
+b1 = expit(T_b1);
+b2 = expit(T_b2);
+phi1 = expitCons(T_phi1, 0.0, 52.25);
+phi2 = expitCons(T_phi2, 0.0, 52.25);
+beta_h3 = T_beta_h3;
 N = T_N;
 beta_sd1 = exp(T_beta_sd1);
 beta_sd2 = exp(T_beta_sd2);
@@ -201,12 +212,35 @@ if(debug) {
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
-double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
-double beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
-// double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
-// double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
-//double beta1 = Ri1 * gamma1; // R0 instead of initial Reff
-//double beta2 = Ri2 * gamma2; // same
+double omega = (2 * M_PI) / 52.25;
+
+double beta1;
+double beta2;
+
+if (strcmp("sinusoidal_forcing", sens) == 0) {
+  
+  // Modelling seasonality with a sinusoidal wave:
+  beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + b1 * cos(omega * (t - phi1))) * gamma1;
+  beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + b2 * cos(omega * (t - phi2))) * gamma2;
+  
+} else if (strcmp("h3_covar", sens) == 0) {
+  
+  // Include H3 as a covariate modulating RSV transmission
+  double beta_h3_t = fmax2(0.0, 1.0 + beta_h3 * h3_inc);
+  beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1;
+  beta2 = Ri2 / (1.0 - (R20 + R120)) * beta_h3_t * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2;
+  
+} else {
+  
+  beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
+  beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+  
+  // Linear (vs. exponential) impact of climate:
+  // beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
+  // beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
+  
+}
+
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 

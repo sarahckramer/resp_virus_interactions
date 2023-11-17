@@ -12,23 +12,51 @@ library(tidyverse)
 
 # Set key parameters:
 n <- 500 # How many synthetic datasets to create?
-vir1 <- 'flu_h1' # 'flu_h1' or 'flu_b'
+vir1 <- 'flu_h1_plus_b' # 'flu_h1' or 'flu_b' or 'flu_h1_plus_b'
+sens <- 'main'
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Set up pomp models with MLE of model parameters
 
 # Get MLE:
-mle <- read_rds(paste0('results/MLEs_', vir1, '.rds'))[1, ]
-shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                    'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+if (sens != 'main') {
+  mle <- read_rds(paste0('results/round2_fit/sens/', sens, '/MLEs_', vir1, '.rds'))[1, ]
+} else {
+  
+  if (vir1 == 'flu_h1_plus_b') {
+    mle <- read_rds('results/round2_fit/sens/h1_plus_b/MLEs_flu_h1_plus_b.rds')[1, ]
+  } else {
+    mle <- read_rds(paste0('results/MLEs_', vir1, '.rds'))[1, ]
+  }
+  
+}
+
+# Get names of shared parameters:
+if (sens == 'sinusoidal_forcing') {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+} else if (sens == 'h3_covar') {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+                      'beta_h3')
+} else if (sens == 'no_int') {
+  shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+} else {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+}
 
 # Set model parameters:
 debug_bool <- FALSE
 vir2 <- 'rsv'
 lag_val <- 0
 prof_lik <- FALSE
+
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+if (sens == 'less_circ_h3') {
+  seasons <- c('s17-18', 's18-19')
+}
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0

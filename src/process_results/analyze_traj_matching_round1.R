@@ -27,6 +27,9 @@ date <- format(Sys.Date(), '%d%m%y')
 # Specify parameters estimated:
 estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 
+# Sensitivity analysis?:
+sens <- 'main'
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Plot results by flu type/season
@@ -83,6 +86,10 @@ for (vir1 in flu_types) {
   }
 }
 
+# Remove empty list elements:
+cor_list <- cor_list[lapply(cor_list, length) > 0]
+pcor_list <- pcor_list[lapply(pcor_list, length) > 0]
+
 # Clean up:
 rm(vir_seas, vir1, yr)
 
@@ -91,10 +98,10 @@ pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsha
     width = 15, height = 10)
 
 for (vir1 in flu_types) {
-  pars_list_temp <- pars_list[str_detect(names(pars_list), vir1)]
-  cor_list_temp <- cor_list[str_detect(names(cor_list), vir1)]
-  pcor_list_temp <- pcor_list[str_detect(names(pcor_list), vir1)]
-  slice_list_temp <- slice_list[str_detect(names(slice_list), vir1)]
+  pars_list_temp <- pars_list[str_detect(names(pars_list), paste0(vir1, '_s'))]
+  cor_list_temp <- cor_list[str_detect(names(cor_list), paste0(vir1, '_s'))]
+  pcor_list_temp <- pcor_list[str_detect(names(pcor_list), paste0(vir1, '_s'))]
+  slice_list_temp <- slice_list[str_detect(names(slice_list), paste0(vir1, '_s'))]
   
   # Pairs plots:
   lapply(pars_list_temp, function(ix) {
@@ -185,7 +192,8 @@ pars_df <- pars_df %>%
   mutate(param = factor(param)) %>%
   mutate(mle = value[which.max(loglik)]) %>%
   mutate(par_mle = paste0(param, '=', signif(mle, 3))) %>%
-  ungroup()
+  ungroup() %>%
+  filter(virus1 %in% flu_types)
 pars_df$param <- factor(pars_df$param, levels = estpars)
 
 # Distinguish between RSV when fit alongside flu_A vs. flu_B:
