@@ -99,7 +99,7 @@ test_rate_per_pop <- fr_dat %>%
 # Load and format Hong Kong data
 
 # Load infection data:
-hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv %>%
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv %>%
   select(time:n_T, GOPC:season) %>%
   rename('i_ILI' = 'GOPC') %>%
   mutate(i_ILI = i_ILI / 1000)

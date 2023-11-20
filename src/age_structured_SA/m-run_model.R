@@ -83,7 +83,7 @@ for (yr_index in 1:length(seasons)) {
   print(yr)
   
   # Get season-specific parameters --------------------------------------------
-  mle <- read_rds('results/MLEs_flu_h1.rds')
+  mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
   fit_params <- mle[1, ] %>%
     select(rho1:eta_ah2, contains(yr)) %>%
     rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
@@ -116,7 +116,7 @@ for (yr_index in 1:length(seasons)) {
   }
   
   # Load and format necessary data --------------------------------------------
-  hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv %>%
+  hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv %>%
     filter(season == yr)
   
   dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
@@ -176,7 +176,7 @@ for (yr_index in 1:length(seasons)) {
     tj[[paste0("p2_", i)]] <- rowSums(tj[, paste0(c("X_SI_", "X_II_", "X_TI_", "X_RI_"), i)])
   }
   
-  # Pivot to long format 
+  # Pivot to long format
   tj_long <- tj %>% 
     pivot_longer(cols = -c("time", ".id"), names_to = "var_nm_full") %>% 
     mutate(var_type = ifelse(str_detect(var_nm_full, "X"), "state_var", ifelse(str_detect(var_nm_full, "H"), "obs_var", "other_var")),
@@ -351,7 +351,7 @@ for (yr_index in 1:length(seasons)) {
   print(yr)
   
   # Get season-specific parameters --------------------------------------------
-  mle <- read_rds('results/MLEs_flu_h1.rds')
+  mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
   fit_params <- mle[1, ] %>%
     select(rho1:eta_ah2, contains(yr)) %>%
     rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
@@ -360,6 +360,7 @@ for (yr_index in 1:length(seasons)) {
   # Create pomp object --------------------------------------------------------
   vir1 <- 'flu_h1'; vir2 <- 'rsv'
   Ri_max1 <- 3.0; Ri_max2 <- 2.0; d2_max <- 10.0
+  sens <- 'main'
   source('src/resp_interaction_model.R')
   
   # Set parameters
@@ -384,7 +385,7 @@ for (yr_index in 1:length(seasons)) {
 hk_dat <- NULL
 for (yr in seasons) {
   
-  hk_dat_temp <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv %>%
+  hk_dat_temp <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv %>%
     filter(season == yr) %>%
     select(time, season, n_P1:n_P2)
   hk_dat <- bind_rows(hk_dat, hk_dat_temp)
