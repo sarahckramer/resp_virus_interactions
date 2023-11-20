@@ -12,7 +12,7 @@ library(tidyverse)
 
 # Set key parameters:
 n <- 500 # How many synthetic datasets to create?
-vir1 <- 'flu_h1_plus_b' # 'flu_h1' or 'flu_b' or 'flu_h1_plus_b'
+vir1 <- 'flu_h1_plus_b'
 sens <- 'main'
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -21,15 +21,9 @@ sens <- 'main'
 
 # Get MLE:
 if (sens != 'main') {
-  mle <- read_rds(paste0('results/round2_fit/sens/', sens, '/MLEs_', vir1, '.rds'))[1, ]
+  mle <- read_rds(paste0('results/round2_fit/sens/', sens, '/MLEs_flu_h1_plus_b.rds'))[1, ]
 } else {
-  
-  if (vir1 == 'flu_h1_plus_b') {
-    mle <- read_rds('results/round2_fit/sens/h1_plus_b/MLEs_flu_h1_plus_b.rds')[1, ]
-  } else {
-    mle <- read_rds(paste0('results/MLEs_', vir1, '.rds'))[1, ]
-  }
-  
+  mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
 }
 
 # Get names of shared parameters:
