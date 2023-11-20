@@ -8,7 +8,7 @@ library(viridis)
 library(gridExtra)
 
 # Read in MLEs:
-mle_h1 <- read_rds('results/MLEs_flu_h1.rds')[1, ]
+mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
 
 # Read in data:
 hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
@@ -19,7 +19,7 @@ gamma1 <- 7/5
 gamma2 <- 7/10
 
 # Get results by season:
-mle_h1 <- mle_h1 %>%
+mle <- mle %>%
   select(eta_temp1:eta_ah2,
          contains('R10'),
          contains('R20'),
@@ -35,7 +35,7 @@ mle_h1 <- mle_h1 %>%
   select(eta_temp1:eta_ah2, Ri1:Ri2, R10:R120, season)
 
 # Get vector of seasons:
-seasons <- unique(mle_h1$season)
+seasons <- unique(mle$season)
 
 # Calculate beta over time based on fit parameter values:
 beta_t <- vector('list', length = length(seasons))
@@ -43,14 +43,14 @@ for (yr_index in 1:length(seasons)) {
   
   seas <- seasons[yr_index]
   
-  dat_temp <- hk_dat[['h1_rsv']] %>%
+  dat_temp <- hk_dat[['h1_plus_b_rsv']] %>%
     filter(season == paste0('s', seas)) %>%
     inner_join(dat_clim,
                by = c('Year' = 'year',
                       'Week' = 'week')) %>%
     select(time, temp, ah)
   
-  mle_temp <- mle_h1 %>%
+  mle_temp <- mle %>%
     filter(season == seas)
   
   beta1_temp <- unlist(mle_temp['Ri1']) / (1.0 - (unlist(mle_temp['R10']) + unlist(mle_temp['R120']))) * exp(unlist(mle_temp['eta_ah1']) * dat_temp$ah + unlist(mle_temp['eta_temp1']) * dat_temp$temp) * gamma1
@@ -86,7 +86,8 @@ max_val <- max(c(max(beta_t$force1), max(beta_t$force2)))
 p_a <- ggplot(data = beta_t, aes(x = time, y = force1, col = season)) +
   geom_line() +
   theme_classic() +
-  theme(axis.title = element_text(size = 14),
+  theme(title = element_text(size = 14),
+        axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.position = 'none',
         plot.tag = element_text(size = 22),
@@ -96,11 +97,12 @@ p_a <- ggplot(data = beta_t, aes(x = time, y = force1, col = season)) +
   scale_y_continuous(limits = c(min_val, max_val)) +
   # scale_y_log10(limits = c(min_val, max_val)) +
   scale_color_manual(values = viridis(6)) +
-  labs(x = 'Week Number', y = 'Climate Forcing')
+  labs(x = 'Week Number', y = 'Climate Forcing', title = 'Influenza')
 p_b <- ggplot(data = beta_t, aes(x = time, y = force2, col = season)) +
   geom_line() +
   theme_classic() +
-  theme(axis.title = element_text(size = 14),
+  theme(title = element_text(size = 14),
+        axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.position = 'none',
         plot.tag = element_text(size = 22),
@@ -110,7 +112,7 @@ p_b <- ggplot(data = beta_t, aes(x = time, y = force2, col = season)) +
   scale_y_continuous(limits = c(min_val, max_val)) +
   # scale_y_log10(limits = c(min_val, max_val)) +
   scale_color_manual(values = viridis(6)) +
-  labs(x = 'Week Number', y = 'Climate Forcing')
+  labs(x = 'Week Number', y = 'Climate Forcing', title = 'RSV')
 
 p_legend <- ggplot(data = beta_t, aes(x = time, y = force1, col = season)) +
   geom_line() +
