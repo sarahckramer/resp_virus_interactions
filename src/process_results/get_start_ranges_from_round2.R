@@ -10,7 +10,7 @@ library(testthat)
 res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 
 # Which round of fits?:
-which_round <- str_split(res_dir, '_')[[1]][3]
+which_round <- str_split(res_dir, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir, '_')[[1]])))]
 
 # Are results from a sensitivity analysis?:
 sens <- 'main'
@@ -39,7 +39,7 @@ if (sens == 'main') {
     dir.create(paste0('results/round2_CIs/sens/', sens, '/'))
   }
   
-  new_dir_h1 <- paste0('results/round2_CIs/sens/', sens, '/from_2_', which_round, '/')
+  new_dir <- paste0('results/round2_CIs/sens/', sens, '/from_2_', which_round, '/')
   if (!dir.exists(new_dir)) {
     dir.create(new_dir)
   }
@@ -162,6 +162,14 @@ if (any(sums %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
     orig_lower_bounds <- ci_start[1, ] %>%
       select(contains(c('R10', 'R20', 'R120'))) %>%
       select(contains(yr))
+    
+    if (!all(new_upper_bounds > orig_lower_bounds)) {
+      new_upper_bounds_try <- orig_upper_bounds
+      new_upper_bounds_try[-which(orig_lower_bounds >= new_upper_bounds)] <- orig_upper_bounds[-which(orig_lower_bounds >= new_upper_bounds)] - (red_needed * (orig_upper_bounds[-which(orig_lower_bounds >= new_upper_bounds)] / sum(orig_upper_bounds[-which(orig_lower_bounds >= new_upper_bounds)])))
+      new_upper_bounds <- new_upper_bounds_try
+      rm(new_upper_bounds_try)
+    }
+    
     expect_true(all(new_upper_bounds > orig_lower_bounds))
     
     # Check that upper bounds now sum to 1 or less:

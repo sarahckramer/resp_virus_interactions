@@ -411,9 +411,9 @@ if (search_type == 'round2_CIs') {
   }
   rm(i)
   
+  start_range <- start_range[, estpars]
+  
 }
-
-start_range <- start_range[, estpars]
 
 # Get starting values for each parameter:
 start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
