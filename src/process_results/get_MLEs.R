@@ -68,7 +68,7 @@ res <- load_and_format_mega_results(res_dir) %>%
 # Save MLEs:
 if (str_detect(res_dir, 'sens')) {
   
-  write_rds(res, file = paste0(paste(str_split(res_dir_h1, '/')[[1]][1:(length(str_split(res_dir_h1, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1_plus_b.rds'))
+  write_rds(res, file = paste0(paste(str_split(res_dir, '/')[[1]][1:(length(str_split(res_dir, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1_plus_b.rds'))
   
 } else {
   
