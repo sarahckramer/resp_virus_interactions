@@ -26,7 +26,7 @@ if (!exists('lag_val')) {
 print(lag_val)
 
 # # Set additional variables locally (for testing):
-# vir1 <- 'flu_h1'
+# vir1 <- 'flu_h1_plus_b'
 # vir2 <- 'rsv'
 # yr <- 's13-14'
 # # yr <- 's15-16'
@@ -265,15 +265,10 @@ if (nrow(dat_pomp) > 0) {
   model_params['theta_lambda2', ] <- 1.0
   
   if (exists('mle')) {
-    if (yr == 's13-14') {
-      model_params['R20', ] <- round(mle$`s13-14_R20`, 7)
-      model_params['I20', ] <- round(mle$`s13-14_I20`, 7)
-    } else if (yr == 's15-16') {
+    if (yr == 's15-16') {
       model_params['I20', ] <- round(mle$`s15-16_I20`, 6)
-    } else if (yr == 's16-17') {
-      model_params['I20', ] <- round(mle$`s16-17_I20`, 6)
     } else if (yr == 's17-18') {
-      model_params['I20', ] <- round(mle$`s17-18_I20`, 7)
+      model_params['R20', ] <- round(mle$`s17-18_R20`, 7)
     }
   }
   
@@ -291,6 +286,13 @@ if (nrow(dat_pomp) > 0) {
   model_params['p_vacc', ] <- c(0.0, 0.2)
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
+  
+  if (exists('mle')) {
+    if (yr == 's15-16') {
+      model_params['I20', ] <- round(mle$`s15-16_I20`, 6)
+      model_params['R10', ] <- round(mle$`s15-16_R10`, 6)
+    }
+  }
   
   p9 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   if (debug_bool) print(p9)
