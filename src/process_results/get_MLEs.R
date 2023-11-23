@@ -70,8 +70,15 @@ if (str_detect(res_dir, 'sens')) {
   
   write_rds(res, file = paste0(paste(str_split(res_dir, '/')[[1]][1:(length(str_split(res_dir, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1_plus_b.rds'))
   
+} else if (str_detect(res_dir, 'age_structured')) {
+  
+  write_rds(res, file = 'results/age_structured_SA/MLEs_flu_h1_plus_b.rds')
+  
 } else {
   
   write_rds(res, file = 'results/MLEs_flu_h1_plus_b.rds')
   
 }
+
+# Clean up:
+rm(list = ls())
