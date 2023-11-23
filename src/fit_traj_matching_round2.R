@@ -54,8 +54,8 @@ lag_val <- 0
 
 if (prof_lik) {
   
-  jobid_orig <- ceiling(jobid / 5)
-  jobid <- (jobid - 1) %% 5 + 1
+  jobid_orig <- ceiling(jobid / no_jobs)
+  jobid <- (jobid - 1) %% no_jobs + 1
   
   print(jobid_orig)
   print(jobid)
@@ -69,8 +69,7 @@ if (prof_lik) {
     prof_val <- (7 / seq(5, 255, by = 5))[jobid_orig]
   } else if (prof_param == 'd2') {
     prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid_orig]
-  }
-  else {
+  } else {
     prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
     # prof_val <- seq(0, 0.05, by = 0.0025)[jobid_orig]
   }
@@ -389,6 +388,10 @@ if (search_type == 'round2_CIs') {
   
   rm(start_range_thetarho)
   
+  if (prof_lik) {
+    start_range <- start_range[, estpars]
+  }
+  
 } else {
   
   for (i in 1:length(seasons)) {
@@ -512,12 +515,22 @@ for (i in seq_along(sub_start)) {
                 etime = as.numeric(etime))
     
     # Write to file:
-    saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d.rds',
-                                vir1,
-                                int_eff,
-                                jobid_orig,
-                                sub_start[i])
-    )
+    if (prof_lik) {
+      saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d_%.3f.rds',
+                                  vir1,
+                                  int_eff,
+                                  jobid_orig,
+                                  sub_start[i],
+                                  prof_val)
+      )
+    } else {
+      saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d.rds',
+                                  vir1,
+                                  int_eff,
+                                  jobid_orig,
+                                  sub_start[i])
+      )
+    }
     
     # Print results:
     print(out$ll)
