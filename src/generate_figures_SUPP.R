@@ -388,8 +388,7 @@ p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs,
 fig6s <- arrangeGrob(arrangeGrob(p6a, p6b, ncol = 1), p_legend, nrow = 2, heights = c(15, 1))
 ggsave('results/plots/figures_for_manuscript/supp/FigureS6.svg', fig6s, width = 10, height = 6.25)
 
-rm(mle, force_t, hk_dat, dat_clim, p6a, p6b, p_legend, fig6s, min_val, max_val,
-   gamma1, gamma2)
+rm(mle, force_t, p6a, p6b, p_legend, fig6s, min_val, max_val, gamma1, gamma2)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -829,7 +828,7 @@ p12a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'na
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
-        legend.key.width = unit(1.75, 'cm'),
+        legend.key.width = unit(2.0, 'cm'),
         legend.key.height = unit(0.7, 'cm'),
         legend.position = 'bottom',
         plot.tag = element_text(size = 22),
