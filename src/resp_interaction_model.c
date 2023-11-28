@@ -58,7 +58,7 @@ T_b1 = logit(b1);
 T_b2 = logit(b2);
 T_phi1 = logitCons(phi1, 0.0, 52.25);
 T_phi2 = logitCons(phi2, 0.0, 52.25);
-T_beta_h3 = beta_h3;
+T_beta_h3 = log(beta_h3);
 T_N = N;
 T_beta_sd1 = log(beta_sd1);
 T_beta_sd2 = log(beta_sd2);
@@ -105,7 +105,7 @@ b1 = expit(T_b1);
 b2 = expit(T_b2);
 phi1 = expitCons(T_phi1, 0.0, 52.25);
 phi2 = expitCons(T_phi2, 0.0, 52.25);
-beta_h3 = T_beta_h3;
+beta_h3 = exp(T_beta_h3);
 N = T_N;
 beta_sd1 = exp(T_beta_sd1);
 beta_sd2 = exp(T_beta_sd2);
@@ -226,7 +226,8 @@ if (strcmp("sinusoidal_forcing", sens) == 0) {
 } else if (strcmp("h3_covar", sens) == 0) {
   
   // Include H3 as a covariate modulating RSV transmission
-  double beta_h3_t = fmax2(0.0, 1.0 + beta_h3 * h3_inc);
+  // double beta_h3_t = fmax2(0.0, 1.0 - beta_h3 * h3_inc);
+  double beta_h3_t = exp(-1 * beta_h3 * h3_inc);
   beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1;
   beta2 = Ri2 / (1.0 - (R20 + R120)) * beta_h3_t * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2;
   
