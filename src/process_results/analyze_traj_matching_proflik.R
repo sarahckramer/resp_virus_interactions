@@ -48,29 +48,19 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
                 unlist()) %>%
     bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist()) %>%
-    bind_cols(map_chr(str_split(res_files, '_'), 5),
-              map_chr(str_split(res_files, '_'), 7),
-              map_chr(str_split(map_chr(str_split(res_files, '_'), 8), fixed('.')), 1)) %>%
-    rename(vir1 = '...14',
-           profpar = '...15',
-           run = '...16') %>%
-    mutate(profpar = as.numeric(profpar),
-           run = as.numeric(run),
-           vir1 = if_else(vir1 == 'b', 'B', 'H1'),
-           vir1 = factor(vir1),
-           vir1 = relevel(vir1, ref = 'H1')) %>%
-    arrange(vir1, profpar, run)
+    bind_cols(map_chr(str_split(res_files, '_'), 10),
+              paste0('0.', map_chr(str_split(map_chr(str_split(res_files, '_'), 11), fixed('.')), 2))) %>%
+    rename(run = '...14',
+           profpar = '...15') %>%
+    mutate(run = as.numeric(run),
+           profpar = as.numeric(profpar)) %>%
+    arrange(profpar, run)
   expect_true(nrow(res_temp) == length(res_files))
   expect_true(all(is.finite(res_temp$loglik)))
   
   res_temp <- res_temp %>%
     filter(!str_detect(message, 'maxtime')) %>%
     select(-message)
-  
-  # Set profpar to correct values:
-  res_temp <- res_temp %>%
-    mutate(profpar = seq(0.0, 0.2, by = 0.01)[profpar])
-    # mutate(profpar = seq(0, 0.05, by = 0.0025)[profpar])
   
   # Return formatted results:
   return(res_temp)
@@ -92,68 +82,40 @@ res <- load_and_format_proflik_results(filepath = res_dir,
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Plot profiles and 99% CIs
+# Plot profiles and 95% CIs
 
 # Get maximum log-likelihood values for each virus/profile:
 maxloglik <- res %>%
-  group_by(vir1) %>%
   summarise(loglik = max(loglik)) %>%
-  pull(loglik) %>%
-  unlist()
+  pull(loglik)
 
-# Calculate cutoff value for 99% CI and add to tibbles:
+# Calculate cutoff value for 95% CI and add to tibbles:
 ci_cutoff <- maxloglik - 0.5 * qchisq(df = 1, p = 0.95)
 res <- res %>%
-  mutate(ci = if_else(vir1 == 'H1', ci_cutoff[1], ci_cutoff[2]))
+  mutate(ci = ci_cutoff)
 
 # Get top estimate for each value of profpar:
 res <- res %>%
-  group_by(vir1, profpar) %>%
+  group_by(profpar) %>%
   filter(rank(-loglik) == 1) %>%
   ungroup()
 
 # Plot profile likelihoods with cutoff for 99% CI:
-p1 <- ggplot(res %>%
-               filter(vir1 == 'H1'),# %>%
-             # filter(loglik > (max(loglik) - 100)), # allows for zooming
+p1 <- ggplot(res, # filter(loglik > (max(loglik) - 100)), # allows for zooming
              aes(x = profpar, y = loglik)) +
   geom_point() + theme_classic() +
   theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.09, 0.98)) +
+        axis.text = element_text(size = 12)) +
   geom_smooth(method = 'loess', span = 0.75, color = 'black') +
   geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
-  labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'A') +
+  labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood') +
   scale_x_continuous(n.breaks = 10)
-p2 <- ggplot(res %>%
-               filter(vir1 == 'B'),# %>%
-             # filter(loglik > (max(loglik) - 100)), # allows for zooming
-             aes(x = profpar, y = loglik)) +
-  geom_point() + theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.09, 0.98)) +
-  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
-  geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
-  labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'B') +
-  scale_x_continuous(n.breaks = 10) + scale_y_continuous(breaks = seq(-3975, -3935, by = 10))
-
-fig1 <- p1 + p2
-fig1
-ggsave('results/plots/profile_likelihood_thetalambda1.svg', fig1, width = 11.5, height = 4.6)
+print(p1)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 # How do other shared parameter values change as prof_par changes?
 res %>%
-  filter(vir1 == 'H1') %>%
-  select(all_of(shared_estpars[shared_estpars != 'theta_lambda1']), profpar) %>%
-  pairs(pch = 20)
-
-res %>%
-  filter(vir1 == 'B') %>%
   select(all_of(shared_estpars[shared_estpars != 'theta_lambda1']), profpar) %>%
   pairs(pch = 20)
 

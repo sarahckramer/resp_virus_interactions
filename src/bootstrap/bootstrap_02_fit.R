@@ -22,7 +22,7 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # # Set parameters for local run:
 # jobid <- 1
 # no_jobs <- 1
-# vir1 <- 'flu_h1' # 'flu_h1', 'flu_b'
+# vir1 <- 'flu_h1_plus_b'
 # sobol_size <- 10
 # final_round <- 3
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
@@ -267,16 +267,7 @@ true_estpars <- c(shared_estpars, unit_estpars)
 estpars <- c(shared_estpars, unit_sp_estpars)
 
 # Get start ranges for all parameters:
-if (vir1 == 'flu_h1') {
-  start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_H1.rds'))
-} else if (vir1 == 'flu_b') {
-  start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_B.rds'))
-} else if (vir1 == 'flu_h1_plus_b') {
-  start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_H1_plus_B.rds'))
-} else {
-  stop('Unknown vir1!')
-}
-start_range <- start_range[, estpars]
+start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_H1_plus_B.rds'))
 
 # Get starting values for each parameter:
 start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),

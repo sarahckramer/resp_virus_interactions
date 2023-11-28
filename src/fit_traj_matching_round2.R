@@ -26,7 +26,7 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # # Set parameters for local run:
 # jobid <- 1
 # no_jobs <- 1
-# vir1 <- 'flu_h1'
+# vir1 <- 'flu_h1_plus_b'
 # 
 # sobol_size <- 10
 # which_round <- 2
@@ -54,8 +54,8 @@ lag_val <- 0
 
 if (prof_lik) {
   
-  jobid_orig <- ceiling(jobid / 5)
-  jobid <- (jobid - 1) %% 5 + 1
+  jobid_orig <- ceiling(jobid / no_jobs)
+  jobid <- (jobid - 1) %% no_jobs + 1
   
   print(jobid_orig)
   print(jobid)
@@ -69,8 +69,7 @@ if (prof_lik) {
     prof_val <- (7 / seq(5, 255, by = 5))[jobid_orig]
   } else if (prof_param == 'd2') {
     prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid_orig]
-  }
-  else {
+  } else {
     prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
     # prof_val <- seq(0, 0.05, by = 0.0025)[jobid_orig]
   }
@@ -317,8 +316,8 @@ start_range <- data.frame(rho1 = c(0, 1.0),
                           eta_temp2 = c(-0.5, 0.5),
                           eta_ah1 = c(-0.5, 0.5),
                           eta_ah2 = c(-0.5, 0.5),
-                          b1 = c(0.15, 0.25),
-                          b2 = c(0, 0.15),
+                          b1 = c(0.05, 0.2),
+                          b2 = c(0.05, 0.2),
                           phi1 = c(0, 52.25),
                           phi2 = c(0, 52.25),
                           beta_h3 = c(0, 10.0))
@@ -334,8 +333,6 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
 
 # Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
-tj_res_list <- tj_res_list[str_detect(names(tj_res_list), paste0(vir1, '_s'))]
-
 ci_list <- vector('list', length(seasons))
 
 for (i in 1:length(ci_list)) {
@@ -382,15 +379,7 @@ if (search_type == 'round2_CIs') {
   
   start_range_thetarho <- start_range %>% select(theta_rho1:theta_rho2)
   
-  if (vir1 == 'flu_h1') {
-    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1.rds'))
-  } else if (vir1 == 'flu_b') {
-    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_B.rds'))
-  } else if (vir1 =='flu_h1_plus_b') {
-    start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1_plus_B.rds'))
-  } else {
-    stop('Unknown vir1!')
-  }
+  start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1_plus_B.rds'))
   
   if (int_eff == 'both') {
     start_range <- start_range %>%
@@ -398,6 +387,10 @@ if (search_type == 'round2_CIs') {
   }
   
   rm(start_range_thetarho)
+  
+  if (prof_lik) {
+    start_range <- start_range[, estpars]
+  }
   
 } else {
   
@@ -421,9 +414,9 @@ if (search_type == 'round2_CIs') {
   }
   rm(i)
   
+  start_range <- start_range[, estpars]
+  
 }
-
-start_range <- start_range[, estpars]
 
 # Get starting values for each parameter:
 start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
@@ -522,12 +515,22 @@ for (i in seq_along(sub_start)) {
                 etime = as.numeric(etime))
     
     # Write to file:
-    saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d.rds',
-                                vir1,
-                                int_eff,
-                                jobid_orig,
-                                sub_start[i])
-    )
+    if (prof_lik) {
+      saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d_%.3f.rds',
+                                  vir1,
+                                  int_eff,
+                                  jobid_orig,
+                                  sub_start[i],
+                                  prof_val)
+      )
+    } else {
+      saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d.rds',
+                                  vir1,
+                                  int_eff,
+                                  jobid_orig,
+                                  sub_start[i])
+      )
+    }
     
     # Print results:
     print(out$ll)

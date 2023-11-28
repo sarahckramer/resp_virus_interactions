@@ -11,11 +11,8 @@ library(tidyverse)
 vacc_cov_vec <- round(seq(0.05, 1.0, by = 0.05), digits = 2) # seq(0.1, 1.0, by = 0.1)
 vacc_time_vec <- round(seq(0, 52, by = 1)) # seq(0, 52, by = 2)
 
-# Set vaccination efficacy against flu:
-vacc_eff <- 0.8
-
 # Set parameters for run:
-vir1 <- 'flu_h1'
+vir1 <- 'flu_h1_plus_b'
 vir2 <- 'rsv'
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
@@ -35,12 +32,26 @@ p_vacc <- vacc_cov_vec[(jobid - 1) %% 20 + 1]
 print(yr)
 print(p_vacc)
 
+# Which assumptions about vaccine efficacy/duration are made?
+sens <- as.character(Sys.getenv("SENS")); print(sens)
+# sens <- 'main'
+
+# Set vaccination efficacy against flu:
+if (sens == 'vacceff60') {
+  vacc_eff <- 0.6
+} else if (sens == 'vacceff95') {
+  vacc_eff <- 0.95
+} else {
+  vacc_eff <- 0.8
+}
+print(vacc_eff)
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Run main simulation study code (Hong Kong / "subtropical" scenario)
 
 # Get MLEs for each season:
-mle <- read_rds('results/MLEs_flu_h1.rds')[1, ]
+mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
 
 # Perform model checks:
 source('src/vaccination_simulation_study/resp_interaction_model_VACC.R')
@@ -51,9 +62,16 @@ model_params <- mle %>%
   rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
   unlist()
 
-model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
-# model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
-# model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 182, vacc_eff)
+if (sens == 'thetalambdavacc0.50') {
+  model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
+} else if (sens == 'deltavacc1month') {
+  model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 30, vacc_eff)
+} else if (sens == 'deltavacc6months') {
+  model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 182, vacc_eff)
+} else {
+  model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
+}
+
 names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
 
 resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
@@ -108,13 +126,13 @@ write_rds(res, paste0('results/vaccination_simulation_study/simulations/sim_dete
 # Run main simulation study code ("temperate" scenario)
 
 # Get MLEs for each season:
-mle <- read_rds('results/MLEs_flu_h1.rds')[1, ]
+mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
 
 # Get "temperate" parameter values:
 temp_params <- read_csv('results/vaccination_simulation_study/temperate_params_to_use.csv')
 
 # Get infection data:
-hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv
+hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv
 start_week <- 40
 
 hk_dat <- hk_dat %>%
@@ -138,10 +156,8 @@ hk_dat <- hk_dat %>%
   complete(Week, season) %>%
   filter(!(Week == 53 & Year != 2016)) %>%
   select(time:GOPC, Week:season, pop) %>%
-  mutate(Year = if_else(is.na(Year) & season == 's13-14', 2013, Year),
-         Year = if_else(is.na(Year) & season == 's15-16', 2015, Year)) %>%
-  # time = if_else(is.na(time) & season == 's13-14', Week - 52, time),
-  # time = if_else(is.na(time) & season == 's15-16', Week - 45, time)) %>%
+  mutate(Year = if_else(is.na(Year) & season == 's13-14', 2013, Year)) %>%
+  # time = if_else(is.na(time) & season == 's13-14', Week - 52, time)) %>%
   arrange(Year, Week) %>%
   group_by(season) %>%
   mutate(time = if_else(Week >= start_week, Week - start_week + 1, Week + length(start_week:max(Week))),
@@ -173,9 +189,16 @@ model_params <- mle %>%
   unlist()
 model_params[c('Ri1', 'Ri2', 'I10', 'I20')] <- temp_params %>% filter(season == yr) %>% select(Ri1:I20) %>% unlist()
 
-model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
-# model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
-# model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 182, vacc_eff)
+if (sens == 'thetalambdavacc0.50') {
+  model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
+} else if (sens == 'deltavacc1month') {
+  model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 30, vacc_eff)
+} else if (sens == 'deltavacc6months') {
+  model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 182, vacc_eff)
+} else {
+  model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
+}
+
 names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
 
 # Get data frame for current season and create pomp model:

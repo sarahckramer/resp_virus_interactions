@@ -182,9 +182,9 @@ for (i in 1:length(unique(res_metrics$season))) {
   
 }
 
-corr_mat_hk <- matrix(NA, nrow = 5, ncol = 5)
-for (i in 1:5) {
-  for (j in 1:5) {
+corr_mat_hk <- matrix(NA, nrow = 6, ncol = 6)
+for (i in 1:6) {
+  for (j in 1:6) {
     corr_mat_hk[i, j] <- cor.test(vec_hk[[i]], vec_hk[[j]], method = 'kendall')$estimate
   }
 }
@@ -358,9 +358,9 @@ for (i in 1:length(unique(res_metrics$season))) {
   
 }
 
-corr_mat_temp <- matrix(NA, nrow = 5, ncol = 5)
-for (i in 1:5) {
-  for (j in 1:5) {
+corr_mat_temp <- matrix(NA, nrow = 6, ncol = 6)
+for (i in 1:6) {
+  for (j in 1:6) {
     corr_mat_temp[i, j] <- cor.test(vec_temp[[i]], vec_temp[[j]], method = 'kendall')$estimate
   }
 }

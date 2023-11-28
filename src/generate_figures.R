@@ -15,18 +15,17 @@ dat_hk <- read_csv('data/formatted/dat_hk.csv')
 
 dat_hk <- dat_hk %>%
   filter(Year < 2020 & !(Year == 2019 & Week > 45)) %>%
-  select(Time:n_h1, n_b, n_rsv, GOPC) %>%
-  mutate(n_h1 = n_h1 / n_samp * 100,
-         n_b = n_b / n_samp * 100,
+  select(Time:n_samp, n_h1_b, n_rsv, GOPC) %>%
+  mutate(n_h1_b = n_h1_b / n_samp * 100,
          n_rsv = n_rsv / n_samp * 100)
 
 dat_pos <- dat_hk %>%
   select(-c(n_samp, GOPC)) %>%
-  pivot_longer(n_h1:n_rsv,
+  pivot_longer(n_h1_b:n_rsv,
                names_to = 'virus',
                values_to = 'perc_pos') %>%
-  mutate(virus = factor(virus, levels = c('n_h1', 'n_b', 'n_rsv'))) %>%
-  mutate(virus = recode(virus, n_h1 = 'Influenza A(H1N1)', n_b = 'Influenza B', n_rsv = 'RSV'))
+  mutate(virus = factor(virus, levels = c('n_h1_b', 'n_rsv'))) %>%
+  mutate(virus = recode(virus, n_h1_b = 'Influenza A(H1N1) + B      ', n_rsv = 'RSV'))
 
 x_lab_breaks <- dat_hk %>% filter(Week == 1) %>% pull(Time)
 
@@ -40,6 +39,7 @@ p1a <- ggplot(data = dat_pos, aes(x = Time, y = perc_pos, col = virus)) +
         legend.text = element_text(size = 12),
         plot.tag.position = c(0.005, 0.98)) +
   scale_x_continuous(breaks = x_lab_breaks, labels = 2014:2019) +
+  scale_y_continuous(limits = c(0, 30)) +
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'A')
 p1a <- reposition_legend(p1a, position = 'top left', plot = FALSE)
@@ -79,13 +79,10 @@ shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 true_estpars <- c(shared_estpars, unit_estpars)
 
-dat_h1 <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_rsv
-dat_b <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$b_rsv
+dat_h1_plus_b <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv
+mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 
-mle_h1 <- read_rds('results/MLEs_flu_h1.rds')
-mle_b <- read_rds('results/MLEs_flu_b.rds')
-
-vir1 <- 'flu_h1'
+vir1 <- 'flu_h1_plus_b'
 prof_lik <- FALSE; lag_val <- 0
 source('src/functions/setup_global_likelilhood.R')
 
@@ -96,7 +93,7 @@ for (i in 1:length(seasons)) {
   yr <- seasons[i]
   resp_mod <- po_list[[i]]
   
-  pars_temp <- mle_h1[1, ] %>%
+  pars_temp <- mle[1, ] %>%
     select(all_of(shared_estpars),
            contains(yr))
   names(pars_temp)[(length(names(pars_temp)) - 6):length(names(pars_temp))] <- unit_estpars
@@ -106,7 +103,7 @@ for (i in 1:length(seasons)) {
   # Run deterministic simulation and calculate mean/median/IQR of binomial distribution:
   traj_temp <- trajectory(resp_mod, format = 'data.frame') %>%
     mutate(season = yr) %>%
-    left_join(dat_h1, by = c('time', 'season')) %>%
+    left_join(dat_h1_plus_b, by = c('time', 'season')) %>%
     rename('i_ILI' = 'GOPC') %>%
     mutate(i_ILI = i_ILI / 1000)
   
@@ -164,99 +161,13 @@ for (i in 1:length(seasons)) {
   
 }
 
-res_h1 <- bind_rows(sim_list) %>%
-  inner_join(dat_h1,
+res <- bind_rows(sim_list) %>%
+  inner_join(dat_h1_plus_b,
              by = c('time', 'season', 'Year', 'Week')) %>%
   select(-c(n_T, GOPC, pop)) %>%
-  mutate(vir1 = 'H1N1')
-
-vir1 <- 'flu_b'
-prof_lik <- FALSE; lag_val <- 0
-source('src/functions/setup_global_likelilhood.R')
-
-sim_list <- vector('list', length = length(seasons))
-for (i in 1:length(seasons)) {
-  
-  # Setup
-  yr <- seasons[i]
-  resp_mod <- po_list[[i]]
-  
-  pars_temp <- mle_b[1, ] %>%
-    select(all_of(shared_estpars),
-           contains(yr))
-  names(pars_temp)[(length(names(pars_temp)) - 6):length(names(pars_temp))] <- unit_estpars
-  
-  coef(resp_mod, true_estpars) <- pars_temp
-  
-  # Run deterministic simulation and calculate mean/median/IQR of binomial distribution:
-  traj_temp <- trajectory(resp_mod, format = 'data.frame') %>%
-    mutate(season = yr) %>%
-    left_join(dat_b, by = c('time', 'season')) %>%
-    rename('i_ILI' = 'GOPC') %>%
-    mutate(i_ILI = i_ILI / 1000)
-  
-  rho1 <- as.numeric(pars_temp['rho1'])
-  rho2 <- as.numeric(pars_temp['rho2'])
-  alpha <- as.numeric(pars_temp['alpha'])
-  phi <- as.numeric(pars_temp['phi'])
-  
-  rho1_w <- rho1 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H1 / traj_temp$i_ILI
-  rho2_w <- rho2 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H2 / traj_temp$i_ILI
-  
-  rho1_w[rho1_w > 1.0 & !is.na(rho1_w)] <- 1.0
-  rho2_w[rho2_w > 1.0 & !is.na(rho2_w)] <- 1.0
-  
-  expect_equal(nrow(traj_temp), length(rho1_w))
-  expect_equal(nrow(traj_temp), length(rho2_w))
-  
-  traj_temp$rho1_w <- rho1_w
-  traj_temp$rho2_w <- rho2_w
-  
-  traj_temp <- traj_temp %>%
-    as_tibble() %>%
-    mutate(mean1 = rho1_w * n_T,
-           mean2 = rho2_w * n_T,
-           # median1 = qbinom(p = 0.50, size = n_T, prob = rho1_w),
-           # median2 = qbinom(p = 0.50, size = n_T, prob = rho2_w),
-           lower1 = qbinom(p = 0.025, size = n_T, prob = rho1_w),
-           lower2 = qbinom(p = 0.025, size = n_T, prob = rho2_w),
-           upper1 = qbinom(p = 0.975, size = n_T, prob = rho1_w),
-           upper2 = qbinom(p = 0.975, size = n_T, prob = rho2_w)) %>%
-    select(time, season, Year, Week, mean1:upper2)
-  
-  # Run several stochastic simulations and calculate mean/median/IQR:
-  sim_temp <- simulate(resp_mod, nsim = 100, format = 'data.frame')
-  
-  sim_temp <- sim_temp %>%
-    as_tibble() %>%
-    group_by(time) %>%
-    summarise(mean1_stoch = mean(n_P1),
-              mean2_stoch = mean(n_P2),
-              # median1_stoch = median(n_P1),
-              # median2_stoch = median(n_P2),
-              lower1_stoch = quantile(n_P1, probs = 0.025, na.rm = TRUE),
-              lower2_stoch = quantile(n_P2, probs = 0.025, na.rm = TRUE),
-              upper1_stoch = quantile(n_P1, probs = 0.975, na.rm = TRUE),
-              upper2_stoch = quantile(n_P2, probs = 0.975, na.rm = TRUE))
-  
-  # Combine and store:
-  expect_equal(nrow(traj_temp), nrow(sim_temp))
-  sim_temp <- traj_temp %>%
-    inner_join(sim_temp, by = 'time')
-  expect_equal(nrow(traj_temp), nrow(sim_temp))
-  
-  sim_list[[i]] <- sim_temp
-  
-}
-
-res_b <- bind_rows(sim_list) %>%
-  inner_join(dat_b,
-             by = c('time', 'season', 'Year', 'Week')) %>%
-  select(-c(n_T, GOPC, pop)) %>%
-  mutate(vir1 = 'B')
+  mutate(vir1 = 'H1N1 + B')
 
 # Format tibble for analyses/plotting:
-res <- bind_rows(res_h1, res_b)
 res <- res %>%
   select(time:Week, vir1, mean1:mean2, lower1:upper2, n_P1:n_P2) %>%
   pivot_longer(n_P1:n_P2, names_to = 'virus', values_to = 'obs') %>%
@@ -277,107 +188,56 @@ res <- res %>%
 # https://stats.stackexchange.com/questions/185898/difference-between-nash-sutcliffe-efficiency-and-coefficient-of-determination
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
-r2a_list = r2b_list = r2c_list = r2d_list = c()
-r2a_num = r2b_num = r2c_num = r2d_num = 0
-r2a_denom = r2b_denom = r2c_denom = r2d_denom = 0
+r2a_list = r2b_list = c()
+r2a_num = r2b_num = 0
+r2a_denom = r2b_denom = 0
 
 for (yr in seasons) {
   
   res_temp <- res %>%
     filter(season == yr)
   
-  if (yr != 's14-15') {
-    
-    r2_a <- res_temp %>%
-      filter(vir1 == 'H1N1' & virus == 'Influenza') %>%
-      mutate(resid_sq = (obs - mean) ** 2,
-             total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
-      summarise(ss_error = sum(resid_sq, na.rm = TRUE),
-                ss_total = sum(total_sq, na.rm = TRUE)) %>%
-      mutate(r2 = 1 - ss_error / ss_total)
-    r2a_num <- r2a_num + r2_a$ss_error
-    r2a_denom <- r2a_denom + r2_a$ss_total
-    r2_a <- r2_a %>%
-      pull(r2)
-    
-    r2_b <- res_temp %>%
-      filter(vir1 == 'H1N1' & virus == 'RSV') %>%
-      mutate(resid_sq = (obs - mean) ** 2,
-             total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
-      summarise(ss_error = sum(resid_sq, na.rm = TRUE),
-                ss_total = sum(total_sq, na.rm = TRUE)) %>%
-      mutate(r2 = 1 - ss_error / ss_total)
-    r2b_num <- r2b_num + r2_b$ss_error
-    r2b_denom <- r2b_denom + r2_b$ss_total
-    r2_b <- r2_b %>%
-      pull(r2)
-    
-    r2a_list <- c(r2a_list, r2_a)
-    r2b_list <- c(r2b_list, r2_b)
-    
-  } else {
-    
-    r2a_list <- c(r2a_list, NA)
-    r2b_list <- c(r2b_list, NA)
-    
-  }
+  r2_a <- res_temp %>%
+    filter(virus == 'Influenza') %>%
+    mutate(resid_sq = (obs - mean) ** 2,
+           total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
+    summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+              ss_total = sum(total_sq, na.rm = TRUE)) %>%
+    mutate(r2 = 1 - ss_error / ss_total)
+  r2a_num <- r2a_num + r2_a$ss_error
+  r2a_denom <- r2a_denom + r2_a$ss_total
+  r2_a <- r2_a %>%
+    pull(r2)
   
+  r2_b <- res_temp %>%
+    filter(virus == 'RSV') %>%
+    mutate(resid_sq = (obs - mean) ** 2,
+           total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
+    summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+              ss_total = sum(total_sq, na.rm = TRUE)) %>%
+    mutate(r2 = 1 - ss_error / ss_total)
+  r2b_num <- r2b_num + r2_b$ss_error
+  r2b_denom <- r2b_denom + r2_b$ss_total
+  r2_b <- r2_b %>%
+    pull(r2)
   
-  if (yr != 's16-17') {
-    
-    r2_c <- res_temp %>%
-      filter(vir1 == 'B' & virus == 'Influenza') %>%
-      mutate(resid_sq = (obs - mean) ** 2,
-             total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
-      summarise(ss_error = sum(resid_sq, na.rm = TRUE),
-                ss_total = sum(total_sq, na.rm = TRUE)) %>%
-      mutate(r2 = 1 - ss_error / ss_total)
-    r2c_num <- r2c_num + r2_c$ss_error
-    r2c_denom <- r2c_denom + r2_c$ss_total
-    r2_c <- r2_c %>%
-      pull(r2)
-    
-    r2_d <- res_temp %>%
-      filter(vir1 == 'B' & virus == 'RSV') %>%
-      mutate(resid_sq = (obs - mean) ** 2,
-             total_sq = (obs - mean(obs, na.rm = TRUE)) ** 2) %>%
-      summarise(ss_error = sum(resid_sq, na.rm = TRUE),
-                ss_total = sum(total_sq, na.rm = TRUE)) %>%
-      mutate(r2 = 1 - ss_error / ss_total)
-    r2d_num <- r2d_num + r2_d$ss_error
-    r2d_denom <- r2d_denom + r2_d$ss_total
-    r2_d <- r2_d %>%
-      pull(r2)
-    
-    r2c_list <- c(r2c_list, r2_c)
-    r2d_list <- c(r2d_list, r2_d)
-    
-  } else {
-    
-    r2c_list <- c(r2c_list, NA)
-    r2d_list <- c(r2d_list, NA)
-    
-  }
+  r2a_list <- c(r2a_list, r2_a)
+  r2b_list <- c(r2b_list, r2_b)
   
 }
 
 print(summary(r2a_list))
 print(summary(r2b_list))
-print(summary(r2c_list))
-print(summary(r2d_list))
 
 r2a <- 1 - (r2a_num / r2a_denom)
 r2b <- 1 - (r2b_num / r2b_denom)
-r2c <- 1 - (r2c_num / r2c_denom)
-r2d <- 1 - (r2d_num / r2d_denom)
 
 # For each virus, virus-virus pair, and season, calculate the proportion of observations falling within confidence intervals:
-prop_a_list = prop_b_list = prop_c_list = prop_d_list = c()
+prop_a_list = prop_b_list = c()
 for (yr in seasons) {
   
   prop_a <- res %>%
     filter(season == yr,
-           vir1 == 'H1N1',
            virus == 'Influenza') %>%
     mutate(within_ci = obs >= lower & obs <= upper) %>%
     summarise(prop = sum(within_ci, na.rm = TRUE) / length(within_ci[!is.na(within_ci)])) %>%
@@ -385,23 +245,6 @@ for (yr in seasons) {
   
   prop_b <- res %>%
     filter(season == yr,
-           vir1 == 'H1N1',
-           virus == 'RSV') %>%
-    mutate(within_ci = obs >= lower & obs <= upper) %>%
-    summarise(prop = sum(within_ci, na.rm = TRUE) / length(within_ci[!is.na(within_ci)])) %>%
-    pull(prop)
-  
-  prop_c <- res %>%
-    filter(season == yr,
-           vir1 == 'B',
-           virus == 'Influenza') %>%
-    mutate(within_ci = obs >= lower & obs <= upper) %>%
-    summarise(prop = sum(within_ci, na.rm = TRUE) / length(within_ci[!is.na(within_ci)])) %>%
-    pull(prop)
-  
-  prop_d <- res %>%
-    filter(season == yr,
-           vir1 == 'B',
            virus == 'RSV') %>%
     mutate(within_ci = obs >= lower & obs <= upper) %>%
     summarise(prop = sum(within_ci, na.rm = TRUE) / length(within_ci[!is.na(within_ci)])) %>%
@@ -409,20 +252,16 @@ for (yr in seasons) {
   
   prop_a_list <- c(prop_a_list, prop_a)
   prop_b_list <- c(prop_b_list, prop_b)
-  prop_c_list <- c(prop_c_list, prop_c)
-  prop_d_list <- c(prop_d_list, prop_d)
   
 }
 
 print(summary(prop_a_list))
 print(summary(prop_b_list))
-print(summary(prop_c_list))
-print(summary(prop_d_list))
 
 # Plot means and 95% CIs from binomial distribution:
 p_legend <- ggplot(data = res, aes(x = mean, y = obs, color = season)) +
   geom_point() +
-  facet_grid(vir1 ~ virus) +
+  facet_wrap(~ virus) +
   theme_classic() +
   theme(legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
@@ -432,12 +271,10 @@ p_legend <- ggplot(data = res, aes(x = mean, y = obs, color = season)) +
   labs(color = 'Season')
 p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
 
-label_a <- paste0(' = ', round(r2a, 2), ' (', round(min(r2a_list, na.rm = TRUE), 2), '-', round(max(r2a_list, na.rm = TRUE), 2), ')')
+label_a <- paste0(' = ', format(round(r2a, 2), nsmall = 2), ' (', round(min(r2a_list, na.rm = TRUE), 2), '-', round(max(r2a_list, na.rm = TRUE), 2), ')')
 label_b <- paste0(' = ', round(r2b, 2), ' (', round(min(r2b_list, na.rm = TRUE), 2), '-', round(max(r2b_list, na.rm = TRUE), 2), ')')
-label_c <- paste0(' = ', round(r2c, 2), ' (', round(min(r2c_list, na.rm = TRUE), 2), '-', round(max(r2c_list, na.rm = TRUE), 2), ')')
-label_d <- paste0(' = ', round(r2d, 2), ' (', round(min(r2d_list, na.rm = TRUE), 2), '-', round(max(r2d_list, na.rm = TRUE), 2), ')')
 
-p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
+p3a <- ggplot(data = res %>% filter(virus == 'Influenza'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
   geom_abline(slope = 1, intercept = 0, col = 'gray80') +
   geom_pointrange(size = 0.2, alpha = 0.6) +
@@ -458,16 +295,16 @@ p3a <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'Influenza'),
         plot.tag.position = c(0.01, 0.98)) +
   scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
   scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(title = 'Influenza (A(H1N1)-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
+  scale_color_manual(values = viridis(6)) +
+  labs(title = 'Influenza', x = 'Simulated Cases', y = 'Observed Cases',
        color = 'Season', tag = 'A')
 
-p3b <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'RSV'),
+p3b <- ggplot(data = res %>% filter(virus == 'RSV'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
   geom_abline(slope = 1, intercept = 0, col = 'gray80') +
   geom_pointrange(size = 0.2, alpha = 0.6) +
   annotate (
-    geom = 'text', x = 200, y = 50, hjust = 0, vjust = 1, size = 5.5,
+    geom = 'text', x = 190, y = 18, hjust = 0, vjust = 1, size = 5.5,
     label = as.expression(bquote(paste(R^2, .(label_b))))
   ) +
   theme_classic() +
@@ -479,55 +316,14 @@ p3b <- ggplot(data = res %>% filter(vir1 == 'H1N1', virus == 'RSV'),
         plot.tag.position = c(0.01, 0.98)) +
   scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
   scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1, 3:6)]) +
-  labs(title = 'RSV (A(H1N1)-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
+  scale_color_manual(values = viridis(6)) +
+  labs(title = 'RSV', x = 'Simulated Cases', y = 'Observed Cases',
        color = 'Season', tag = 'B')
 
-p3c <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'Influenza'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
-  annotate (
-    geom = 'text', x = 500, y = 100, hjust = 0, vjust = 1, size = 5.5,
-    label = as.expression(bquote(paste(R^2, .(label_c))))
-  ) +
-  theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(title = 'Influenza (B-RSV)', x = 'Simulated Cases', y = 'Observed Cases',
-       color = 'Season', tag = 'C')
-
-p3d <- ggplot(data = res %>% filter(vir1 == 'B', virus == 'RSV'),
-              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
-  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
-  annotate (
-    geom = 'text', x = 190, y = 35, hjust = 0, vjust = 1, size = 5.5,
-    label = as.expression(bquote(paste(R^2, .(label_d))))
-  ) +
-  theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
-  scale_color_manual(values = viridis(6)[c(1:3, 5:6)]) +
-  labs(title = 'RSV (B-RSV)', x = 'Simulated Cases', y = 'Observed Cases',color = 'Season', tag = 'D')
-
-fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, p3c, p3d, ncol = 2), p_legend, nrow = 2, heights = c(15, 1))
+fig3 <- arrangeGrob(arrangeGrob(p3a, p3b, ncol = 2), p_legend, nrow = 2, heights = c(8, 1))
 plot(fig3)
 
-ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 8)
+ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 6)
 rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -593,15 +389,15 @@ res_metrics <- res %>%
   ungroup()
 
 res_metrics <- res_metrics %>%
-  filter(vacc_cov <= 0.60) %>%
+  filter(vacc_cov <= 0.70) %>%
   mutate(vacc_cov = vacc_cov * 100)
 
 res <- res %>%
-  filter((climate == 'subtrop' & season == 's18-19') |
-           (climate == 'temp' & season == 's17-18'))
+  filter((climate == 'subtrop' & season == 's13-14') |
+           (climate == 'temp' & season == 's18-19'))
 res_metrics <- res_metrics %>%
-  filter((climate == 'subtrop' & season == 's18-19') |
-           (climate == 'temp' & season == 's17-18'))
+  filter((climate == 'subtrop' & season == 's13-14') |
+           (climate == 'temp' & season == 's18-19'))
 
 upper_bound_ar <- max(res_metrics$ar2_impact)
 
@@ -628,16 +424,17 @@ p_legend1 <- ggplotGrob(p_legend1)$grobs[[which(sapply(ggplotGrob(p_legend1)$gro
 
 # res_metrics %>%
 #   filter(climate == 'temp' & scenario == 'natural') %>%
-#   filter(ar2_impact == min(ar2_impact))
+#   filter(ar2_impact == min(ar2_impact) |
+#            ar2_impact == max(ar2_impact))
 
 res_simA <- res %>%
   filter(climate == 'temp',
-         scenario == 'natural',
-         vacc_cov == '0.6',
-         vacc_time == '0') %>%
+         scenario == 'natural') %>%
+  filter((vacc_cov == '0.35' & vacc_time == '0') | (vacc_cov == '0.7' & vacc_time == '1')) %>%
   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
   mutate(val = val * 100) %>%
-  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
+  mutate(vacc_time = factor(vacc_time, levels = c('1', '0')))
 
 p_legend2 <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
@@ -656,7 +453,8 @@ p_legend2 <- ggplotGrob(p_legend2)$grobs[[which(sapply(ggplotGrob(p_legend2)$gro
 p4a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 0, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 1, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 35, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
@@ -678,15 +476,17 @@ p4a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'nat
 
 p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
-  geom_vline(xintercept = 0, lty = 2) +
-  geom_point(x = 52, y = 1.13, shape = 16, size = 3, col = 'black') +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
+  geom_point(x = 52, y = 2.0, aes(shape = vacc_time), size = 3, col = 'black') +
+  facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
-        legend.position = 'none') +
+        legend.position = 'none',
+        strip.text = element_blank()) +
   scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
   scale_linetype(guide = 'none') +
   scale_shape_discrete(guide = 'none') +
@@ -695,8 +495,8 @@ p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id
 p4b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'natural'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 15, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 60, shape = 17, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 20, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 70, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
@@ -723,17 +523,17 @@ p4b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == '
 res_simB <- res %>%
   filter(climate == 'subtrop',
          scenario == 'natural',
-         vacc_cov == 0.6,
-         vacc_time %in% c('0', '15')) %>%
+         vacc_cov == 0.7,
+         vacc_time %in% c('0', '20')) %>%
   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
   mutate(val = val * 100) %>%
   mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
-  mutate(vacc_time = factor(vacc_time, levels = c('15', '0')))
+  mutate(vacc_time = factor(vacc_time, levels = c('20', '0')))
 
 p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
   geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 3.8, aes(shape = vacc_time), size = 3, col = 'black', fill = 'black') +
+  geom_point(x = 52, y = 5.05, aes(shape = vacc_time), size = 3, col = 'black', fill = 'black') +
   facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
   theme(title = element_text(size = 12),
@@ -751,8 +551,8 @@ p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id
 p4c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'half'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 0, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 20, shape = 17, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 9, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 65, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
@@ -779,18 +579,18 @@ p4c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hal
 res_simC <- res %>%
   filter(climate == 'temp',
          scenario == 'half',
-         vacc_cov %in% c('0.2', '0.6'),
-         vacc_time == '0') %>%
+         vacc_cov == 0.6,
+         vacc_time %in% c('9', '0')) %>%
   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
   mutate(val = val * 100) %>%
   mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
-  mutate(vacc_cov = factor(vacc_cov, levels = c('0.6', '0.2')))
+  mutate(vacc_time = factor(vacc_time, levels = c('9', '0')))
 
 p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
-  geom_vline(aes(xintercept = vacc_time), lty = 2) +
-  geom_point(x = 52, y = 1.13, aes(shape = vacc_cov), size = 3, col = 'black') +
-  facet_wrap(~ vacc_cov, ncol = 1) +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
+  geom_point(x = 52, y = 2.0, aes(shape = vacc_time), size = 3, col = 'black') +
+  facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
@@ -807,8 +607,8 @@ p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id
 p4d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'half'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 19, y = 60, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 40, shape = 17, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 23, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 70, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
@@ -834,18 +634,19 @@ p4d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == '
 
 res_simD <- res %>%
   filter(climate == 'subtrop',
-         scenario == 'half') %>%
-  filter((vacc_cov == '0.4' & vacc_time == '0') | (vacc_cov == '0.6' & vacc_time == '19')) %>%
+         scenario == 'half',
+         vacc_cov == 0.7,
+         vacc_time %in% c('23', '0')) %>%
   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
   mutate(val = val * 100) %>%
   mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
-  mutate(vacc_cov = factor(vacc_cov, levels = c('0.6', '0.4')))
+  mutate(vacc_time = factor(vacc_time, levels = c('23', '0')))
 
 p4d_sim <- ggplot(data = res_simD, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
-  geom_vline(aes(xintercept = vacc_time), lty = 2) +
-  geom_point(x = 52, y = 3.8, aes(shape = vacc_cov), size = 3, col = 'black') +
-  facet_wrap(~ vacc_cov, ncol = 1) +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
+  geom_point(x = 52, y = 4.4, aes(shape = vacc_time), size = 3, col = 'black') +
+  facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
@@ -859,7 +660,7 @@ p4d_sim <- ggplot(data = res_simD, aes(x = time, y = val, col = Virus, lty = .id
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
-fig4 <- arrangeGrob(arrangeGrob(arrangeGrob(p4a, p4a_sim, layout_matrix = rbind(c(1, 2), c(1, NA)), heights = c(5.86, 4.14), widths = c(5.5, 4.5)),
+fig4 <- arrangeGrob(arrangeGrob(arrangeGrob(p4a, p4a_sim, nrow = 1, widths = c(5.5, 4.5)),
                                 arrangeGrob(p4b, p4b_sim, nrow = 1, widths = c(5.5, 4.5)), nrow = 1),
                     arrangeGrob(arrangeGrob(p4c, p4c_sim, nrow = 1, widths = c(5.5, 4.5)),
                                 arrangeGrob(p4d, p4d_sim, nrow = 1, widths = c(5.5, 4.5)), nrow = 1),

@@ -18,6 +18,11 @@ hk_dat <- hk_dat$h1_rsv %>%
               rename(n_b = n_P1,
                      n_rsv = n_P2) %>%
               select(time, season, n_b, n_rsv, n_T, GOPC, pop),
+            by = c('time', 'season')) %>%
+  full_join(hk_dat$h1_plus_b_rsv %>%
+              rename(n_h1_plus_b = n_P1,
+                     n_rsv = n_P2) %>%
+              select(time, season, n_h1_plus_b, n_rsv, n_T, GOPC, pop),
             by = c('time', 'season'))
 
 expect_true(all.equal(hk_dat$n_rsv.x, hk_dat$n_rsv.y))
@@ -25,12 +30,13 @@ expect_true(all.equal(hk_dat$n_T.x, hk_dat$n_T.y))
 expect_true(all.equal(hk_dat$GOPC.x, hk_dat$GOPC.y))
 expect_true(all.equal(hk_dat$pop.x, hk_dat$pop.y))
 
+expect_true(all.equal(hk_dat$n_rsv, hk_dat$n_rsv.y))
+expect_true(all.equal(hk_dat$n_T, hk_dat$n_T.y))
+expect_true(all.equal(hk_dat$GOPC, hk_dat$GOPC.y))
+expect_true(all.equal(hk_dat$pop, hk_dat$pop.y))
+
 hk_dat <- hk_dat %>%
-  mutate(n_rsv = n_rsv.x,
-         n_T = n_T.x,
-         GOPC = GOPC.x,
-         pop = pop.x) %>%
-  select(time:n_h1, n_b, n_rsv:pop) %>%
+  select(time:n_h1, n_b, n_h1_plus_b:pop) %>%
   arrange(season)
 
 # Calculate peak timing and attack rate metrics:
@@ -49,9 +55,10 @@ metrics_pt_diff <- metrics_pt_ar %>%
   select(-c(ar, ar_prop)) %>%
   pivot_wider(names_from = vir, values_from = pt) %>%
   mutate(n_h1 = n_h1 - n_rsv,
-         n_b = n_b - n_rsv) %>%
+         n_b = n_b - n_rsv,
+         n_h1_plus_b = n_h1_plus_b - n_rsv) %>%
   select(-n_rsv) %>%
-  pivot_longer(n_b:n_h1, names_to = 'vir', values_to = 'pt_diff')
+  pivot_longer(n_b:n_h1_plus_b, names_to = 'vir', values_to = 'pt_diff')
 
 # Calculate the number of weeks containing 75% of reported cases:
 metrics_conc <- NULL
@@ -60,7 +67,7 @@ for (yr in unique(hk_dat$season)) {
   hk_dat_temp <- hk_dat %>%
     filter(season == yr)
   
-  for (vir in c('n_h1', 'n_b', 'n_rsv')) {
+  for (vir in c('n_h1', 'n_b', 'n_h1_plus_b', 'n_rsv')) {
     
     case_counts_temp <- hk_dat_temp %>% pull(vir)
     case_counts_temp[is.na(case_counts_temp)] <- 0
@@ -117,7 +124,7 @@ metrics <- metrics %>%
   pivot_longer(ar:consecutive, names_to = 'metric', values_to = 'val')
 
 metrics %>%
-  filter(vir == 'n_h1') %>%
+  filter(vir == 'n_h1_plus_b') %>%
   group_by(metric) %>%
   summarise(mean = mean(val),
             median = median(val),
@@ -126,22 +133,7 @@ metrics %>%
             sum = sum(val)) %>%
   print()
 metrics %>%
-  filter(vir == 'n_h1', metric == 'pt') %>%
-  mutate(val = if_else(season == 's16-17', val - 53, val - 52)) %>%
-  pull(val) %>%
-  summary()
-
-metrics %>%
-  filter(vir == 'n_b') %>%
-  group_by(metric) %>%
-  summarise(mean = mean(val),
-            median = median(val),
-            min = min(val),
-            max = max(val),
-            sum = sum(val)) %>%
-  print()
-metrics %>%
-  filter(vir == 'n_b', metric == 'pt') %>%
+  filter(vir == 'n_h1_plus_b', metric == 'pt') %>%
   mutate(val = if_else(season == 's16-17', val - 53, val - 52)) %>%
   pull(val) %>%
   summary()

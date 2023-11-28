@@ -22,8 +22,7 @@ if (!dir.exists('results/plots/')) {
 # Specify parameters estimated:
 estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 
-# Get vectors of flu types/seasons:
-flu_types <- c('flu_h1', 'flu_b')
+# Get vector of seasons:
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -37,12 +36,11 @@ pars_top <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_TOP.rds'))
 pars_df <- pars_top %>%
   bind_rows() %>%
   pivot_longer(all_of(estpars), names_to = 'param', values_to = 'val') %>%
-  mutate(param = factor(param, levels = estpars)) %>%
-  filter(virus1 %in% flu_types)
+  mutate(param = factor(param, levels = estpars))
 
 # Get MLEs and ranges for each season/parameter:
 mle_ranges_df <- pars_df %>%
-  group_by(virus1, year, param) %>%
+  group_by(year, param) %>%
   summarise(mle = val[loglik == max(loglik)],
             min = min(val),
             max = max(val))
@@ -52,17 +50,17 @@ mle_ranges_df <- pars_df %>%
 # Plots
 
 # Plot violin plots of all values within 95% CI:
-p1 <- ggplot(data = pars_df, aes(x = year, y = val, group = paste(virus1, year), fill = virus1)) + geom_violin() +
+p1 <- ggplot(data = pars_df, aes(x = year, y = val, group = year)) + geom_violin(fill = 'gray90') +
   theme_classic() + facet_wrap(~ param, scales = 'free_y', ncol = 3) +
   scale_fill_brewer(palette = 'Set1') + labs(x = 'Season', y = 'Parameter Value')
 print(p1)
 
 # Plot parameter values and ranges:
 p2 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, col = param)) + geom_point(size = 2.5) +
-  theme_bw() + facet_grid(param ~ virus1, scales = 'free_y') +
+  theme_bw() + facet_wrap(~ param, scales = 'free_y', ncol = 1) +
   theme(legend.position = 'none', axis.text.x = element_text(angle = 45, vjust = 0.7))
 p3 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, ymin = min, ymax = max, col = param)) + geom_pointrange() +
-  theme_bw() + facet_grid(param ~ virus1, scales = 'free_y') +
+  theme_bw() + facet_wrap(~ param, scales = 'free_y', ncol = 1) +
   theme(legend.position = 'none', axis.text.x = element_text(angle = 45, vjust = 0.7))
 grid.arrange(p2, p3, ncol = 2)
 

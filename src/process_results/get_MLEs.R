@@ -7,8 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Set directory where final results from round2 fits are stored:
-res_dir_h1 <- 'results/round2_fit/round2_3_fluH1/'
-res_dir_b <- 'results/round2_fit/round2_3_fluB/'
+res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 
 # Check that directory for storing results exists, and create if not:
 if (!dir.exists('results/')) {
@@ -63,26 +62,23 @@ load_and_format_mega_results <- function(filepath) {
 }
 
 # Get MLEs:
-res_h1 <- load_and_format_mega_results(res_dir_h1) %>%
-  select(-loglik)
-res_b <- load_and_format_mega_results(res_dir_b) %>%
+res <- load_and_format_mega_results(res_dir) %>%
   select(-loglik)
 
 # Save MLEs:
-if (str_detect(res_dir_h1, 'sens')) {
+if (str_detect(res_dir, 'sens')) {
   
-  write_rds(res_h1, file = paste0(paste(str_split(res_dir_h1, '/')[[1]][1:(length(str_split(res_dir_h1, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1.rds'))
-  write_rds(res_b, file = paste0(paste(str_split(res_dir_b, '/')[[1]][1:(length(str_split(res_dir_b, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_b.rds'))
+  write_rds(res, file = paste0(paste(str_split(res_dir, '/')[[1]][1:(length(str_split(res_dir, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1_plus_b.rds'))
+  
+} else if (str_detect(res_dir, 'age_structured')) {
+  
+  write_rds(res, file = 'results/age_structured_SA/MLEs_flu_h1_plus_b.rds')
   
 } else {
   
-  write_rds(res_h1, file = 'results/MLEs_flu_h1.rds')
-  write_rds(res_b, file = 'results/MLEs_flu_b.rds')
+  write_rds(res, file = 'results/MLEs_flu_h1_plus_b.rds')
   
 }
 
-# # Also get MLEs for H1+B sensitivity analysis?
-# res_dir_h1_plus_b <- 'results/round2_fit/sens/round2_5_fluH1_plus_B/'
-# res_h1_plus_b <- load_and_format_mega_results(res_dir_h1_plus_b) %>%
-#   select(-loglik)
-# write_rds(res_h1_plus_b, file = 'results/round2_fit/sens/MLEs_flu_h1_plus_b.rds')
+# Clean up:
+rm(list = ls())

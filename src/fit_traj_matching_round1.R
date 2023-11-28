@@ -19,14 +19,14 @@ search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 fit_shared <- as.logical(Sys.getenv("FITSHARED")); print(fit_shared)
 
 yr <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')[(ceiling(jobid / no_jobs) - 1) %% 6 + 1]; print(yr)
-vir1 <- c('flu_h1', 'flu_b', 'flu_h1_plus_b')[ceiling(jobid / (no_jobs * 6))]; print(vir1)
+vir1 <- 'flu_h1_plus_b'
 jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 
 # # Set parameters for local runs (temp):
 # jobid <- 1
 # no_jobs <- 10
 # 
-# vir1 <- 'flu_h1'
+# vir1 <- 'flu_h1_plus_b'
 # yr <- 's15-16'
 # 
 # sobol_size <- 500
@@ -52,6 +52,7 @@ d2_max <- 10.0
 # Note: Separate runs for each season
 
 # Load data and create pomp object:
+sens <- 'main'
 source('src/resp_interaction_model.R')
 
 # Check that sufficient epidemic activity:
