@@ -9,12 +9,11 @@ library(tidyverse)
 library(testthat)
 library(gridExtra)
 
-# Set directory where results are stored:
-res_dir_h1 <- 'results/round2_4_fluH1_FULL/'
-res_dir_b <- 'results/round2_3_fluB_FULL/'
-
-res_dir_h1_noAH <- 'results/round2_4_fluH1_noAH/'
-res_dir_b_noAH <- 'results/round2_3_fluB_noAH/'
+# Set directories where results are stored:
+res_dir_maih <- 'results/round2_fit/round2_3_fluH1_plus_B/'
+res_dir_noAH <- 'results/round2_fit/sens/no_ah/round2_3_fluH1_plus_B/'
+res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_4_fluH1_plus_B/'
+res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -45,12 +44,7 @@ load_and_format_mega_results <- function(filepath, cond) {
     arrange(desc(loglik))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  if (cond == 'full') {
-    expect_equal(df_use, 54)
-  } else if (cond == 'noAH') {
-    expect_equal(df_use, 52)
-  }
-
+  
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   pars_top <- pars_df[1:no_best, ]
   
@@ -72,43 +66,44 @@ load_and_format_mega_results <- function(filepath, cond) {
 
 # Read in results for all runs
 
-# For "full" models:
-res_h1_full <- load_and_format_mega_results(res_dir_h1, cond = 'full')
-res_b_full <- load_and_format_mega_results(res_dir_b, cond = 'full')
-
-# For models w/o AH:
-res_h1_noAH <- load_and_format_mega_results(res_dir_h1_noAH, cond = 'noAH')
-res_b_noAH <- load_and_format_mega_results(res_dir_b_noAH, cond = 'noAH')
+res_main <- load_and_format_mega_results(res_dir_maih, cond = 'Main')
+res_noah <- load_and_format_mega_results(res_dir_noAH, cond = 'No AH')
+res_sinusoidal <- load_and_format_mega_results(res_dir_sinusoidal, cond = 'Sinusoidal Forcing')
+res_noint <- load_and_format_mega_results(res_dir_noint, cond = 'No Interaction')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Compare runs with and without eta_ah1/eta_ah2
+# Compare runs
 
 # Compare parameter estimates:
-summary(res_h1_full %>%
-          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2')))
-summary(res_h1_noAH %>%
-          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2')))
-
-summary(res_b_full %>%
-          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2')))
-summary(res_b_noAH %>%
-          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2')))
+summary(res_main %>%
+          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
+summary(res_noah %>%
+          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
+summary(res_sinusoidal %>%
+          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
+# summary(res_noint %>%
+#           select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
 
 # Compare log likelihoods:
-res_h1 <- bind_rows(res_h1_full, res_h1_noAH) %>%
-  select(rho1:eta_ah2, loglik:condition)
-res_b <- bind_rows(res_b_full, res_b_noAH) %>%
-  select(rho1:eta_ah2, loglik:condition)
+res <- bind_rows(res_main,
+                 res_noah,
+                 res_sinusoidal,
+                 res_noint)
 
-p1 <- ggplot(data = res_h1, aes(x = condition, y = loglik, group = condition)) + geom_jitter() + theme_classic()# + geom_boxplot()
-p2 <- ggplot(data = res_b, aes(x = condition, y = loglik, group = condition)) + geom_jitter() + theme_classic()# + geom_boxplot()
-grid.arrange(p1, p2, ncol = 2)
+p1 <- ggplot(data = res, aes(x = condition, y = loglik, group = condition)) + geom_jitter() + theme_classic()# + geom_boxplot()
+print(p1)
 
 # Check for significance:
 # full is significantly better than noAH if 2 * (loglik_full - loglik_noAH) > qchisq(p = 0.95, df = 2)
-print(2 * (min(res_h1$loglik[res_h1$condition == 'full']) - max(res_h1$loglik[res_h1$condition == 'noAH'])) > qchisq(p = 0.95, df = 2))
-print(2 * (min(res_b$loglik[res_b$condition == 'full']) - max(res_b$loglik[res_b$condition == 'noAH'])) > qchisq(p = 0.95, df = 2))
+print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No AH'])) > qchisq(p = 0.95, df = 2))
+# print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'Sinusoidal Forcing'])) > qchisq(p = 0.95, df = 0))
+print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No Interaction'])) > qchisq(p = 0.95, df = 4))
+
+aic_main <- 2 * length(names(res_main %>% select(-c(loglik, condition)))) - 2 * max(res_main$loglik)
+aic_noah <- 2 * length(names(res_noah %>% select(-c(loglik, condition)))) - 2 * max(res_noah$loglik)
+aic_sinusoidal <- 2 * length(names(res_sinusoidal %>% select(-c(loglik, condition)))) - 2 * max(res_sinusoidal$loglik)
+aic_noint <- 2 * length(names(res_noint %>% select(-c(loglik, condition)))) - 2 * max(res_noint$loglik)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
