@@ -16,6 +16,7 @@ jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
 no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
+sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_shared <- as.logical(Sys.getenv("FITSHARED")); print(fit_shared)
 
 yr <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')[(ceiling(jobid / no_jobs) - 1) %% 6 + 1]; print(yr)
@@ -64,7 +65,13 @@ if (exists('resp_mod')) {
                  'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi',
                  'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   } else {
-    estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+    
+    if (sens == 'no_rsv_immune') {
+      estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'rho1', 'rho2')
+    } else {
+      estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+    }
+    
   }
   
   start_range <- data.frame(Ri1 = c(1.0, Ri_max1),

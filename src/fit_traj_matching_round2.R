@@ -290,6 +290,9 @@ if (int_eff == 'susc') {
 }
 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+if (sens == 'no_rsv_immune') {
+  unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10')
+}
 
 unit_sp_estpars <- c()
 for (i in 1:length(seasons)) {
@@ -330,6 +333,13 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R10 = c(0, 0.3),
                                R20 = c(0, 0.3),
                                R120 = c(0, 0.3))
+if (sens == 'no_rsv_immune') {
+  unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
+                                 Ri2 = c(1.0, Ri_max2),
+                                 I10 = c(0, 1e-3),
+                                 I20 = c(0, 1e-3),
+                                 R10 = c(0, 0.3))
+}
 
 # Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
@@ -344,28 +354,32 @@ for (i in 1:length(ci_list)) {
   ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
                                  summarise(tj_res_temp, across(.cols = everything(), max))))
   
-  # Check that initial conditions can't sum to >1:
-  sums <- ci_temp %>% select(I10:R120) %>% rowSums()
-  
-  if (sums[1] > 1.0) {
-    print('Lower bounds sum to more than 1!')
-    stop()
-  }
-  
-  if (sums[2] > 1.0) {
+  if (sens != 'no_rsv_immune') {
     
-    # Reduce the upper bounds of R10/R20/R120 proportionally:
-    orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
-    red_needed <- sums[2] - 0.9999999
-    new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
+    # Check that initial conditions can't sum to >1:
+    sums <- ci_temp %>% select(I10:R120) %>% rowSums()
     
-    # Ensure upper bounds still greater than lower:
-    orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
-    expect_true(all(new_upper_bounds > orig_lower_bounds))
+    if (sums[1] > 1.0) {
+      print('Lower bounds sum to more than 1!')
+      stop()
+    }
     
-    # Ensure upper bounds now sum to 1 or less:
-    ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
-    expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
+    if (sums[2] > 1.0) {
+      
+      # Reduce the upper bounds of R10/R20/R120 proportionally:
+      orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
+      red_needed <- sums[2] - 0.9999999
+      new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
+      
+      # Ensure upper bounds still greater than lower:
+      orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
+      expect_true(all(new_upper_bounds > orig_lower_bounds))
+      
+      # Ensure upper bounds now sum to 1 or less:
+      ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
+      expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
+      
+    }
     
   }
   
@@ -447,6 +461,22 @@ if (sens == 'no_ah') {
   shared_estpars <- shared_estpars[!(shared_estpars %in% c('eta_ah1', 'eta_ah2'))]
   
   start_values <- start_values[!(names(start_values) %in% c('eta_ah1', 'eta_ah2'))]
+  
+}
+
+# Assume all susceptible to RSV?:
+if (sens == 'no_rsv_immune') {
+  
+  # estpars <- estpars[!str_detect(estpars, 'R20') & !str_detect(estpars, 'R120')]
+  # true_estpars <- true_estpars[!str_detect(true_estpars, 'R20') & !str_detect(true_estpars, 'R120')]
+  # shared_estpars <- shared_estpars[!str_detect(shared_estpars, 'R20') & !str_detect(shared_estpars, 'R120')]
+  # 
+  # start_values <- start_values[!str_detect(names(start_values), 'R20') & !str_detect(names(start_values), 'R120')]
+  
+  print(estpars)
+  print(true_estpars)
+  print(shared_estpars)
+  print('End check')
   
 }
 

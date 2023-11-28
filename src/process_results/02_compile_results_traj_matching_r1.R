@@ -9,6 +9,7 @@ library(tidyverse)
 library(testthat)
 
 # Get cluster environmental variables:
+sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_shared <- as.logical(Sys.getenv("FITSHARED")); print(fit_shared)
 
 # Set estimated parameter names:
@@ -17,7 +18,13 @@ if (fit_shared) {
                'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi',
                'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 } else {
-  estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+  
+  if (sens == 'no_rsv_immune') {
+    estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'rho1', 'rho2')
+  } else {
+    estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
+  }
+  
 }
 
 # Set parameter values:
@@ -106,7 +113,6 @@ for (yr in yrs_unique) {
       select(-message)
     
     # Check that no model states go below zero:
-    sens <- 'main'
     source('src/resp_interaction_model.R')
     
     p_mat <- parmat(coef(resp_mod), nrep = nrow(pars_temp))
@@ -197,17 +203,31 @@ for (yr in yrs_unique) {
                              eta_ah2 = seq(from = 0.9 * mle['eta_ah2'], to = 1.1 * mle['eta_ah2'], length.out = 20)) %>%
         mutate(ll = NA)
     } else {
-      slices <- slice_design(center = mle,
-                             Ri1 = seq(from = 0.9 * mle['Ri1'], to = 1.1 * mle['Ri1'], length.out = 20),
-                             Ri2 = seq(from = 0.9 * mle['Ri2'], to = 1.1 * mle['Ri2'], length.out = 20),
-                             I10 = seq(from = 0.9 * mle['I10'], to = 1.1 * mle['I10'], length.out = 20),
-                             I20 = seq(from = 0.9 * mle['I20'], to = 1.1 * mle['I20'], length.out = 20),
-                             R10 = seq(from = 0.9 * mle['R10'], to = 1.1 * mle['R10'], length.out = 20),
-                             R20 = seq(from = 0.9 * mle['R20'], to = 1.1 * mle['R20'], length.out = 20),
-                             R120 = seq(from = 0.9 * mle['R120'], to = 1.1 * mle['R120'], length.out = 20),
-                             rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
-                             rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20)) %>%
-        mutate(ll = NA)
+      
+      if (sens == 'no_rsv_immune') {
+        slices <- slice_design(center = mle,
+                               Ri1 = seq(from = 0.9 * mle['Ri1'], to = 1.1 * mle['Ri1'], length.out = 20),
+                               Ri2 = seq(from = 0.9 * mle['Ri2'], to = 1.1 * mle['Ri2'], length.out = 20),
+                               I10 = seq(from = 0.9 * mle['I10'], to = 1.1 * mle['I10'], length.out = 20),
+                               I20 = seq(from = 0.9 * mle['I20'], to = 1.1 * mle['I20'], length.out = 20),
+                               R10 = seq(from = 0.9 * mle['R10'], to = 1.1 * mle['R10'], length.out = 20),
+                               rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
+                               rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20)) %>%
+          mutate(ll = NA)
+      } else {
+        slices <- slice_design(center = mle,
+                               Ri1 = seq(from = 0.9 * mle['Ri1'], to = 1.1 * mle['Ri1'], length.out = 20),
+                               Ri2 = seq(from = 0.9 * mle['Ri2'], to = 1.1 * mle['Ri2'], length.out = 20),
+                               I10 = seq(from = 0.9 * mle['I10'], to = 1.1 * mle['I10'], length.out = 20),
+                               I20 = seq(from = 0.9 * mle['I20'], to = 1.1 * mle['I20'], length.out = 20),
+                               R10 = seq(from = 0.9 * mle['R10'], to = 1.1 * mle['R10'], length.out = 20),
+                               R20 = seq(from = 0.9 * mle['R20'], to = 1.1 * mle['R20'], length.out = 20),
+                               R120 = seq(from = 0.9 * mle['R120'], to = 1.1 * mle['R120'], length.out = 20),
+                               rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
+                               rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20)) %>%
+          mutate(ll = NA)
+      }
+      
     }
     
     # Calculate log likelihoods:
@@ -219,9 +239,15 @@ for (yr in yrs_unique) {
     rm(i, x0_trans)
     
     # Check that any NAs are due to initial conditions or other unrealistic parameter values:
-    nas_in_ll <- slices %>%
-      filter(is.na(ll)) %>%
-      mutate(init_sum = I10 + I20 + R10 + R20 + R120)
+    if (sens == 'no_rsv_immune') {
+      nas_in_ll <- slices %>%
+        filter(is.na(ll)) %>%
+        mutate(init_sum = I10 + I20 + R10)
+    } else {
+      nas_in_ll <- slices %>%
+        filter(is.na(ll)) %>%
+        mutate(init_sum = I10 + I20 + R10 + R20 + R120)
+    }
     
     if (fit_shared) {
       expect_true(all(nas_in_ll$init_sum > 1.0 | nas_in_ll$rho1 > 1.0 | nas_in_ll$rho2 > 1.0 |
