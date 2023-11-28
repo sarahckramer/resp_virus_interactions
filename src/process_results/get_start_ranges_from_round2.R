@@ -85,12 +85,26 @@ load_and_format_mega_results <- function(filepath) {
   
   # Get tibble of top fits:
   pars_top <- pars_df[1:no_best, ]
+  print(summary(pars_top$loglik))
   
   # Remove where no convergence occurs:
   pars_top <- pars_top %>%
-    filter(!str_detect(message, 'maxtime'))
-  pars_top <- pars_top %>%
+    filter(!str_detect(message, 'maxtime')) %>%
     select(-message)
+  
+  # If none remaining, take top 25 again:
+  while(nrow(pars_top) == 0) {
+    no_best <- max(no_best, 25)
+    
+    pars_top <- pars_df[1:no_best, ] %>%
+      filter(!str_detect(message, 'maxtime')) %>%
+      select(-message)
+    
+    no_best <- no_best + 25
+  }
+  no_best <- no_best - 25
+  print(no_best)
+  print(summary(pars_top$loglik))
   
   # # Remove where d2 > 10 and theta_lambda2 != 1.0:
   # pars_top <- pars_top %>%
