@@ -90,7 +90,7 @@ pcor_list <- pcor_list[lapply(pcor_list, length) > 0]
 # Clean up:
 rm(vir_seas, yr)
 
-# Output plots to file (for A and B separately):
+# Output plots to file:
 pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE.pdf'),
     width = 15, height = 10)
 
