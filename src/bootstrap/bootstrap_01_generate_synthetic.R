@@ -171,4 +171,15 @@ for (i in 1:length(seasons)) {
 }
 
 # Save synthetic data:
-write_rds(synth_LIST, paste0('results/synth_data_for_bootstrapping_', vir1, '.rds'))
+if (sens != 'main') {
+  
+  write_rds(synth_LIST, paste0('results/round2_fit/sens/', sens, '/synth_data_for_bootstrapping_', vir1, '.rds'))
+  
+} else {
+  
+  write_rds(synth_LIST, paste0('results/synth_data_for_bootstrapping_', vir1, '.rds'))
+  
+}
+
+# Clean up:
+rm(list = ls())
