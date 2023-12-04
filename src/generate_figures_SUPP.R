@@ -9,6 +9,7 @@ library(lemon)
 library(gridExtra)
 library(grid)
 library(patchwork)
+library(cowplot)
 library(GGally)
 library(RColorBrewer)
 library(viridis)
@@ -518,48 +519,107 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
   
 }
 
-res_proflik <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda1/',
-                                               prof_par = 'theta_lambda1',
-                                               shared_estpars = shared_estpars)
+get_maxloglik_and_ci_cutoff <- function(res) {
+  
+  # Get maximum log-likelihood value:
+  maxloglik <- res %>%
+    summarise(loglik = max(loglik)) %>%
+    pull(loglik)
+  
+  # Get cutoff for 95% confidence interval:
+  ci_cutoff <- maxloglik - 0.5 * qchisq(df = 1, p = 0.95)
+  res <- res %>%
+    mutate(ci = ci_cutoff)
+  
+  # Keep only best-fit run for each value of interaction parameter:
+  res <- res %>%
+    group_by(profpar) %>%
+    filter(rank(-loglik) == 1) %>%
+    ungroup
+  
+  # Return updated results:
+  return(res)
+  
+}
 
-maxloglik <- res_proflik %>%
-  summarise(loglik = max(loglik)) %>%
-  pull(loglik)
+res_proflik1 <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda1/',
+                                                prof_par = 'theta_lambda1',
+                                                shared_estpars = shared_estpars)
+res_proflik1 <- get_maxloglik_and_ci_cutoff(res_proflik1)
 
-ci_cutoff <- maxloglik - 0.5 * qchisq(df = 1, p = 0.95)
-res_proflik <- res_proflik %>%
-  mutate(ci = ci_cutoff)
+res_proflik2 <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda2/',
+                                                prof_par = 'theta_lambda2',
+                                                shared_estpars = shared_estpars)
+res_proflik2 <- get_maxloglik_and_ci_cutoff(res_proflik2)
 
-res_proflik <- res_proflik %>%
-  group_by(profpar) %>%
-  filter(rank(-loglik) == 1) %>%
-  ungroup()
+res_proflik1_ZOOM <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda1ZOOM/',
+                                                     prof_par = 'theta_lambda1',
+                                                     shared_estpars = shared_estpars)
+res_proflik1_ZOOM <- get_maxloglik_and_ci_cutoff(res_proflik1_ZOOM)
 
-fig8s <- ggplot(res_proflik, # %>% filter(loglik > (max(loglik) - 100)), # allows for zooming
-                aes(x = profpar, y = loglik)) +
+res_proflik2_ZOOM <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda2ZOOM/',
+                                                     prof_par = 'theta_lambda2',
+                                                     shared_estpars = shared_estpars)
+res_proflik2_ZOOM <- get_maxloglik_and_ci_cutoff(res_proflik2_ZOOM)
+
+p8a_main <- ggplot(res_proflik1, # %>% filter(loglik > (max(loglik) - 100)), # allows for zooming
+                   aes(x = profpar, y = loglik)) +
+  geom_point() + theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.02, 0.975)) +
+  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
+  geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
+  labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'A') +
+  scale_x_continuous(n.breaks = 10) +
+  scale_y_continuous(n.breaks = 6)
+p8a_insert <- ggplot(res_proflik1_ZOOM, # %>% filter(loglik > (max(loglik) - 100)), # allows for zooming
+                     aes(x = profpar, y = loglik)) +
   geom_point() + theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12)) +
   geom_smooth(method = 'loess', span = 0.75, color = 'black') +
   geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
   labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood') +
+  scale_x_continuous(n.breaks = 5) +
+  scale_y_continuous(n.breaks = 6)
+
+p8b_main <- ggplot(res_proflik2, # %>% filter(loglik > (max(loglik) - 100)), # allows for zooming
+                   aes(x = profpar, y = loglik)) +
+  geom_point() + theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.02, 0.975)) +
+  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
+  geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
+  labs(x = bquote(theta[lambda*2]), y = 'Log-Likelihood', tag = 'B') +
   scale_x_continuous(n.breaks = 10) +
   scale_y_continuous(n.breaks = 6)
-# fig8s <- ggplot(res_proflik, # %>% filter(loglik > (max(loglik) - 100)), # allows for zooming
-#                 aes(x = profpar, y = loglik)) +
-#   geom_point() + theme_classic() +
-#   theme(axis.title = element_text(size = 14),
-#         axis.text = element_text(size = 12),
-#         plot.tag = element_text(size = 22),
-#         plot.tag.position = c(0.02, 0.975)) +
-#   geom_smooth(method = 'loess', span = 0.75, color = 'black') +
-#   geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
-#   labs(x = bquote(theta[lambda*1]), y = 'Log-Likelihood', tag = 'A') +
-#   scale_x_continuous(n.breaks = 10)
+p8b_insert <- ggplot(res_proflik2_ZOOM, # %>% filter(loglik > (max(loglik) - 100)), # allows for zooming
+                     aes(x = profpar, y = loglik)) +
+  geom_point() + theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12)) +
+  geom_smooth(method = 'loess', span = 0.75, color = 'black') +
+  geom_hline(color = 'black', aes(yintercept = ci), linewidth = 1, lty = 2) +
+  labs(x = bquote(theta[lambda*2]), y = 'Log-Likelihood') +
+  scale_x_continuous(n.breaks = 5) +
+  scale_y_continuous(n.breaks = 6)
 
-ggsave('results/plots/figures_for_manuscript/supp/FigureS8.svg', width = 6, height = 3.75, fig8s)
+p8a <- ggdraw() +
+  draw_plot(p8a_main) +
+  draw_plot(p8a_insert, x = 0.11, y = 0.0955, width = 0.46, height = 0.43)
+p8b <- ggdraw() +
+  draw_plot(p8b_main) +
+  draw_plot(p8b_insert, x = 0.11, y = 0.0955, width = 0.46, height = 0.43)
 
-rm(fig8s, res_proflik, maxloglik, ci_cutoff)
+fig8s <- arrangeGrob(p8a, p8b, nrow = 1)
+ggsave('results/plots/figures_for_manuscript/supp/FigureS8.svg', width = 17, height = 6, fig8s)
+
+rm(fig8s, p8a, p8b, p8a_main, p8a_insert, p8b_main, p8b_insert,
+   res_proflik1, res_proflik1_ZOOM, res_proflik2, res_proflik2_ZOOM)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
