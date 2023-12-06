@@ -231,6 +231,13 @@ if (strcmp("sinusoidal_forcing", sens) == 0) {
   beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1;
   beta2 = Ri2 / (1.0 - (R20 + R120)) * beta_h3_t * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2;
   
+} else if (strcmp("rhino_covar", sens) == 0) {
+  
+  // Include rhinovirus as a covariate modulating influenza transmission
+  double beta_rhino_t = exp(-1 * beta_rhino * rhino_inc);
+  beta1 = Ri1 / (1.0 - (R10 + R120)) * beta_rhino_t * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1;
+  beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2;
+  
 } else {
   
   beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)

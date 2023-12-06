@@ -30,10 +30,10 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # 
 # sobol_size <- 10
 # which_round <- 2
-# search_type <- 'round2_CIs'
+# search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
-# sens <- 'main' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'h3_covar'
+# sens <- 'rhino_covar' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'h3_covar', 'rhino_covar'
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -261,6 +261,10 @@ if (int_eff == 'susc') {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                           'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
                           'beta_h3')
+    } else if (sens == 'rhino_covar') {
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+                          'beta_rhino')
     } else {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                           'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
@@ -323,7 +327,8 @@ start_range <- data.frame(rho1 = c(0, 1.0),
                           b2 = c(0.05, 0.2),
                           phi1 = c(0, 52.25),
                           phi2 = c(0, 52.25),
-                          beta_h3 = c(0, 10.0))
+                          beta_h3 = c(0, 10.0),
+                          beta_rhino = c(0, 10.0))
 
 # Set upper/lower values for unit params (broad):
 unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),

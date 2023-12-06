@@ -88,6 +88,24 @@ dat_pomp <- dat_pomp %>%
 expect_true(nrow(dat_pomp) == nrow_check)
 rm(dat_h3)
 
+# Get rhinovirus incidence data (as covariate):
+dat_rhino <- hk_dat$h1_plus_b_rhino %>%
+  rename('i_ILI' = 'GOPC') %>%
+  mutate(i_ILI = i_ILI / 1000,
+         rhino_inc_raw = (n_P2 / n_T) * i_ILI,
+         rhino_inc = scale(rhino_inc_raw)[, 1]) %>%
+  select(time:Year, Week:season, rhino_inc)
+expect_equal(mean(dat_rhino$rhino_inc, na.rm = TRUE), 0)
+expect_equal(sd(dat_rhino$rhino_inc, na.rm = TRUE), 1)
+
+dat_pomp <- dat_pomp %>%
+  inner_join(dat_rhino,
+             by = c('time', 'Year', 'Week', 'season')) %>%
+  select(time:Year, Week:season, n_T:i_ILI, pop:rhino_inc) %>%
+  mutate(rhino_inc = if_else(is.na(rhino_inc), 0, rhino_inc))
+expect_true(nrow(dat_pomp) == nrow_check)
+rm(dat_rhino)
+
 # If no data for this season, skip:
 if (nrow(dat_pomp) > 0) {
   
