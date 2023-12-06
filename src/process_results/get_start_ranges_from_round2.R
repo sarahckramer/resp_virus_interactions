@@ -13,7 +13,19 @@ res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 which_round <- str_split(res_dir, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir, '_')[[1]])))]
 
 # Are results from a sensitivity analysis?:
-sens <- 'main'
+if (str_detect(res_dir, 'sinusoidal')) {
+  sens <- 'sinusoidal_forcing'
+} else if (str_detect(res_dir, 'h3_covar')) {
+  sens <- 'h3_covar'
+} else if (str_detect(res_dir, 'less_circ_h3')) {
+  sens <- 'less_circ_h3'
+} else if (str_detect(res_dir, 'no_rsv_immune')) {
+  sens <- 'no_rsv_immune'
+} else if (str_detect(res_dir, 'no_ah')) {
+  sens <- 'no_ah'
+} else {
+  sens <- 'main'
+}
 
 # Check that directory for storing results exists, and create if not:
 if (!dir.exists('results/')) {
@@ -28,6 +40,21 @@ if (sens == 'main') {
   new_dir <- paste0('results/round2_CIs/from_2_', which_round, '/')
   if (!dir.exists(new_dir)) {
     dir.create(new_dir)
+  }
+  
+  if (str_detect(res_dir, 'age_structured')) {
+    
+    if(!dir.exists('results/round2_CIs/sens/')) {
+      dir.create('results/round2_CIs/sens/')
+    }
+    if(!dir.exists('results/round2_CIs/sens/age_structured/')) {
+      dir.create('results/round2_CIs/sens/age_structured/')
+    }
+    
+    new_dir <- paste0('results/round2_CIs/sens/age_structured/from_2_', which_round, '/')
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
   }
   
 } else {
