@@ -53,7 +53,7 @@ fig1s <- ggplot(data = dat_pos, aes(x = Time, y = perc_pos, col = virus)) +
   geom_vline(xintercept = season_breaks, linetype = 'dashed')
 
 fig1s <- reposition_legend(fig1s, position = 'top left', plot = FALSE)
-ggsave('results/plots/figures_for_manuscript/supp/FigureS1.svg', width = 9.5, height = 4, fig1s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS1.svg', width = 9.5, height = 4, fig1s)
 
 rm(dat_pos, fig1s, season_breaks)
 
@@ -98,7 +98,7 @@ p2c <- ggplot(data = dat_clim, aes(x = temp, y = ah)) +
   labs(x = 'Mean Temperature (°C)', y = expression(paste('Mean Absolute Humidity ', (g/m^{3}))), tag = 'C')
 
 fig2s <- arrangeGrob(p2a, p2b, p2c, ncol = 1)
-ggsave('results/plots/figures_for_manuscript/supp/FigureS2.svg', width = 10.5, height = 9, fig2s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS2.svg', width = 10.5, height = 9, fig2s)
 
 rm(dat_hk, dat_clim, p2a, p2b, p2c, fig2s, x_lab_breaks)
 
@@ -130,7 +130,7 @@ fig3s <- ggplot(data = res) +
   scale_color_manual(values = c('black', 'darkred'), guide = 'none') +
   labs(x = 'Season', y = 'Maximum Likelihood Estimate (95% CI)')
 
-ggsave('results/plots/figures_for_manuscript/supp/FigureS3.svg', width = 3.7, height = 20.0, fig3s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS3.svg', width = 3.7, height = 20.0, fig3s)
 
 rm(fig3s, res, mle)
 
@@ -140,10 +140,7 @@ rm(fig3s, res, mle)
 
 res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 
-load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars, run_name) {
-  
-  # Compile estpars:
-  true_estpars <- c(shared_estpars, unit_estpars)
+load_and_format_mega_results <- function(filepath, run_name) {
   
   # Get list of results files:
   res_files <- list.files(path = filepath, full.names = TRUE)
@@ -172,7 +169,6 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
     arrange(desc(loglik))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  expect_equal(df_use, 54)
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   print(no_best)
@@ -184,6 +180,10 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
     filter(!str_detect(message, 'maxtime'))
   pars_top <- pars_top %>%
     select(-message)
+  
+  # Add run name to tibble:
+  pars_top <- pars_top %>%
+    mutate(condition = run_name)
   
   # Return formatted results:
   return(pars_top)
@@ -210,7 +210,7 @@ fig4s <- ggpairs(pars_top_temp %>% select(all_of(shared_estpars_temp)),
         strip.text = element_text(size = 15),
         panel.border = element_rect(linewidth = 0.5, fill = NA))
 
-ggsave('results/plots/figures_for_manuscript/supp/FigureS4.svg', fig4s, width = 18, height = 12)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS4.svg', fig4s, width = 18, height = 12)
 
 rm(fig4s, pars_top_temp, shared_estpars_temp)
 
@@ -274,7 +274,7 @@ for (seas_index in 1:length(seasons)) {
 rm(seas_index, seas, pars_top_unit_temp, p_temp, tags)
 
 fig5s <- arrangeGrob(grobs = plot_list, ncol = 2)
-ggsave('results/plots/figures_for_manuscript/supp/FigureS5.svg', fig5s, width = 18, height = 16.5)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS5.svg', fig5s, width = 18, height = 16.5)
 
 rm(fig5s, pars_top_unit, plot_list)
 
@@ -387,7 +387,7 @@ p_legend <- ggplot(data = force_t, aes(x = time, y = force1, col = season)) +
 p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
 
 fig6s <- arrangeGrob(arrangeGrob(p6a, p6b, ncol = 1), p_legend, nrow = 2, heights = c(15, 1))
-ggsave('results/plots/figures_for_manuscript/supp/FigureS6.svg', fig6s, width = 10, height = 6.25)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS6.svg', fig6s, width = 10, height = 6.25)
 
 rm(mle, force_t, p6a, p6b, p_legend, fig6s, min_val, max_val, gamma1, gamma2)
 
@@ -470,13 +470,13 @@ fig7s <- ggplot(data = sims) +
   scale_color_brewer(palette = 'Set1') +
   labs(x = 'Week #', y = '# of Cases', col = 'Virus')
 
-ggsave('results/plots/figures_for_manuscript/supp/FigureS7.svg', width = 14.5, height = 7.5, fig7s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS7.svg', width = 14.5, height = 7.5, fig7s)
 
 rm(fig7s, sims)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 8: Profile likelihood of theta_lambda1
+# Supplementary Figure 8: Profile likelihoods of theta_lambda1 and theta_lambda2
 
 load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) {
   
@@ -616,7 +616,7 @@ p8b <- ggdraw() +
   draw_plot(p8b_insert, x = 0.11, y = 0.0955, width = 0.46, height = 0.43)
 
 fig8s <- arrangeGrob(p8a, p8b, nrow = 1)
-ggsave('results/plots/figures_for_manuscript/supp/FigureS8.svg', width = 17, height = 6, fig8s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS8.svg', width = 17, height = 6, fig8s)
 
 rm(fig8s, p8a, p8b, p8a_main, p8a_insert, p8b_main, p8b_insert,
    res_proflik1, res_proflik1_ZOOM, res_proflik2, res_proflik2_ZOOM)
@@ -734,9 +734,9 @@ fig9s <- ggplot(data = ar_df, aes(x = virus, y = attack_rate, group = virus)) +
   # guides(colour = guide_legend(nrow = 1)) +
   labs(x = 'Virus', y = 'Attack Rate (%)', col = 'Season')
 
-ggsave('results/plots/figures_for_manuscript/supp/FigureS9.svg', width = 6, height = 3.5, fig9s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS9.svg', width = 6, height = 3.5, fig9s)
 
-rm(fig9s, ar_df, shared_estpars, unit_estpars, true_estpars)
+rm(fig9s, ar_df, unit_estpars, true_estpars)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -795,7 +795,7 @@ p10b <- ggplot() +
   labs(x = 'Week #', y = 'Influenza Incidence', color = '', tag = 'B')
 
 fig10s <- arrangeGrob(p10a, p10b, ncol = 1)
-ggsave('results/plots/figures_for_manuscript/supp/FigureS10.svg', width = 18, height = 7, fig10s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS10.svg', width = 18, height = 7, fig10s)
 
 rm(p10a, p10b, fig10s, res, pars_top, seasons, vir1, vir2, age_structured, sens,
    d2_max, debug_bool, lag_val, prof_lik, Ri_max1, Ri_max2)
@@ -968,7 +968,7 @@ p12d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
 fig12s <- p12a / p12b / p12c / p12d + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-ggsave('results/plots/figures_for_manuscript/supp/FigureS12.svg', fig12s, width = 13, height = 12)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS12.svg', fig12s, width = 13, height = 12)
 
 rm(fig12s, p12a, p12b, p12c, p12d, res, res_metrics, upper_bound_ar)
 
@@ -1202,7 +1202,7 @@ p13h <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   labs(title = 'Subtropical (VE = 95%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'H')
 
 fig13s <- (p13a + p13b) / (p13c + p13d) / (p13e + p13f) / (p13g + p13h) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-ggsave('results/plots/figures_for_manuscript/supp/FigureS13.svg', fig13s, width = 10, height = 15)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS13.svg', fig13s, width = 10, height = 15)
 
 rm(fig13s, p13a, p13b, p13c, p13d, p13e, p13f, p13g, p13h, res, res_metrics, upper_bound_ar)
 
@@ -1262,7 +1262,7 @@ fig14s <- ggplot(data = res_all_ages, aes(x = time, y = val, col = age)) +
   scale_color_viridis(discrete = TRUE) +
   labs(x = 'Week #', y = '% Positive', color = 'Age')
 
-ggsave('results/plots/figures_for_manuscript/supp/FigureS14.svg', fig14s, width = 9.5, height = 10.5)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS14.svg', fig14s, width = 9.5, height = 10.5)
 
 rm(fig14s, res_all_ages, covar_all_ages)
 
@@ -1319,4 +1319,5 @@ fig15s <- ggplot(data = res_combined_long,
 
 ggsave('results/plots/figures_for_manuscript/supp/FigureS15.svg', width = 14.5, height = 7.5, fig15s)
 
+# Clean up:
 rm(list = ls())
