@@ -1317,7 +1317,125 @@ fig15s <- ggplot(data = res_combined_long,
   scale_color_brewer(palette = 'Set1') +
   labs(x = 'Week #', y = '# of Cases', color = 'Virus')
 
-ggsave('results/plots/figures_for_manuscript/supp/FigureS15.svg', width = 14.5, height = 7.5, fig15s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS15.svg', width = 14.5, height = 7.5, fig15s)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Supplementary Figure 16: Circulation of rhinovirus over time, vs. influenza (H1N1 + B) and RSV
+
+dat_hk <- read_csv('data/formatted/dat_hk.csv')
+
+dat_hk <- dat_hk %>%
+  filter(Year < 2020 & !(Year == 2019 & Week > 45)) %>%
+  select(Time:n_h1, n_b:n_rsv, n_rhino_est_rnd) %>%
+  mutate(n_h1 = n_h1 / n_samp * 100,
+         n_b = n_b / n_samp * 100,
+         n_h1_b = n_h1_b / n_samp * 100,
+         n_rsv = n_rsv / n_samp * 100,
+         n_rhino = n_rhino_est_rnd / n_samp * 100) %>%
+  select(-n_rhino_est_rnd)
+
+dat_pos <- dat_hk %>%
+  select(-n_samp) %>%
+  pivot_longer(n_h1:n_rhino,
+               names_to = 'virus',
+               values_to = 'perc_pos') %>%
+  mutate(virus = factor(virus, levels = c('n_h1', 'n_b', 'n_h1_b', 'n_rsv', 'n_rhino'))) %>%
+  mutate(virus = recode(virus, n_h1 = 'Influenza A(H1N1)', n_b = 'Influenza (B)',
+                        n_h1_b = 'Influenza (A(H1N1) + B)    ', n_rsv = 'RSV  ', n_rhino = 'Rhinovirus'))
+
+x_lab_breaks <- dat_hk %>% filter(Week == 1) %>% pull(Time)
+season_breaks <- dat_hk %>% filter(Week == 46) %>% pull(Time)
+
+fig16s <- ggplot(data = dat_pos %>%
+                   filter(virus %in% c('Influenza (A(H1N1) + B)    ', 'RSV  ', 'Rhinovirus')),
+                 aes(x = Time, y = perc_pos, col = virus)) +
+  geom_line() + theme_classic() +
+  theme(legend.position = 'bottom',
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12)) +
+  scale_x_continuous(breaks = x_lab_breaks, labels = 2014:2019) +
+  scale_y_continuous(limits = c(0, 42)) +
+  scale_color_brewer(palette = 'Set1') +
+  labs(x = 'Year', y = '\n% Positive', col = 'Virus') +
+  geom_vline(xintercept = season_breaks, linetype = 'dashed')
+
+fig16s <- reposition_legend(fig16s, position = 'top left', plot = FALSE)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS16.svg', width = 9.5, height = 4, fig16s)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Supplementary Figure 17: MLE for shared parameters for a variety of sensitivity analyses
+# For now only have 95% CIs for some of these - decide whether ranges need to be plotted, or just MLE values
+
+res_dir_main <- 'results/round2_fit/round2_3_fluH1_plus_B/'
+res_dir_noAH <- 'results/round2_fit/sens/no_ah/round2_3_fluH1_plus_B/'
+res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_4_fluH1_plus_B/'
+res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
+res_dir_noRSVimmune <- 'results/round2_fit/sens/no_rsv_immune/round2_5_fluH1_plus_B/'
+res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
+res_dir_lesscirch3 <- 'results/round2_fit/sens/less_circ_h3/round2_5_fluH1_plus_B/'
+
+res_main <- load_and_format_mega_results(res_dir_main, run_name = 'Main')
+res_noah <- load_and_format_mega_results(res_dir_noAH, run_name = 'No AH')
+res_sinusoidal <- load_and_format_mega_results(res_dir_sinusoidal, run_name = 'Sinusoidal Forcing')
+res_noint <- load_and_format_mega_results(res_dir_noint, run_name = 'No Interaction')
+res_noRSVimmune <- load_and_format_mega_results(res_dir_noRSVimmune, run_name = 'No Immunity to RSV')
+res_h3covar <- load_and_format_mega_results(res_dir_h3covar, run_name = 'H3 as Covariate')
+res_lesscirch3 <- load_and_format_mega_results(res_dir_lesscirch3, run_name = 'Low H3 Circulation')
+
+# res_main <- read_csv('results/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+# res_h3covar <- read_csv('results/round2_fit/sens/h3_covar/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+# res_lesscirch3 <- read_csv('results/round2_fit/sens/less_circ_h3/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+
+res <- bind_rows(res_main,
+                 res_noah,
+                 res_sinusoidal,
+                 res_noint,
+                 res_noRSVimmune,
+                 res_h3covar,
+                 res_lesscirch3)
+
+res <- res %>%
+  group_by(condition) %>%
+  filter(loglik == max(loglik)) %>%
+  ungroup() %>%
+  select(all_of(shared_estpars), condition) %>%
+  mutate(delta2 = d2 * delta1) %>%
+  select(-d2) %>%
+  pivot_longer(-condition,
+               names_to = 'parameter')
+
+res <- res %>%
+  mutate(parameter = if_else(parameter == 'theta_lambda1', 'theta[lambda*1]', parameter),
+         parameter = if_else(parameter == 'theta_lambda2', 'theta[lambda*2]', parameter),
+         parameter = if_else(parameter == 'delta1', 'delta[1]', parameter),
+         parameter = if_else(parameter == 'delta2', 'delta[2]', parameter),
+         parameter = if_else(parameter == 'eta_temp1', 'eta[temp*1]', parameter),
+         parameter = if_else(parameter == 'eta_temp2', 'eta[temp*2]', parameter),
+         parameter = if_else(parameter == 'eta_ah1', 'eta[ah*1]', parameter),
+         parameter = if_else(parameter == 'eta_ah2', 'eta[ah*2]', parameter),
+         parameter = if_else(parameter == 'rho1', 'rho[1]', parameter),
+         parameter = if_else(parameter == 'rho2', 'rho[2]', parameter))
+
+res <- res %>%
+  mutate(condition = factor(condition, levels = c('Main', 'H3 as Covariate', 'Low H3 Circulation', 'No Interaction', 'No AH', 'Sinusoidal Forcing', 'No Immunity to RSV')),
+         parameter = factor(parameter, levels = c('theta[lambda*1]', 'theta[lambda*2]', 'delta[1]', 'delta[2]', 'eta[temp*1]', 'eta[temp*2]', 'eta[ah*1]', 'eta[ah*2]', 'rho[1]', 'rho[2]', 'alpha', 'phi')))
+
+fig17s <- ggplot(data = res, aes(x = condition, y = value)) +
+  geom_point() +
+  theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        axis.text.x = element_text(angle = 40, vjust = 1, hjust = 1),
+        strip.text = element_text(size = 14)) +
+  facet_wrap(~ parameter, scales = 'free_y', ncol = 2, labeller = 'label_parsed') +
+  labs(x = 'Analysis', y = 'Parameter Value')
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS17.svg', width = 7, height = 12, fig17s)
+
+# ---------------------------------------------------------------------------------------------------------------------
 
 # Clean up:
 rm(list = ls())
