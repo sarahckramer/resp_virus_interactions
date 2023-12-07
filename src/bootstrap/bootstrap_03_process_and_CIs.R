@@ -88,33 +88,40 @@ true_estpars <- c(shared_estpars, unit_estpars)
 #   unlist()))
 
 # Calculate composite parameters:
-res_df <- res_df %>%
-  mutate(delta2 = d2 * delta1,
-         `s13-14_R10 + R120` = `s13-14_R10` + `s13-14_R120`,
-         `s14-15_R10 + R120` = `s14-15_R10` + `s14-15_R120`,
-         `s15-16_R10 + R120` = `s15-16_R10` + `s15-16_R120`,
-         `s16-17_R10 + R120` = `s16-17_R10` + `s16-17_R120`,
-         `s17-18_R10 + R120` = `s17-18_R10` + `s17-18_R120`,
-         `s18-19_R10 + R120` = `s18-19_R10` + `s18-19_R120`,
-         `s13-14_R20 + R120` = `s13-14_R20` + `s13-14_R120`,
-         `s14-15_R20 + R120` = `s14-15_R20` + `s14-15_R120`,
-         `s15-16_R20 + R120` = `s15-16_R20` + `s15-16_R120`,
-         `s16-17_R20 + R120` = `s16-17_R20` + `s16-17_R120`,
-         `s17-18_R20 + R120` = `s17-18_R20` + `s17-18_R120`,
-         `s18-19_R20 + R120` = `s18-19_R20` + `s18-19_R120`) %>%
-  select(rho1:`s18-19_R120`, delta2:`s18-19_R20 + R120`, loglik:dataset)
+res_df_unit <- res_df %>%
+  select(contains('I') | contains('R') | dataset) %>%
+  select(-c(phi, rho1, rho2)) %>%
+  pivot_longer(-c(loglik, dataset)) %>%
+  mutate(season = str_sub(name, 1, 6),
+         name = str_sub(name, 8)) %>%
+  pivot_wider(names_from = name,
+              values_from = value) %>%
+  mutate(`R10 + R120` = R10 + R120,
+         `R20 + R120` = R20 + R120,
+         R01 = Ri1 / (1 - (I10 + R10 + R120)),
+         R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
+  pivot_longer(Ri1:R02,
+               names_to = 'parameter',
+               values_to = 'value') %>%
+  mutate(parameter = paste(season, parameter, sep = '_')) %>%
+  select(parameter:value)
+
+res_df_shared <- res_df %>%
+  select(all_of(shared_estpars), loglik, dataset) %>%
+  mutate(delta2 = d2 * delta1) %>%
+  pivot_longer(-c(loglik, dataset),
+               names_to = 'parameter',
+               values_to = 'value') %>%
+  select(parameter:value)
+
+res_df <- bind_rows(res_df_shared, res_df_unit) %>%
+  mutate(parameter = factor(parameter, levels = c(shared_estpars, 'delta2', unique(res_df_unit$parameter))))
 
 # Calculate 95% confidence intervals for each parameter:
-res_df_long <- res_df %>%
-  select(-c(loglik, dataset)) %>%
-  pivot_longer(cols = everything(), names_to = 'parameter', values_to = 'value') %>%
-  mutate(parameter = factor(parameter, levels = names(res_df)[1:(length(names(res_df)) - 2)]))
-
-ci_res <- res_df_long %>%
+ci_res <- res_df %>%
   group_by(parameter) %>%
   summarise(lower = HPDI(value, p = 0.95)[1],
-            upper = HPDI(value, p = 0.95)[2]) %>%
-  mutate(vir1 = 'flu_h1_plus_b')
+            upper = HPDI(value, p = 0.95)[2])
 # ci_res <- res_df_long %>%
 #   group_by(parameter) %>%
 #   summarise(lower = quantile(value, p = 0.025),
@@ -125,38 +132,44 @@ ci_res <- res_df_long %>%
 write_csv(ci_res, file = 'results/95CI_from_boostrapping_HPDI.csv')
 
 # Read in MLEs and add to data frame:
-mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
+mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
 
-mle <- mle %>%
-  mutate(delta2 = d2 * delta1,
-         `s13-14_R10 + R120` = `s13-14_R10` + `s13-14_R120`,
-         `s14-15_R10 + R120` = `s14-15_R10` + `s14-15_R120`,
-         `s15-16_R10 + R120` = `s15-16_R10` + `s15-16_R120`,
-         `s16-17_R10 + R120` = `s16-17_R10` + `s16-17_R120`,
-         `s17-18_R10 + R120` = `s17-18_R10` + `s17-18_R120`,
-         `s18-19_R10 + R120` = `s18-19_R10` + `s18-19_R120`,
-         `s13-14_R20 + R120` = `s13-14_R20` + `s13-14_R120`,
-         `s14-15_R20 + R120` = `s14-15_R20` + `s14-15_R120`,
-         `s15-16_R20 + R120` = `s15-16_R20` + `s15-16_R120`,
-         `s16-17_R20 + R120` = `s16-17_R20` + `s16-17_R120`,
-         `s17-18_R20 + R120` = `s17-18_R20` + `s17-18_R120`,
-         `s18-19_R20 + R120` = `s18-19_R20` + `s18-19_R120`)
+mle_unit <- mle %>%
+  select(contains('I') | contains('R')) %>%
+  select(-c(phi, rho1, rho2)) %>%
+  pivot_longer(everything()) %>%
+  mutate(season = str_sub(name, 1, 6),
+         name = str_sub(name, 8)) %>%
+  pivot_wider(names_from = name,
+              values_from = value) %>%
+  mutate(`R10 + R120` = R10 + R120,
+         `R20 + R120` = R20 + R120,
+         R01 = Ri1 / (1 - (I10 + R10 + R120)),
+         R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
+  pivot_longer(Ri1:R02,
+               names_to = 'parameter',
+               values_to = 'mle') %>%
+  mutate(parameter = paste(season, parameter, sep = '_')) %>%
+  select(parameter:mle)
 
-mle <- mle[1, ] %>%
-  pivot_longer(cols = everything(),
+mle_shared <- mle %>%
+  select(all_of(shared_estpars)) %>%
+  mutate(delta2 = d2 * delta1) %>%
+  pivot_longer(everything(),
                names_to = 'parameter',
                values_to = 'mle')
 
+mle <- bind_rows(mle_shared, mle_unit)
+
 ci_res <- ci_res %>%
   left_join(mle, by = 'parameter') %>%
-  select(parameter, mle, lower:vir1)
+  select(parameter, mle, lower:upper)
 
 # Write results to file:
 write_csv(ci_res, file = 'results/MLE_plus_95CI_from_boostrapping_HPDI.csv')
 
 # Generate tables of results:
 res_table <- ci_res %>%
-  select(-vir1) %>%
   gt() %>%
   tab_header(title = 'Best-Fit Parameter Values') %>%
   fmt_number(columns = c(mle, lower, upper), decimals = 3, suffixing = TRUE)
@@ -169,27 +182,27 @@ ci_res %>% filter(mle <= lower)
 ci_res %>% filter(mle >= upper)
 
 # Plot range of fit values for each parameter:
-composite_params <- c('delta2', res_df_long %>%
-                        filter(grepl(' ', parameter)) %>%
-                        pull(parameter) %>%
-                        as.character() %>%
-                        unique())
-
-res_df_NOSHARED <- res_df_long %>%
-  filter(!(parameter %in% composite_params)) %>%
-  filter(!(parameter %in% shared_estpars)) %>%
+res_df_unit <- res_df_unit %>%
   mutate(season = str_sub(parameter, 1, 6),
-         parameter = str_remove(parameter, paste0(season, '_'))) %>%
-  mutate(parameter = factor(parameter, levels = c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')))
+         parameter = str_sub(parameter, 8)) %>%
+  mutate(parameter = factor(parameter, levels = c('Ri1', 'Ri2', 'R01', 'R02', 'I10', 'I20', 'R10', 'R20', 'R120', 'R10 + R120', 'R20 + R120')))
 
-p1 <- ggplot(data = res_df_long %>% filter(parameter %in% shared_estpars),
+p1 <- ggplot(data = res_df %>% filter(parameter %in% c(shared_estpars, 'delta2')),
              aes(x = value, y = after_stat(count)/nrow(res_df))) +
   geom_freqpoly(bins = 40) + facet_wrap(~ parameter, scales = 'free') +
   theme_classic() + labs(x = 'Parameter Value', y = 'Proportion of Fits', title = 'Shared Parameters')
-p2 <- ggplot(data = res_df_NOSHARED, aes(x = value, y = after_stat(count)/nrow(res_df), col = season)) +
+p2 <- ggplot(data = res_df_unit, aes(x = value, y = after_stat(count)/nrow(res_df), col = season)) +
   geom_freqpoly(bins = 100) + facet_wrap(~ parameter, scales = 'free') +
   theme_classic() + scale_color_brewer(palette = 'Set1') +
   labs(x = 'Parameter Value', y = 'Proportion of Fits', title = 'Season-Specific Parameters')
 
 print(p1)
 print(p2)
+
+pdf('results/plots/plot_params_plus_ci.pdf', width = 15, height = 8)
+print(p1)
+print(p2)
+dev.off()
+
+# Clean up:
+rm(list = ls())
