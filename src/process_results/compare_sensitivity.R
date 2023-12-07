@@ -10,7 +10,7 @@ library(testthat)
 library(gridExtra)
 
 # Set directories where results are stored:
-res_dir_maih <- 'results/round2_fit/round2_3_fluH1_plus_B/'
+res_dir_main <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_noAH <- 'results/round2_fit/sens/no_ah/round2_3_fluH1_plus_B/'
 res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_4_fluH1_plus_B/'
 res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
@@ -69,7 +69,7 @@ load_and_format_mega_results <- function(filepath, cond) {
 
 # Read in results for all runs
 
-res_main <- load_and_format_mega_results(res_dir_maih, cond = 'Main')
+res_main <- load_and_format_mega_results(res_dir_main, cond = 'Main')
 res_noah <- load_and_format_mega_results(res_dir_noAH, cond = 'No AH')
 res_sinusoidal <- load_and_format_mega_results(res_dir_sinusoidal, cond = 'Sinusoidal Forcing')
 res_noint <- load_and_format_mega_results(res_dir_noint, cond = 'No Interaction')
