@@ -469,22 +469,6 @@ if (sens == 'no_ah') {
   
 }
 
-# Assume all susceptible to RSV?:
-if (sens == 'no_rsv_immune') {
-  
-  # estpars <- estpars[!str_detect(estpars, 'R20') & !str_detect(estpars, 'R120')]
-  # true_estpars <- true_estpars[!str_detect(true_estpars, 'R20') & !str_detect(true_estpars, 'R120')]
-  # shared_estpars <- shared_estpars[!str_detect(shared_estpars, 'R20') & !str_detect(shared_estpars, 'R120')]
-  # 
-  # start_values <- start_values[!str_detect(names(start_values), 'R20') & !str_detect(names(start_values), 'R120')]
-  
-  print(estpars)
-  print(true_estpars)
-  print(shared_estpars)
-  print('End check')
-  
-}
-
 # Check that starting values and estpars are correct:
 print(start_range)
 print(summary(start_values))
