@@ -33,7 +33,7 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
-# sens <- 'rhino_covar' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'h3_covar', 'rhino_covar'
+# sens <- 'rhino_covar' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
 
 # Set parameters for run:
 debug_bool <- FALSE
