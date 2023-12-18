@@ -282,13 +282,42 @@ DH2 = gamma2 * (X_SI + theta_rho1 * X_II + X_TI + X_RI) / N; // Incidence rate o
 
 //start_rsim
 
+double omega = (2 * M_PI) / 52.25;
+
 // Calculate prevalences:
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
 // Calculate R0:
-double R0_1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp); // Basic reproductive number (virus 1)
-double R0_2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp); // Basic reproductive number (virus 2)
+double R0_1;
+double R0_2;
+
+if (strcmp("sinusoidal_forcing", sens) == 0) {
+  
+  // Modelling seasonality with a sinusoidal wave:
+  R0_1 = Ri1 / (1.0 - (R10 + R120)) * (1 + b1 * cos(omega * (t - phi1)));
+  R0_2 = Ri2 / (1.0 - (R20 + R120)) * (1 + b2 * cos(omega * (t - phi2)));
+  
+} else if (strcmp("h3_covar", sens) == 0) {
+  
+  // Include H3 as a covariate modulating RSV transmission
+  double beta_h3_t = exp(-1 * beta_h3 * h3_inc);
+  R0_1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp);
+  R0_2 = Ri2 / (1.0 - (R20 + R120)) * beta_h3_t * exp(eta_ah2 * ah + eta_temp2 * temp);
+  
+} else if (strcmp("rhino_covar", sens) == 0) {
+  
+  // Include rhinovirus as a covariate modulating influenza transmission
+  double beta_rhino_t = exp(-1 * beta_rhino * rhino_inc);
+  R0_1 = Ri1 / (1.0 - (R10 + R120)) * beta_rhino_t * exp(eta_ah1 * ah + eta_temp1 * temp);
+  R0_2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp);
+  
+} else {
+  
+  R0_1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp); // Basic reproductive number (virus 1)
+  R0_2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp); // Basic reproductive number (virus 2)
+  
+}
 
 // Incorporate extrademographic stochasticity:
 double beta1, beta2;
