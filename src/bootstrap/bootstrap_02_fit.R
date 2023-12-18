@@ -256,6 +256,9 @@ if (int_eff == 'susc') {
 }
 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+if (sens == 'no_rsv_immune') {
+  unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10')
+}
 
 unit_sp_estpars <- c()
 for (i in 1:length(seasons)) {
