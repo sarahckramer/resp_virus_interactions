@@ -191,8 +191,6 @@ load_and_format_mega_results <- function(filepath, run_name) {
 }
 
 pars_top <- load_and_format_mega_results(filepath = res_dir,
-                                         shared_estpars = shared_estpars,
-                                         unit_estpars = unit_estpars,
                                          run_name = 'H1_plus_B_FULL')
 rm(res_dir)
 
