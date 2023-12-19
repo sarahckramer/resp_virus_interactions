@@ -136,6 +136,77 @@ rm(fig3s, res, mle)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Supplementary Figure 4: Relationship between proportion immune and previous season's attack rate
+
+ar_df <- read_rds('results/simulated_ar.rds')
+mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
+dat_temp <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv
+
+prop_imm_df <- mle[1, ] %>%
+  select(contains('R1') | contains('R2')) %>%
+  pivot_longer(everything()) %>%
+  mutate(season = str_sub(name, 1, 6),
+         parameter = str_sub(name, 8)) %>%
+  select(-name) %>%
+  pivot_wider(names_from = parameter,
+              values_from = value) %>%
+  mutate(r_flu = R10 + R120, r_rsv = R20 + R120) %>%
+  select(season, r_flu:r_rsv) %>%
+  pivot_longer(r_flu:r_rsv,
+               names_to = 'virus',
+               values_to = 'prop_imm') %>%
+  mutate(virus = if_else(virus == 'r_flu', 'Influenza', 'RSV'))
+
+tot_cases_df <- dat_temp %>%
+  select(n_P1:n_P2, season) %>%
+  group_by(season) %>%
+  summarise(tot_cases1 = sum(n_P1, na.rm = TRUE),
+            tot_cases2 = sum(n_P2, na.rm = TRUE)) %>%
+  pivot_longer(tot_cases1:tot_cases2,
+               names_to = 'virus',
+               values_to = 'tot_cases') %>%
+  mutate(virus = if_else(virus == 'tot_cases1', 'Influenza', 'RSV'))
+
+ar_df <- ar_df %>%
+  inner_join(tot_cases_df,
+             by = c('season', 'virus'))
+rm(tot_cases_df)
+
+ar_df <- ar_df %>%
+  mutate(season = paste0('s', as.numeric(str_sub(season, 2, 3)) + 1, '-', as.numeric(str_sub(season, 5, 6)) + 1))
+
+prop_imm_df <- prop_imm_df %>%
+  inner_join(ar_df,
+             by = c('season', 'virus'))
+
+p4a <- ggplot(data = prop_imm_df, aes(x = attack_rate, y = prop_imm)) +
+  geom_point(size = 2.5) +
+  facet_wrap(~ virus) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        strip.text = element_text(size = 14),
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.015, 0.95)) +
+  labs(x = 'Estimated Total Attack Rate', y = 'Proportion Immune', tag = 'A')
+p4b <- ggplot(data = prop_imm_df, aes(x = tot_cases, y = prop_imm)) +
+  geom_point(size = 2.5) +
+  facet_wrap(~ virus) +
+  theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        strip.text = element_text(size = 14),
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.015, 0.95)) +
+  labs(x = 'Total Observed Cases', y = 'Proportion Immune', tag = 'B')
+
+fig4s <- arrangeGrob(p4a, p4b, ncol = 1)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS4_NEW.svg', width = 9, height = 6.5, fig4s)
+
+rm(fig4s, p4a, p4b, ar_df, prop_imm_df, mle, dat_temp)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # Supplementary Figure 4: Correlations between estimated parameters (shared parameters)
 
 res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'

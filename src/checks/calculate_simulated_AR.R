@@ -94,6 +94,13 @@ rm(dat_pomp, hk_dat, obj_fun_list, po_list, resp_mod, traj_temp,
    debug_bool, vir1, vir2, Ri_max1, Ri_max2, d2_max, prof_lik, lag_val, age_structured,
    j, yr, yr_index)
 
+# Save results for supplementary figure:
+ar_df <- bind_rows(ar_list) %>%
+  select(season:H2) %>%
+  pivot_longer(H1:H2, names_to = 'virus', values_to = 'attack_rate') %>%
+  mutate(virus = if_else(virus == 'H1', 'Influenza', 'RSV'))
+write_rds(ar_df, 'results/simulated_ar.rds')
+
 # Plot attack rates by virus/season:
 ar_df <- bind_rows(ar_list) %>%
   select(-c(obs1:obs2)) %>%
