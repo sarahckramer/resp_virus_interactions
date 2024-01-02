@@ -445,7 +445,7 @@ p_legend2 <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
         legend.position = 'bottom') +
-  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
+  scale_color_brewer(palette = 'Dark2') +
   scale_linetype(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 p_legend2 <- ggplotGrob(p_legend2)$grobs[[which(sapply(ggplotGrob(p_legend2)$grobs, function(x) x$name) == 'guide-box')]]
@@ -487,7 +487,7 @@ p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id
         legend.text = element_text(size = 12),
         legend.position = 'none',
         strip.text = element_blank()) +
-  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
+  scale_color_brewer(palette = 'Dark2') +
   scale_linetype(guide = 'none') +
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
@@ -543,7 +543,7 @@ p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id
         legend.text = element_text(size = 12),
         legend.position = 'none',
         strip.text = element_blank()) +
-  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
+  scale_color_brewer(palette = 'Dark2') +
   scale_linetype(guide = 'none') +
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
@@ -599,7 +599,7 @@ p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id
         legend.text = element_text(size = 12),
         legend.position = 'none',
         strip.text = element_blank()) +
-  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
+  scale_color_brewer(palette = 'Dark2') +
   scale_linetype(guide = 'none') +
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
@@ -655,7 +655,7 @@ p4d_sim <- ggplot(data = res_simD, aes(x = time, y = val, col = Virus, lty = .id
         legend.text = element_text(size = 12),
         legend.position = 'none',
         strip.text = element_blank()) +
-  scale_color_manual(values = brewer.pal(3, 'Dark2')[c(1, 3)]) +
+  scale_color_brewer(palette = 'Dark2') +
   scale_linetype(guide = 'none') +
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
