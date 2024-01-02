@@ -23,6 +23,8 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'no_rsv_immune'
 } else if (str_detect(res_dir, 'no_ah')) {
   sens <- 'no_ah'
+} else if (str_detect(res_dir, 'rhino_covar')) {
+  sens <- 'rhino_covar'
 } else {
   sens <- 'main'
 }
@@ -103,6 +105,7 @@ load_and_format_mega_results <- function(filepath) {
   # expect_equal(df_use, 54)
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
+  print(table(pars_df$message))
   
   # If only one parameter set is in this range, MLE has not yet been reached; take top 5% of fits instead:
   if (no_best == 1) {
