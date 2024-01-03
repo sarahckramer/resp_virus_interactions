@@ -1466,10 +1466,10 @@ res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
 res_dir_lesscirch3 <- 'results/round2_fit/sens/less_circ_h3/round2_5_fluH1_plus_B/'
 
 res_main <- load_and_format_mega_results(res_dir_main, run_name = 'Main')
-res_noah <- load_and_format_mega_results(res_dir_noAH, run_name = 'No AH')
+res_noah <- load_and_format_mega_results(res_dir_noAH, run_name = 'Temperature Only')
 res_sinusoidal <- load_and_format_mega_results(res_dir_sinusoidal, run_name = 'Sinusoidal Forcing')
 res_noint <- load_and_format_mega_results(res_dir_noint, run_name = 'No Interaction')
-res_noRSVimmune <- load_and_format_mega_results(res_dir_noRSVimmune, run_name = 'No Immunity to RSV')
+res_noRSVimmune <- load_and_format_mega_results(res_dir_noRSVimmune, run_name = 'R[20] + R[120] = 0')
 res_h3covar <- load_and_format_mega_results(res_dir_h3covar, run_name = 'H3 as Covariate')
 res_lesscirch3 <- load_and_format_mega_results(res_dir_lesscirch3, run_name = 'Low H3 Circulation')
 
@@ -1508,8 +1508,11 @@ res <- res %>%
          parameter = if_else(parameter == 'rho2', 'rho[2]', parameter))
 
 res <- res %>%
-  mutate(condition = factor(condition, levels = c('Main', 'H3 as Covariate', 'Low H3 Circulation', 'No Interaction', 'No AH', 'Sinusoidal Forcing', 'No Immunity to RSV')),
+  mutate(condition = factor(condition, levels = c('Main', 'H3 as Covariate', 'Low H3 Circulation', 'No Interaction', 'Temperature Only', 'Sinusoidal Forcing', 'R[20] + R[120] = 0')),
          parameter = factor(parameter, levels = c('theta[lambda*1]', 'theta[lambda*2]', 'delta[1]', 'delta[2]', 'eta[temp*1]', 'eta[temp*2]', 'eta[ah*1]', 'eta[ah*2]', 'rho[1]', 'rho[2]', 'alpha', 'phi')))
+
+xlabels <- levels(res$condition)
+xlabels[7] <- expression(R[20] + R[120] == 0)
 
 fig18s <- ggplot(data = res, aes(x = condition, y = value)) +
   geom_point() +
@@ -1519,8 +1522,9 @@ fig18s <- ggplot(data = res, aes(x = condition, y = value)) +
         axis.text.x = element_text(angle = 40, vjust = 1, hjust = 1),
         strip.text = element_text(size = 14)) +
   facet_wrap(~ parameter, scales = 'free_y', ncol = 2, labeller = 'label_parsed') +
+  scale_x_discrete(labels = xlabels) +
   labs(x = 'Analysis', y = 'Parameter Value')
-ggsave('results/plots/figures_for_manuscript/supp/FigureS18.svg', width = 7, height = 12, fig18s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS18.svg', width = 7, height = 12, fig18s)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
