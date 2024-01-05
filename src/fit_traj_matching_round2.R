@@ -328,7 +328,7 @@ start_range <- data.frame(rho1 = c(0, 1.0),
                           phi1 = c(0, 52.25),
                           phi2 = c(0, 52.25),
                           beta_h3 = c(0, 10.0),
-                          beta_rhino = c(0, 10.0))
+                          beta_rhino = c(0, 5.0))
 
 # Set upper/lower values for unit params (broad):
 unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
