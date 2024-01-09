@@ -12,7 +12,7 @@ library(gridExtra)
 # Set directories where results are stored:
 res_dir_main <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_noAH <- 'results/round2_fit/sens/no_ah/round2_3_fluH1_plus_B/'
-res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_4_fluH1_plus_B/'
+res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1_plus_B/'
 res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
 res_dir_noRSVimmune <- 'results/round2_fit/sens/no_rsv_immune/round2_5_fluH1_plus_B/'
 res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
