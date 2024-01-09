@@ -13,6 +13,7 @@ library(cowplot)
 library(GGally)
 library(RColorBrewer)
 library(viridis)
+library(purrr)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -142,7 +143,7 @@ fig3s <- ggplot(data = res %>% filter(!is.na(parameter))) +
   scale_color_manual(values = c('black', 'darkred'), guide = 'none') +
   labs(x = 'Season', y = 'Maximum Likelihood Estimate (95% CI)')
 
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS3.svg', width = 3.7, height = 20.0, fig3s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS3.svg', width = 4, height = 20.0, fig3s)
 
 rm(fig3s, res, mle)
 
@@ -790,20 +791,6 @@ ar_df <- ar_df %>%
   mutate(virus = if_else(virus == 'H1', 'Influenza', 'RSV'),
          attack_rate = attack_rate * 100)
 
-p_legend <- ggplot(data = ar_df, aes(x = virus, y = attack_rate, group = virus)) +
-  geom_violin(fill = 'gray90') +
-  geom_point(aes(col = season), size = 2) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'bottom',
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12)) +
-  scale_color_viridis(discrete = TRUE) +
-  guides(colour = guide_legend(nrow = 1)) +
-  labs(col = 'Season')
-p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
-
 fig10s <- ggplot(data = ar_df, aes(x = virus, y = attack_rate, group = virus)) +
   geom_violin(fill = 'gray90') +
   geom_point(aes(col = season), size = 2) +
@@ -852,7 +839,7 @@ p11a <- ggplot() +
         plot.tag.position = c(0.004, 0.975)) +
   scale_x_continuous(breaks = breaks_fxn,
                      labels = c(46, 51, seq(4, 45, by = 5))) +
-  scale_color_manual(values = c('#1b9e77', '#8dd3c7')) +
+  scale_color_manual(values = c('#d95f02', '#fdbf6f')) +
   labs(x = 'Week #', y = 'RSV Incidence', color = '', tag = 'A')
 p11b <- ggplot() +
   geom_line(data = res %>%
@@ -874,7 +861,7 @@ p11b <- ggplot() +
         plot.tag.position = c(0.004, 0.975)) +
   scale_x_continuous(breaks = breaks_fxn,
                      labels = c(46, 51, seq(4, 45, by = 5))) +
-  scale_color_manual(values = c('#d95f02', '#fdbf6f')) +
+  scale_color_manual(values = c('#1b9e77', '#8dd3c7')) +
   labs(x = 'Week #', y = 'Influenza Incidence', color = '', tag = 'B')
 
 fig11s <- arrangeGrob(p11a, p11b, ncol = 1)
@@ -961,19 +948,45 @@ res_metrics <- res_metrics %>%
 
 upper_bound_ar <- max(res_metrics$ar2_impact)
 
+get_inset <- function(df){
+  p <- ggplot(data = df %>% 
+                group_by(season),# %>% 
+              # slice(1),
+              aes(x = time, y = val, col = Virus)) +
+    geom_line() +
+    # guides(fill=FALSE) +
+    theme_classic() +
+    theme(axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position = 'none',
+          strip.text = element_blank()) +
+    scale_y_continuous(limits = c(0, 4.1)) +
+    scale_color_brewer(palette = 'Dark2') +
+    labs(x = 'Time (Weeks)', y = 'Incidence (%)')
+  return(p)
+}
+# Source: https://clarewest.github.io/blog-posts/ggplotInset.html
+
+annotation_custom2 <- function (grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, data) 
+{
+  layer(data = data, stat = StatIdentity, position = PositionIdentity, 
+        geom = ggplot2:::GeomCustomAnn,
+        inherit.aes = TRUE, params = list(grob = grob, 
+                                          xmin = xmin, xmax = xmax, 
+                                          ymin = ymin, ymax = ymax))
+}
+# Source: https://clarewest.github.io/blog-posts/ggplotInset.html
+
 p13a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
-               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
-  geom_tile() +
-  facet_wrap(~ season, nrow = 1) +
+               aes(group = season)) +
+  geom_tile(aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+  facet_wrap(~ season, nrow = 1, scales = 'fixed') +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.key.width = unit(2.0, 'cm'),
-        legend.key.height = unit(0.7, 'cm'),
-        legend.position = 'bottom',
+        legend.position = 'none',
         plot.tag = element_text(size = 22),
         plot.tag.position = c(0.01, 0.98)) +
   scale_fill_distiller(palette = 'RdBu',
@@ -984,16 +997,69 @@ p13a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'na
   labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ' = ', theta[lambda*1], ')')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
-p13b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'natural'),
-               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
-  geom_tile() +
-  facet_wrap(~ season, nrow = 1) +
+p_legend1 <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'natural'),
+                    aes(group = season)) +
+  geom_tile(aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+  facet_wrap(~ season, nrow = 1, scales = 'fixed') +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
         legend.title = element_text(size = 14),
         legend.text = element_text(size = 12),
+        legend.key.width = unit(2.0, 'cm'),
+        legend.key.height = unit(0.7, 'cm'),
+        legend.position = 'bottom') +
+  scale_fill_distiller(palette = 'RdBu',
+                       values = c(0, 1 / upper_bound_ar, 1),
+                       limits = c(0, upper_bound_ar),
+                       breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  labs(fill = 'RR')
+p_legend1 <- ggplotGrob(p_legend1)$grobs[[which(sapply(ggplotGrob(p_legend1)$grobs, function(x) x$name) == 'guide-box')]]
+
+res_simA <- res %>%
+  filter(climate == 'temp',
+         scenario == 'natural',
+         season != 's18-19',
+         .id == 1,
+         vacc_time == '0',
+         vacc_cov == '0.5') %>%
+  # select(time:.id, season) %>%
+  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
+  mutate(val = val * 100) %>%
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
+
+p_legend2 <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus)) +
+  geom_line() +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'bottom') +
+  scale_color_brewer(palette = 'Dark2')
+p_legend2 <- ggplotGrob(p_legend2)$grobs[[which(sapply(ggplotGrob(p_legend2)$grobs, function(x) x$name) == 'guide-box')]]
+
+insetA <- res_simA %>%
+  split(f = .$season) %>%
+  purrr::map(~annotation_custom2(
+    grob = ggplotGrob(get_inset(.)),
+    data = data.frame(season = unique(.$season)),
+    ymin = 2, ymax = 30, xmin = 25, xmax = 52)
+  )
+
+p13a <- p13a + insetA
+
+p13b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'natural'),
+               aes(group = season)) +
+  geom_tile(aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+  facet_wrap(~ season, nrow = 1) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
         legend.position = 'none',
         plot.tag = element_text(size = 22),
         plot.tag.position = c(0.01, 0.98)) +
@@ -1006,6 +1072,28 @@ p13b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ' = ', theta[lambda*1], ')')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
+res_simB <- res %>%
+  filter(climate == 'subtrop',
+         scenario == 'natural',
+         season != 's13-14',
+         .id == 1,
+         vacc_time == '0',
+         vacc_cov == '0.5') %>%
+  # select(time:.id, season) %>%
+  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
+  mutate(val = val * 100) %>%
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV'))
+
+insetB <- res_simB %>%
+  split(f = .$season) %>%
+  purrr::map(~annotation_custom2(
+    grob = ggplotGrob(get_inset(.)),
+    data = data.frame(season = unique(.$season)),
+    ymin = 2, ymax = 30, xmin = 25, xmax = 52)
+  )
+
+p13b <- p13b + insetB
+
 p13c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'half'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
@@ -1014,8 +1102,6 @@ p13c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'ha
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
         legend.position = 'none',
         plot.tag = element_text(size = 22),
         plot.tag.position = c(0.01, 0.98)) +
@@ -1036,8 +1122,6 @@ p13d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
         legend.position = 'none',
         plot.tag = element_text(size = 22),
         plot.tag.position = c(0.01, 0.98)) +
@@ -1050,10 +1134,13 @@ p13d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ' = 0.5)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
-fig13s <- p13a / p13b / p13c / p13d + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS13.svg', fig13s, width = 13, height = 12)
+# fig13s <- p13a / p13b / p13c / p13d + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+fig13s <- arrangeGrob(p13a, p13b, p13c, p13d,
+                      arrangeGrob(p_legend1, p_legend2, layout_matrix = rbind(c(NA, 1, 2, NA)), widths = c(1.25, 2, 2, 1.25)),
+                      nrow = 5, heights = c(10, 10, 10, 10, 2.5))
+ggsave('results/plots/figures_for_manuscript/supp/FigureS13.svg', fig13s, width = 13, height = 11)
 
-rm(fig13s, p13a, p13b, p13c, p13d, res, res_metrics, upper_bound_ar)
+rm(fig13s, p13a, p13b, p13c, p13d, insetA, insetB, res, res_metrics, res_simA, res_simB, upper_bound_ar)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -1459,7 +1546,7 @@ rm(fig17s, dat_hk, dat_pos, x_lab_breaks, season_breaks)
 
 res_dir_main <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_noAH <- 'results/round2_fit/sens/no_ah/round2_3_fluH1_plus_B/'
-res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_4_fluH1_plus_B/'
+res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1_plus_B/'
 res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
 res_dir_noRSVimmune <- 'results/round2_fit/sens/no_rsv_immune/round2_5_fluH1_plus_B/'
 res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
