@@ -28,6 +28,12 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
 # sens <- 'main'
 
+# Determine which synthetic dataset and start values to use:
+jobid_orig <- ceiling(jobid / no_jobs)
+jobid <- (jobid - 1) %% no_jobs + 1
+print(jobid_orig)
+print(jobid)
+
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
@@ -37,7 +43,7 @@ if (sens == 'less_circ_h3') {
   seasons <- c('s17-18', 's18-19')
 }
 
-time_max <- 14.75 # Maximal execution time (in hours)
+time_max <- 23.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
@@ -220,7 +226,7 @@ synth_LIST <- read_rds(paste0('results/synth_data_for_bootstrapping_', vir1, '.r
 # Set data in pomp objects to synthetic values:
 for (i in 1:length(po_list)) {
   
-  po_list[[i]]@data <- synth_LIST[[i]][[jobid]]
+  po_list[[i]]@data <- synth_LIST[[i]][[jobid_orig]]
   
 }
 
@@ -297,7 +303,8 @@ nmins_exec <- time_max * 60 / (sobol_size / no_jobs)
 print(sprintf("Max estimation time=%.1f min", nmins_exec))
 
 # Get unique identifiers:
-sub_start <- (1:(sobol_size / no_jobs))
+# sub_start <- (1:(sobol_size / no_jobs))
+sub_start <- (1 + (jobid - 1) * sobol_size / no_jobs) : (jobid * sobol_size / no_jobs)
 
 # Fit:
 for (i in seq_along(sub_start)) {
@@ -350,7 +357,7 @@ for (i in seq_along(sub_start)) {
     saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d.rds',
                                 vir1,
                                 int_eff,
-                                jobid,
+                                jobid_orig,
                                 sub_start[i])
     )
     
