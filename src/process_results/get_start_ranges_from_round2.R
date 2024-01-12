@@ -122,17 +122,10 @@ load_and_format_mega_results <- function(filepath) {
     filter(!str_detect(message, 'maxtime')) %>%
     select(-message)
   
-  # If none remaining, take top 25 again:
-  while(nrow(pars_top) == 0) {
-    no_best <- max(no_best, 25)
-    
-    pars_top <- pars_df[1:no_best, ] %>%
-      filter(!str_detect(message, 'maxtime')) %>%
-      select(-message)
-    
-    no_best <- no_best + 25
+  # If none remaining, print warning:
+  if(nrow(pars_top) == 0) {
+    print('No convergence among best-fit runs!')
   }
-  no_best <- no_best - 25
   print(no_best)
   print(summary(pars_top$loglik))
   
