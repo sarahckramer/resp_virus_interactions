@@ -445,6 +445,12 @@ start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), name
 if (search_type == 'round2_CIs') {
   start_values <- start_values %>%
     mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+  
+  if ('phi1' %in% names(start_values)) {
+    start_values <- start_values %>%
+      mutate(phi1 = if_else(phi1 > 52.25, phi1 - 52.25, phi1),
+             phi2 = if_else(phi2 > 52.25, phi2 - 52.25, phi2))
+  }
 }
 
 # Force no interaction?:

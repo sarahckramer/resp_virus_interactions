@@ -147,9 +147,27 @@ load_and_format_mega_results <- function(filepath) {
   pars_top$rho2[pars_top$rho2 == 1.0] <- NA
   
   # Since phi=0 is equivalent to phi=52.25, don't use full range; transform so that we can select from only best-supported range:
+  par(mfrow = c(2, 1))
   hist(pars_top$phi, breaks = 50)
   pars_top <- pars_top %>%
-    mutate(phi = if_else(phi < 26, phi + 52.25, phi))
+    mutate(phi = if_else(phi < 5, phi + 52.25, phi))
+  hist(pars_top$phi, breaks = 50)
+  
+  # If using sinusoidal forcing, do the same for phi1 and phi2:
+  if ('phi1' %in% names(pars_top)) {
+    
+    par(mfrow = c(2, 2))
+    hist(pars_top$phi1, breaks = 50)
+    hist(pars_top$phi2, breaks = 50)
+    
+    pars_top <- pars_top %>%
+      mutate(phi1 = if_else(phi1 < 5, phi1 + 52.25, phi1),
+             phi2 = if_else(phi2 < 5, phi2 + 52.25, phi2))
+    
+    hist(pars_top$phi1, breaks = 50)
+    hist(pars_top$phi2, breaks = 50)
+    
+  }
   
   # Return formatted results:
   return(pars_top)
