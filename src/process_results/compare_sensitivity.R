@@ -17,6 +17,7 @@ res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
 res_dir_noRSVimmune <- 'results/round2_fit/sens/no_rsv_immune/round2_5_fluH1_plus_B/'
 res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
 res_dir_lesscirch3 <- 'results/round2_fit/sens/less_circ_h3/round2_5_fluH1_plus_B/'
+res_dir_rhino <- 'results/round2_fit/sens/rhino_covar/round2_3_fluH1_plus_B/'
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -76,6 +77,7 @@ res_noint <- load_and_format_mega_results(res_dir_noint, cond = 'No Interaction'
 res_noRSVimmune <- load_and_format_mega_results(res_dir_noRSVimmune, cond = 'No Immunity to RSV')
 res_h3covar <- load_and_format_mega_results(res_dir_h3covar, cond = 'H3 as Covariate')
 res_lesscirch3 <- load_and_format_mega_results(res_dir_lesscirch3, cond = 'Low H3 Circulation Seasons')
+res_rhino <- load_and_format_mega_results(res_dir_rhino, cond = 'Rhinovirus as Covariate')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -96,6 +98,8 @@ summary(res_h3covar %>%
           select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
 summary(res_lesscirch3 %>%
           select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
+summary(res_rhino %>%
+          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
 
 # Compare log likelihoods:
 res <- bind_rows(res_main,
@@ -103,7 +107,8 @@ res <- bind_rows(res_main,
                  res_sinusoidal,
                  res_noint,
                  res_noRSVimmune,
-                 res_h3covar)
+                 res_h3covar,
+                 res_rhino)
 
 p1 <- ggplot(data = res, aes(x = condition, y = loglik, group = condition)) + geom_jitter() + theme_classic()# + geom_boxplot()
 print(p1)
