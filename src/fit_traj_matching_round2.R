@@ -44,7 +44,7 @@ if (sens == 'less_circ_h3') {
   seasons <- c('s17-18', 's18-19')
 }
 
-time_max <- 23.75 # Maximal execution time (in hours)
+time_max <- 14.75 # 23.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
