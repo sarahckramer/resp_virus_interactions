@@ -186,8 +186,6 @@ res <- res %>%
 
 # For each virus, virus-virus pair, and season, calculate coefficient of efficiency:
 # https://stats.stackexchange.com/questions/185898/difference-between-nash-sutcliffe-efficiency-and-coefficient-of-determination
-seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
-
 r2a_list = r2b_list = c()
 r2a_num = r2b_num = 0
 r2a_denom = r2b_denom = 0
@@ -231,6 +229,73 @@ print(summary(r2b_list))
 
 r2a <- 1 - (r2a_num / r2a_denom)
 r2b <- 1 - (r2b_num / r2b_denom)
+
+# # Do the same, but instead of comparing to observed mean, fit sine wave to data:
+# r2a_list = r2b_list = c()
+# r2a_num = r2b_num = 0
+# r2a_denom = r2b_denom = 0
+# 
+# omega <- 2 * pi / 52.25
+# for (yr in seasons) {
+#   
+#   res_temp <- res %>%
+#     filter(season == yr)
+#   
+#   res_temp1 <- res_temp %>%
+#     filter(virus == 'Influenza')
+#   res_temp2 <- res_temp %>%
+#     filter(virus == 'RSV')
+#   
+#   m1 <- lm(log(obs) ~ sin(omega * time) + cos(omega * time), data = res_temp1)
+#   m2 <- lm(log(obs) ~ sin(omega * time) + cos(omega * time), data = res_temp2)
+#   
+#   par(mfrow = c(1, 2))
+#   plot(res_temp1$obs, pch = 20, xlab = 'Time', ylab = 'Influenza Cases')
+#   lines(exp(m1$coefficients[1] + m1$coefficients[2] * sin(omega * res_temp1$time) + m1$coefficients[3] * cos(omega * res_temp1$time)))
+#   lines(res_temp1$mean, col = 'blue')
+#   plot(res_temp2$obs, pch = 20, xlab = 'Time', ylab = 'RSV Cases')
+#   lines(exp(m2$coefficients[1] + m2$coefficients[2] * sin(omega * res_temp1$time) + m2$coefficients[3] * cos(omega * res_temp1$time)))
+#   lines(res_temp2$mean, col = 'blue')
+#   
+#   res_fit1 <- bind_cols(time = names(exp(m1$fitted.values)), sin_fit = exp(m1$fitted.values)) %>%
+#     mutate(time = as.numeric(time))
+#   res_fit2 <- bind_cols(time = names(exp(m2$fitted.values)), sin_fit = exp(m2$fitted.values)) %>%
+#     mutate(time = as.numeric(time))
+#   
+#   r2_a <- res_temp1 %>%
+#     left_join(res_fit1, by = 'time') %>%
+#     mutate(resid_sq = (obs - mean) ** 2,
+#            total_sq = (obs - sin_fit) ** 2) %>%
+#     summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+#               ss_total = sum(total_sq, na.rm = TRUE)) %>%
+#     mutate(r2 = 1 - ss_error / ss_total)
+#   r2a_num <- r2a_num + r2_a$ss_error
+#   r2a_denom <- r2a_denom + r2_a$ss_total
+#   r2_a <- r2_a %>%
+#     pull(r2)
+#   
+#   r2_b <- res_temp2 %>%
+#     left_join(res_fit2, by = 'time') %>%
+#     mutate(resid_sq = (obs - mean) ** 2,
+#            total_sq = (obs - sin_fit) ** 2) %>%
+#     summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+#               ss_total = sum(total_sq, na.rm = TRUE)) %>%
+#     mutate(r2 = 1 - ss_error / ss_total)
+#   r2b_num <- r2b_num + r2_b$ss_error
+#   r2b_denom <- r2b_denom + r2_b$ss_total
+#   r2_b <- r2_b %>%
+#     pull(r2)
+#   
+#   r2a_list <- c(r2a_list, r2_a)
+#   r2b_list <- c(r2b_list, r2_b)
+#   
+# }
+# 
+# print(summary(r2a_list))
+# print(summary(r2b_list))
+# 
+# r2a <- 1 - (r2a_num / r2a_denom)
+# r2b <- 1 - (r2b_num / r2b_denom)
 
 # For each virus, virus-virus pair, and season, calculate the proportion of observations falling within confidence intervals:
 prop_a_list = prop_b_list = c()
