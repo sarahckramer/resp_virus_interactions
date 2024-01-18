@@ -80,13 +80,28 @@ dat_h3 <- hk_dat$h3_rsv %>%
 expect_equal(mean(dat_h3$h3_inc, na.rm = TRUE), 0)
 expect_equal(sd(dat_h3$h3_inc, na.rm = TRUE), 1)
 
+dat_h3 <- dat_h3 %>%
+  mutate(h3_inc_lag1 = lag(h3_inc, 1),
+         h3_inc_lag2 = lag(h3_inc, 2))
+
 dat_pomp <- dat_pomp %>%
   inner_join(dat_h3,
              by = c('time', 'Year', 'Week', 'season')) %>%
-  select(time:Year, Week:season, n_T:i_ILI, pop:h3_inc) %>%
-  mutate(h3_inc = if_else(is.na(h3_inc), 0, h3_inc))
+  select(time:Year, Week:season, n_T:i_ILI, pop:h3_inc_lag2) %>%
+  mutate(h3_inc = if_else(is.na(h3_inc), 0, h3_inc),
+         h3_inc_lag1 = if_else(is.na(h3_inc_lag1), 0, h3_inc_lag1),
+         h3_inc_lag2 = if_else(is.na(h3_inc_lag2), 0, h3_inc_lag2))
 expect_true(nrow(dat_pomp) == nrow_check)
 rm(dat_h3)
+
+dat_pomp <- dat_pomp %>%
+  select(-h3_inc_lag1, -h3_inc_lag2)
+# dat_pomp <- dat_pomp %>%
+#   select(-h3_inc, -h3_inc_lag2) %>%
+#   rename('h3_inc' = 'h3_inc_lag1')
+# dat_pomp <- dat_pomp %>%
+#   select(-h3_inc, -h3_inc_lag1) %>%
+#   rename('h3_inc' = 'h3_inc_lag2')
 
 # Get rhinovirus incidence data (as covariate):
 dat_rhino <- hk_dat$h1_plus_b_rhino %>%
