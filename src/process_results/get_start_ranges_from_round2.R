@@ -112,6 +112,7 @@ load_and_format_mega_results <- function(filepath) {
     print('MLE not reached!')
     no_best <- 25
   }
+  print(no_best)
   
   # Get tibble of top fits:
   pars_top <- pars_df[1:no_best, ]
