@@ -30,10 +30,10 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # 
 # sobol_size <- 10
 # which_round <- 2
-# search_type <- 'round2_CIs'
+# search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
-# sens <- 'main' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'h3_covar'
+# sens <- 'rhino_covar' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -44,7 +44,7 @@ if (sens == 'less_circ_h3') {
   seasons <- c('s17-18', 's18-19')
 }
 
-time_max <- 14.75 # Maximal execution time (in hours)
+time_max <- 14.75 # 23.75 # Maximal execution time (in hours)
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
@@ -71,7 +71,7 @@ if (prof_lik) {
     prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid_orig]
   } else {
     prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
-    # prof_val <- seq(0, 0.05, by = 0.0025)[jobid_orig]
+    # prof_val <- seq(0, 0.02, by = 0.001)[jobid_orig]
   }
   print(prof_val)
   
@@ -261,6 +261,10 @@ if (int_eff == 'susc') {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                           'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
                           'beta_h3')
+    } else if (sens == 'rhino_covar') {
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+                          'beta_rhino')
     } else {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                           'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
@@ -290,6 +294,9 @@ if (int_eff == 'susc') {
 }
 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+if (sens == 'no_rsv_immune') {
+  unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10')
+}
 
 unit_sp_estpars <- c()
 for (i in 1:length(seasons)) {
@@ -320,7 +327,8 @@ start_range <- data.frame(rho1 = c(0, 1.0),
                           b2 = c(0.05, 0.2),
                           phi1 = c(0, 52.25),
                           phi2 = c(0, 52.25),
-                          beta_h3 = c(0, 10.0))
+                          beta_h3 = c(0, 5.0),
+                          beta_rhino = c(0, 5.0))
 
 # Set upper/lower values for unit params (broad):
 unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
@@ -330,6 +338,13 @@ unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
                                R10 = c(0, 0.3),
                                R20 = c(0, 0.3),
                                R120 = c(0, 0.3))
+if (sens == 'no_rsv_immune') {
+  unit_start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
+                                 Ri2 = c(1.0, Ri_max2),
+                                 I10 = c(0, 1e-3),
+                                 I20 = c(0, 1e-3),
+                                 R10 = c(0, 0.3))
+}
 
 # Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
@@ -344,28 +359,32 @@ for (i in 1:length(ci_list)) {
   ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
                                  summarise(tj_res_temp, across(.cols = everything(), max))))
   
-  # Check that initial conditions can't sum to >1:
-  sums <- ci_temp %>% select(I10:R120) %>% rowSums()
-  
-  if (sums[1] > 1.0) {
-    print('Lower bounds sum to more than 1!')
-    stop()
-  }
-  
-  if (sums[2] > 1.0) {
+  if (sens != 'no_rsv_immune') {
     
-    # Reduce the upper bounds of R10/R20/R120 proportionally:
-    orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
-    red_needed <- sums[2] - 0.9999999
-    new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
+    # Check that initial conditions can't sum to >1:
+    sums <- ci_temp %>% select(I10:R120) %>% rowSums()
     
-    # Ensure upper bounds still greater than lower:
-    orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
-    expect_true(all(new_upper_bounds > orig_lower_bounds))
+    if (sums[1] > 1.0) {
+      print('Lower bounds sum to more than 1!')
+      stop()
+    }
     
-    # Ensure upper bounds now sum to 1 or less:
-    ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
-    expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
+    if (sums[2] > 1.0) {
+      
+      # Reduce the upper bounds of R10/R20/R120 proportionally:
+      orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
+      red_needed <- sums[2] - 0.9999999
+      new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
+      
+      # Ensure upper bounds still greater than lower:
+      orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
+      expect_true(all(new_upper_bounds > orig_lower_bounds))
+      
+      # Ensure upper bounds now sum to 1 or less:
+      ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
+      expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
+      
+    }
     
   }
   
@@ -426,6 +445,12 @@ start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), name
 if (search_type == 'round2_CIs') {
   start_values <- start_values %>%
     mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+  
+  if ('phi1' %in% names(start_values)) {
+    start_values <- start_values %>%
+      mutate(phi1 = if_else(phi1 > 52.25, phi1 - 52.25, phi1),
+             phi2 = if_else(phi2 > 52.25, phi2 - 52.25, phi2))
+  }
 }
 
 # Force no interaction?:

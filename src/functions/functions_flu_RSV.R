@@ -42,7 +42,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
   po <- pomp(data = dat[, c('time', 'n_P1', 'n_P2')],
              times = 'time',
              t0 = 0,
-             covar = covariate_table(dat[, c('time', 'i_ILI', 'n_T', 'temp', 'ah', 'h3_inc')], times = 'time'),
+             covar = covariate_table(dat[, c('time', 'i_ILI', 'n_T', 'temp', 'ah', 'h3_inc', 'rhino_inc')], times = 'time'),
              accumvars = c('H1_tot', 'H2_tot', 'H1', 'H2'),
              obsnames = c('n_P1', 'n_P2'),
              statenames = c('X_SS', 'X_IS', 'X_TS', 'X_RS', 
@@ -63,6 +63,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
                             'eta_ah1', 'eta_ah2', # absolute humidity on virus 1 and 2
                             'b1', 'b2', 'phi1', 'phi2', # amplitudes and phase shifts for sinusoidal seasonality
                             'beta_h3', # effect of H3 on RSV force of infection
+                            'beta_rhino', # effect of rhinovirus on influenza force of infection
                             'beta_sd1', 'beta_sd2', # extrademographic stochasticity (k-value) for virus 1 and 2
                             'N', # population size
                             'I10', 'I20', # props. infectious at outbreak start
@@ -78,7 +79,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
                         eta_temp1 = 0, eta_temp2 = 0,
                         eta_ah1 = 0, eta_ah2 = 0,
                         b1 = 0, b2 = 0, phi1 = 0, phi2 = 0,
-                        beta_h3 = 0,
+                        beta_h3 = 0, beta_rhino = 0,
                         beta_sd1 = 0, beta_sd2 = 0,
                         N = unique(dat$pop),
                         I10 = 1e-5, I20 = 1e-5,

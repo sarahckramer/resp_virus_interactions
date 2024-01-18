@@ -13,7 +13,21 @@ res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 which_round <- str_split(res_dir, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir, '_')[[1]])))]
 
 # Are results from a sensitivity analysis?:
-sens <- 'main'
+if (str_detect(res_dir, 'sinusoidal')) {
+  sens <- 'sinusoidal_forcing'
+} else if (str_detect(res_dir, 'h3_covar')) {
+  sens <- 'h3_covar'
+} else if (str_detect(res_dir, 'less_circ_h3')) {
+  sens <- 'less_circ_h3'
+} else if (str_detect(res_dir, 'no_rsv_immune')) {
+  sens <- 'no_rsv_immune'
+} else if (str_detect(res_dir, 'no_ah')) {
+  sens <- 'no_ah'
+} else if (str_detect(res_dir, 'rhino_covar')) {
+  sens <- 'rhino_covar'
+} else {
+  sens <- 'main'
+}
 
 # Check that directory for storing results exists, and create if not:
 if (!dir.exists('results/')) {
@@ -28,6 +42,21 @@ if (sens == 'main') {
   new_dir <- paste0('results/round2_CIs/from_2_', which_round, '/')
   if (!dir.exists(new_dir)) {
     dir.create(new_dir)
+  }
+  
+  if (str_detect(res_dir, 'age_structured')) {
+    
+    if(!dir.exists('results/round2_CIs/sens/')) {
+      dir.create('results/round2_CIs/sens/')
+    }
+    if(!dir.exists('results/round2_CIs/sens/age_structured/')) {
+      dir.create('results/round2_CIs/sens/age_structured/')
+    }
+    
+    new_dir <- paste0('results/round2_CIs/sens/age_structured/from_2_', which_round, '/')
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
   }
   
 } else {
@@ -76,21 +105,30 @@ load_and_format_mega_results <- function(filepath) {
   # expect_equal(df_use, 54)
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
+  print(table(pars_df$message))
   
   # If only one parameter set is in this range, MLE has not yet been reached; take top 5% of fits instead:
   if (no_best == 1) {
     print('MLE not reached!')
     no_best <- 25
   }
+  print(no_best)
   
   # Get tibble of top fits:
   pars_top <- pars_df[1:no_best, ]
+  print(summary(pars_top$loglik))
   
   # Remove where no convergence occurs:
   pars_top <- pars_top %>%
-    filter(!str_detect(message, 'maxtime'))
-  pars_top <- pars_top %>%
+    filter(!str_detect(message, 'maxtime')) %>%
     select(-message)
+  
+  # If none remaining, print warning:
+  if(nrow(pars_top) == 0) {
+    print('No convergence among best-fit runs!')
+  }
+  print(no_best)
+  print(summary(pars_top$loglik))
   
   # # Remove where d2 > 10 and theta_lambda2 != 1.0:
   # pars_top <- pars_top %>%
@@ -103,9 +141,27 @@ load_and_format_mega_results <- function(filepath) {
   pars_top$rho2[pars_top$rho2 == 1.0] <- NA
   
   # Since phi=0 is equivalent to phi=52.25, don't use full range; transform so that we can select from only best-supported range:
+  par(mfrow = c(2, 1))
   hist(pars_top$phi, breaks = 50)
   pars_top <- pars_top %>%
-    mutate(phi = if_else(phi < 26, phi + 52.25, phi))
+    mutate(phi = if_else(phi < 5, phi + 52.25, phi))
+  hist(pars_top$phi, breaks = 50)
+  
+  # If using sinusoidal forcing, do the same for phi1 and phi2:
+  if ('phi1' %in% names(pars_top)) {
+    
+    par(mfrow = c(2, 2))
+    hist(pars_top$phi1, breaks = 50)
+    hist(pars_top$phi2, breaks = 50)
+    
+    pars_top <- pars_top %>%
+      mutate(phi1 = if_else(phi1 < 5, phi1 + 52.25, phi1),
+             phi2 = if_else(phi2 < 5, phi2 + 52.25, phi2))
+    
+    hist(pars_top$phi1, breaks = 50)
+    hist(pars_top$phi2, breaks = 50)
+    
+  }
   
   # Return formatted results:
   return(pars_top)

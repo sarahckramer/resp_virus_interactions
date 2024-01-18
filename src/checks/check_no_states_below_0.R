@@ -9,6 +9,19 @@ library(testthat)
 # Specify location of results to check:
 res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 
+# Identify sensitivity analysis:
+if (str_detect(res_dir, 'sinusoidal')) {
+  sens <- 'sinusoidal_forcing'
+} else if (str_detect(res_dir, 'h3_covar')) {
+  sens <- 'h3_covar'
+} else if (str_detect(res_dir, 'no_rsv_immune')) {
+  sens <- 'no_rsv_immune'
+} else if (str_detect(res_dir, 'rhino_covar')) {
+  sens <- 'rhino_covar'
+} else {
+  sens <- 'main'
+}
+
 # Check for missing results files:
 res_files <- list.files(path = res_dir, full.names = FALSE)
 res_exist <- res_files %>%
@@ -40,8 +53,12 @@ pars_df <- pars_df %>%
   arrange(desc(loglik))
 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+if (sens == 'no_rsv_immune') {
+  unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10')
+}
+
 shared_estpars <- pars_df %>% select(!contains(unit_estpars) & !'loglik') %>% names()
-expect_equal(length(shared_estpars), 12)
+# expect_equal(length(shared_estpars), 12)
 true_estpars <- c(shared_estpars, unit_estpars)
 
 df_use <- pars_df %>% select(-loglik) %>% names() %>% length()
