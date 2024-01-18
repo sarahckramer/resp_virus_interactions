@@ -120,6 +120,7 @@ print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$conditi
 print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No Interaction'])) > qchisq(p = 0.95, df = 4))
 print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No Immunity to RSV'])) > qchisq(p = 0.95, df = 12))
 print(2 * (min(res$loglik[res$condition == 'H3 as Covariate']) - max(res$loglik[res$condition == 'Main'])) > qchisq(p = 0.95, df = 1))
+print(2 * (min(res$loglik[res$condition == 'Rhinovirus as Covariate']) - max(res$loglik[res$condition == 'Main'])) > qchisq(p = 0.95, df = 1))
 
 aic_main <- 2 * length(names(res_main %>% select(-c(loglik, condition)))) - 2 * max(res_main$loglik)
 aic_noah <- 2 * length(names(res_noah %>% select(-c(loglik, condition)))) - 2 * max(res_noah$loglik)
