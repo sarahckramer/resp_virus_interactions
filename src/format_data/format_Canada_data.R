@@ -42,22 +42,6 @@ can_ili <- can_ili %>%
   mutate(year = as.numeric(year),
          week = as.numeric(week))
 
-# # Check FluID data (from WHO):
-# # Source: https://www.who.int/teams/global-influenza-programme/surveillance-and-monitoring/influenza-surveillance-outputs
-# can_ili2 <- read_csv('data/raw/canada/VIW_FID_EPI.csv')
-# can_ili2 <- can_ili2 %>%
-#   filter(COUNTRY_AREA_TERRITORY == 'Canada',
-#          AGEGROUP_CODE == 'All',
-#          !is.na(ILI_CASE)) %>%
-#   select(ISO_WEEKSTARTDATE:ISO_WEEK, ILI_CASE:ILI_OUTPATIENTS) %>%
-#   rename_with(tolower) %>%
-#   rename('date' = iso_weekstartdate,
-#          'year' = iso_year,
-#          'week' = iso_week) %>%
-#   mutate(ili_rate = ili_case / ili_outpatients * 1000) %>%
-#   select(year:week, date, ili_rate) %>%
-#   arrange(year, week)
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Read in and format virologic data
@@ -101,21 +85,6 @@ can_vir <- can_vir %>%
   select(year:date, n_test_flu:rsv) %>%
   mutate(year = as.numeric(year),
          week = as.numeric(week))
-
-# # Check FluNet data (from WHO):
-# can_vir2 <- read_csv('data/raw/canada/VIW_FNT.csv')
-# can_vir2 <- can_vir2 %>%
-#   filter(COUNTRY_AREA_TERRITORY == 'Canada') %>%
-#   select(ISO_WEEKSTARTDATE:ISO_WEEK, SPEC_PROCESSED_NB, AH1N12009:AH3, ANOTSUBTYPED, INF_A, INF_B, INF_ALL, ADENO:RSV) %>%
-#   mutate(AH1 = sum(AH1, AH1N12009, na.rm = TRUE)) %>%
-#   select(!AH1N12009) %>%
-#   arrange(ISO_WEEKSTARTDATE) %>%
-#   rename_with(tolower) %>%
-#   rename('date' = iso_weekstartdate,
-#          'year' = iso_year,
-#          'week' = iso_week)
-# can_vir2 <- can_vir2 %>%
-#   filter(year >= 2008 & year < 2020)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -200,28 +169,12 @@ can_dat_long <- can_dat %>%
                values_to = 'perc_pos') %>%
   mutate(virus = if_else(virus == 'perc_flu', 'Flu', virus),
          virus = if_else(virus == 'perc_rsv', 'RSV', virus))
-# can_vir2_long <- can_vir2 %>%
-#   mutate(perc_a = inf_a / spec_processed_nb * 100,
-#          perc_b = inf_b / spec_processed_nb * 100,
-#          perc_rsv = rsv / spec_processed_nb * 100) %>%
-#   select(date, perc_a:perc_rsv) %>%
-#   pivot_longer(!date,
-#                names_to = 'virus',
-#                values_to = 'perc_pos') %>%
-#   mutate(virus = if_else(virus == 'perc_a', 'Flu A', virus),
-#          virus = if_else(virus == 'perc_b', 'Flu B', virus),
-#          virus = if_else(virus == 'perc_rsv', 'RSV', virus))
 
 p2 <- ggplot(can_dat_long, aes(x = date, y = perc_pos, group = virus, col = virus)) +
   geom_line() +
   theme_classic() +
   labs(x = 'Date', y = 'Percent Positive', col = 'Virus', title = 'Canada Virologic') +
   scale_color_brewer(palette = 'Set1')
-# p_can_3 <- ggplot(can_vir2_long, aes(x = date , y = perc_pos, group = virus, col = virus)) +
-#   geom_line() +
-#   theme_classic() +
-#   labs(x = 'Date', y = 'Percent Positive', col = 'Virus', title = 'Canada Virologic (WHO)') +
-#   scale_color_brewer(palette = 'Set1')
 
 p3 <- ggplot(can_dat_long, aes(x = time, y = perc_pos, group = virus, col = virus)) +
   geom_line() +
