@@ -69,10 +69,11 @@ check_correct_N_CONST_VACC <- function(sim_res, true_n) {
 }
 
 
-check_obs_lessthan_samples <- function(pomp_object, n_sim = 10) {
+check_obs_lessthan_samples <- function(pomp_object, n_sim = 10, test_diff = FALSE) {
   # Function to check that simulated case numbers never exceed the total number of tests performed
   # params pomp_object: The pomp model object to be checked
   # params n_sim: The number of stochastic simulations to run
+  # param test_diff: are there a different number of tests performed for the two viruses being modeled?
   # returns: Plot of # of samples, observations, and simulated positive tests
   
   sim_stoch <- simulate(object = pomp_object, nsim = n_sim, format = 'data.frame')
@@ -85,23 +86,48 @@ check_obs_lessthan_samples <- function(pomp_object, n_sim = 10) {
            obs_nP2 = n_P2.y) %>%
     filter(!is.na(sim_nP1))
   
-  expect_true(all(sim_stoch$sim_nP1 <= sim_stoch$n_T))
-  expect_true(all(sim_stoch$sim_nP2 <= sim_stoch$n_T))
-  
-  sim_stoch <- sim_stoch %>%
-    select(time:.id, sim_nP1:sim_nP2, obs_nP1:obs_nP2, n_T) %>%
-    pivot_longer(sim_nP1:sim_nP2, names_to = 'sim_names', values_to = 'sim_vals') %>%
-    pivot_longer(obs_nP1:obs_nP2, names_to = 'obs_names', values_to = 'obs_vals') %>%
-    mutate(sim_names = str_sub(sim_names, 5, 7),
-           obs_names = str_sub(obs_names, 5, 7)) %>%
-    filter(sim_names == obs_names)
-  
-  p_temp <- ggplot(data = sim_stoch) + geom_line(aes(x = time, y = n_T), lwd = 1.5) +
-    geom_line(aes(x = time, y = sim_vals, group = .id, col = .id)) +
-    geom_point(aes(x = time, y = obs_vals)) +
-    facet_wrap(~sim_names, ncol = 1) +
-    labs(x = 'Time (Weeks)', y = 'Simulated Observations') + theme_classic() +
-    scale_color_viridis(discrete = TRUE)
+  if (test_diff) {
+    
+    expect_true(all(sim_stoch$sim_nP1 <= sim_stoch$n_T1))
+    expect_true(all(sim_stoch$sim_nP2 <= sim_stoch$n_T2))
+    
+    sim_stoch <- sim_stoch %>%
+      select(time:.id, sim_nP1:sim_nP2, obs_nP1:obs_nP2, n_T1:n_T2) %>%
+      pivot_longer(sim_nP1:sim_nP2, names_to = 'sim_names', values_to = 'sim_vals') %>%
+      pivot_longer(obs_nP1:obs_nP2, names_to = 'obs_names', values_to = 'obs_vals') %>%
+      mutate(sim_names = str_sub(sim_names, 5, 7),
+             obs_names = str_sub(obs_names, 5, 7)) %>%
+      filter(sim_names == obs_names)
+    
+    p_temp <- ggplot(data = sim_stoch) + geom_line(aes(x = time, y = n_T1), lwd = 1.5) +
+      geom_line(aes(x = time, y = n_T2), lwd = 1.5, linetype = 2) +
+      geom_line(aes(x = time, y = sim_vals, group = .id, col = .id)) +
+      geom_point(aes(x = time, y = obs_vals)) +
+      facet_wrap(~sim_names, ncol = 1) +
+      labs(x = 'Time (Weeks)', y = 'Simulated Observations') + theme_classic() +
+      scale_color_viridis(discrete = TRUE)
+    
+  } else {
+    
+    expect_true(all(sim_stoch$sim_nP1 <= sim_stoch$n_T))
+    expect_true(all(sim_stoch$sim_nP2 <= sim_stoch$n_T))
+    
+    sim_stoch <- sim_stoch %>%
+      select(time:.id, sim_nP1:sim_nP2, obs_nP1:obs_nP2, n_T) %>%
+      pivot_longer(sim_nP1:sim_nP2, names_to = 'sim_names', values_to = 'sim_vals') %>%
+      pivot_longer(obs_nP1:obs_nP2, names_to = 'obs_names', values_to = 'obs_vals') %>%
+      mutate(sim_names = str_sub(sim_names, 5, 7),
+             obs_names = str_sub(obs_names, 5, 7)) %>%
+      filter(sim_names == obs_names)
+    
+    p_temp <- ggplot(data = sim_stoch) + geom_line(aes(x = time, y = n_T), lwd = 1.5) +
+      geom_line(aes(x = time, y = sim_vals, group = .id, col = .id)) +
+      geom_point(aes(x = time, y = obs_vals)) +
+      facet_wrap(~sim_names, ncol = 1) +
+      labs(x = 'Time (Weeks)', y = 'Simulated Observations') + theme_classic() +
+      scale_color_viridis(discrete = TRUE)
+    
+  }
   
   return(p_temp)
 }

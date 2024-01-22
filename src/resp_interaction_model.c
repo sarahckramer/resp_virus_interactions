@@ -124,7 +124,7 @@ R120 = exp(T_R120) / (1.0 + sum_init);
 
 //end_fromest
 
-//start_dmeas
+//start_dmeas_orig
 double fP1, fP2, ll;
 double omega = (2 * M_PI) / 52.25;
 
@@ -162,9 +162,40 @@ if(debug) {
 } 
 lik = (give_log) ? ll : exp(ll);
 
-//end_dmeas
+//end_dmeas_orig
 
-//start_rmeas
+//start_dmeas_testdiff
+double fP1, fP2, ll;
+double omega = (2 * M_PI) / 52.25;
+
+double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ILI); // Probability of detecting virus 2
+
+if (rho1_w < 0) {
+  rho1_w = 0.0;
+}
+if (rho2_w < 0) {
+  rho2_w = 0.0;
+}
+
+fP1 = dbinom(n_P1, n_T1, rho1_w, 1); // First likelihood component, natural scale
+fP2 = dbinom(n_P2, n_T2, rho2_w, 1); // Second likelihood component, natural scale
+
+// If rho_w == 1, the resulting observation probability might be 0 (-Inf on log-scale)
+// Replace by a big, but finite penalty if that's the case 
+ll = fmax2(fP1 + fP2, -1e3);
+
+// If data are NA, ll will be NA; in this case, set to zero
+ll = ISNA(ll) ? 0.0 : ll;
+
+if(debug) {
+  Rprintf("t=%.1f, rho1_w=%.1f, rho2_w=%.1f, n_T1=%.1f, n_T2=%.1f, fP1=%.1f, fP2=%.1f, sum=%.1f, ll=%.f\n", t, rho1_w, rho2_w, n_T1, n_T2, fP1, fP2, fP1 + fP2, ll);
+}
+lik = (give_log) ? ll : exp(ll);
+
+//end_dmeas_testdiff
+
+//start_rmeas_orig
 double omega = (2 * M_PI) / 52.25;
 
 double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
@@ -172,7 +203,17 @@ double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / 
 
 n_P1 = rbinom(n_T, rho1_w); // Generate of tests positive to virus 1
 n_P2 = rbinom(n_T, rho2_w); // Generate of tests positive to virus 2
-//end_rmeas
+//end_rmeas_orig
+
+//start_rmeas_testdiff
+double omega = (2 * M_PI) / 52.25;
+
+double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ILI); // Probability of detecting virus 2
+
+n_P1 = rbinom(n_T1, rho1_w); // Generate of tests positive to virus 1
+n_P2 = rbinom(n_T2, rho2_w); // Generate of tests positive to virus 2
+//end_rmeas_testdiff
 
 //start_rinit
 X_SS = nearbyint((1.0 - I10 - I20 - R10 - R20 - R120) * N);

@@ -29,10 +29,20 @@ if (!exists('age_structured')) {
 
 # Read in data:
 hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
+can_dat <- read_csv('data/formatted/dat_canada.csv')
 
 # Get data of interest:
-dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
-  filter(season == yr)
+if (fit_canada) {
+  
+  dat_pomp <- can_dat %>%
+    filter(season == yr)
+  
+} else {
+  
+  dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
+    filter(season == yr)
+  
+}
 nrow_check <- nrow(dat_pomp)
 
 if (age_structured) {
@@ -47,79 +57,109 @@ if (age_structured) {
   
 } else {
   
-  dat_pomp <- dat_pomp %>%
-    rename('i_ILI' = 'GOPC') %>%
-    mutate(i_ILI = i_ILI / 1000)
-  # https://www.censtatd.gov.hk/en/
-  # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
+  if (!fit_canada) {
+    dat_pomp <- dat_pomp %>%
+      rename('i_ILI' = 'GOPC') %>%
+      mutate(i_ILI = i_ILI / 1000)
+    # https://www.censtatd.gov.hk/en/
+    # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
+  }
   
 }
 
 # Get climate data:
-dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
-if (lag_val > 0) {
-  dat_clim <- dat_clim %>%
-    mutate(temp = lag(temp, n = lag_val),
-           ah = lag(ah, n = lag_val))
+if (!fit_canada) {
+  
+  dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
+  if (lag_val > 0) {
+    dat_clim <- dat_clim %>%
+      mutate(temp = lag(temp, n = lag_val),
+             ah = lag(ah, n = lag_val))
+  }
+  dat_pomp <- dat_pomp %>%
+    inner_join(dat_clim,
+               by = c('Year' = 'year',
+                      'Week' = 'week')) %>%
+    select(time:pop, temp, ah, rh)
+  expect_true(nrow(dat_pomp) == nrow_check)
+  rm(dat_clim)
+  
+} else {
+  
+  dat_pomp <- dat_pomp %>%
+    mutate(temp = 0,
+           ah = 0)
+  
 }
-dat_pomp <- dat_pomp %>%
-  inner_join(dat_clim,
-             by = c('Year' = 'year',
-                    'Week' = 'week')) %>%
-  select(time:pop, temp, ah, rh)
-expect_true(nrow(dat_pomp) == nrow_check)
-rm(dat_clim)
 
 # Get H3 incidence data (as covariate):
-dat_h3 <- hk_dat$h3_rsv %>%
-  rename('i_ILI' = 'GOPC') %>%
-  mutate(i_ILI = i_ILI / 1000,
-         h3_inc_raw = (n_P1 / n_T) * i_ILI,
-         h3_inc = scale(h3_inc_raw)[, 1]) %>%
-  select(time:Year, Week:season, h3_inc)
-expect_equal(mean(dat_h3$h3_inc, na.rm = TRUE), 0)
-expect_equal(sd(dat_h3$h3_inc, na.rm = TRUE), 1)
-
-dat_h3 <- dat_h3 %>%
-  mutate(h3_inc_lag1 = lag(h3_inc, 1),
-         h3_inc_lag2 = lag(h3_inc, 2))
-
-dat_pomp <- dat_pomp %>%
-  inner_join(dat_h3,
-             by = c('time', 'Year', 'Week', 'season')) %>%
-  select(time:Year, Week:season, n_T:i_ILI, pop:h3_inc_lag2) %>%
-  mutate(h3_inc = if_else(is.na(h3_inc), 0, h3_inc),
-         h3_inc_lag1 = if_else(is.na(h3_inc_lag1), 0, h3_inc_lag1),
-         h3_inc_lag2 = if_else(is.na(h3_inc_lag2), 0, h3_inc_lag2))
-expect_true(nrow(dat_pomp) == nrow_check)
-rm(dat_h3)
-
-dat_pomp <- dat_pomp %>%
-  select(-h3_inc_lag1, -h3_inc_lag2)
-# dat_pomp <- dat_pomp %>%
-#   select(-h3_inc, -h3_inc_lag2) %>%
-#   rename('h3_inc' = 'h3_inc_lag1')
-# dat_pomp <- dat_pomp %>%
-#   select(-h3_inc, -h3_inc_lag1) %>%
-#   rename('h3_inc' = 'h3_inc_lag2')
+if (!fit_canada) {
+  
+  dat_h3 <- hk_dat$h3_rsv %>%
+    rename('i_ILI' = 'GOPC') %>%
+    mutate(i_ILI = i_ILI / 1000,
+           h3_inc_raw = (n_P1 / n_T) * i_ILI,
+           h3_inc = scale(h3_inc_raw)[, 1]) %>%
+    select(time:Year, Week:season, h3_inc)
+  expect_equal(mean(dat_h3$h3_inc, na.rm = TRUE), 0)
+  expect_equal(sd(dat_h3$h3_inc, na.rm = TRUE), 1)
+  
+  dat_h3 <- dat_h3 %>%
+    mutate(h3_inc_lag1 = lag(h3_inc, 1),
+           h3_inc_lag2 = lag(h3_inc, 2))
+  
+  dat_pomp <- dat_pomp %>%
+    inner_join(dat_h3,
+               by = c('time', 'Year', 'Week', 'season')) %>%
+    select(time:Year, Week:season, n_T:i_ILI, pop:h3_inc_lag2) %>%
+    mutate(h3_inc = if_else(is.na(h3_inc), 0, h3_inc),
+           h3_inc_lag1 = if_else(is.na(h3_inc_lag1), 0, h3_inc_lag1),
+           h3_inc_lag2 = if_else(is.na(h3_inc_lag2), 0, h3_inc_lag2))
+  expect_true(nrow(dat_pomp) == nrow_check)
+  rm(dat_h3)
+  
+  dat_pomp <- dat_pomp %>%
+    select(-h3_inc_lag1, -h3_inc_lag2)
+  # dat_pomp <- dat_pomp %>%
+  #   select(-h3_inc, -h3_inc_lag2) %>%
+  #   rename('h3_inc' = 'h3_inc_lag1')
+  # dat_pomp <- dat_pomp %>%
+  #   select(-h3_inc, -h3_inc_lag1) %>%
+  #   rename('h3_inc' = 'h3_inc_lag2')
+  
+} else {
+  
+  dat_pomp <- dat_pomp %>%
+    mutate(h3_inc = 0)
+  
+}
 
 # Get rhinovirus incidence data (as covariate):
-dat_rhino <- hk_dat$h1_plus_b_rhino %>%
-  rename('i_ILI' = 'GOPC') %>%
-  mutate(i_ILI = i_ILI / 1000,
-         rhino_inc_raw = (n_P2 / n_T) * i_ILI,
-         rhino_inc = scale(rhino_inc_raw)[, 1]) %>%
-  select(time:Year, Week:season, rhino_inc)
-expect_equal(mean(dat_rhino$rhino_inc, na.rm = TRUE), 0)
-expect_equal(sd(dat_rhino$rhino_inc, na.rm = TRUE), 1)
-
-dat_pomp <- dat_pomp %>%
-  inner_join(dat_rhino,
-             by = c('time', 'Year', 'Week', 'season')) %>%
-  select(time:Year, Week:season, n_T:i_ILI, pop:rhino_inc) %>%
-  mutate(rhino_inc = if_else(is.na(rhino_inc), 0, rhino_inc))
-expect_true(nrow(dat_pomp) == nrow_check)
-rm(dat_rhino)
+if (!fit_canada) {
+  
+  dat_rhino <- hk_dat$h1_plus_b_rhino %>%
+    rename('i_ILI' = 'GOPC') %>%
+    mutate(i_ILI = i_ILI / 1000,
+           rhino_inc_raw = (n_P2 / n_T) * i_ILI,
+           rhino_inc = scale(rhino_inc_raw)[, 1]) %>%
+    select(time:Year, Week:season, rhino_inc)
+  expect_equal(mean(dat_rhino$rhino_inc, na.rm = TRUE), 0)
+  expect_equal(sd(dat_rhino$rhino_inc, na.rm = TRUE), 1)
+  
+  dat_pomp <- dat_pomp %>%
+    inner_join(dat_rhino,
+               by = c('time', 'Year', 'Week', 'season')) %>%
+    select(time:Year, Week:season, n_T:i_ILI, pop:rhino_inc) %>%
+    mutate(rhino_inc = if_else(is.na(rhino_inc), 0, rhino_inc))
+  expect_true(nrow(dat_pomp) == nrow_check)
+  rm(dat_rhino)
+  
+} else {
+  
+  dat_pomp <- dat_pomp %>%
+    mutate(rhino_inc = 0)
+  
+}
 
 # If no data for this season, skip:
 if (nrow(dat_pomp) > 0) {
@@ -144,12 +184,27 @@ if (nrow(dat_pomp) > 0) {
   # Create pomp model and run basic model checks
   
   # Create model:
-  resp_mod <- create_SITRxSITR_mod(dat = dat_pomp,
-                                   Ri1_max = Ri_max1,
-                                   Ri2_max = Ri_max2,
-                                   d2_max = d2_max,
-                                   debug_bool = debug_bool,
-                                   sens = sens)
+  if (fit_canada) {
+    
+    resp_mod <- create_SITRxSITR_mod(dat = dat_pomp,
+                                     Ri1_max = Ri_max1,
+                                     Ri2_max = Ri_max2,
+                                     d2_max = d2_max,
+                                     debug_bool = debug_bool,
+                                     sens = sens,
+                                     test_diff = TRUE)
+    
+  } else {
+    
+    resp_mod <- create_SITRxSITR_mod(dat = dat_pomp,
+                                     Ri1_max = Ri_max1,
+                                     Ri2_max = Ri_max2,
+                                     d2_max = d2_max,
+                                     debug_bool = debug_bool,
+                                     sens = sens,
+                                     test_diff = FALSE)
+    
+  }
   
   # Check transformations:
   check_transformations(resp_mod)
@@ -174,7 +229,7 @@ if (nrow(dat_pomp) > 0) {
   if (debug_bool) print(p3)
   
   # Run stochastic simulation and check that obs never more than n_samp:
-  p4 <- check_obs_lessthan_samples(resp_mod)
+  p4 <- check_obs_lessthan_samples(resp_mod, test_diff = fit_canada)
   if (debug_bool) print(p4)
   
   # Check that measurement density model works:

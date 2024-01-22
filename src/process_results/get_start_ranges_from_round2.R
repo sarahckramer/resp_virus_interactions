@@ -29,6 +29,14 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'main'
 }
 
+# Check whether Canada or Hong Kong:
+if (str_detect(res_dir, 'canada')) {
+  fit_canada <- TRUE
+  sens <- 'sinusoidal_forcing'
+} else {
+  fit_canada <- FALSE
+}
+
 # Check that directory for storing results exists, and create if not:
 if (!dir.exists('results/')) {
   dir.create('results/')
@@ -71,6 +79,18 @@ if (sens == 'main') {
   new_dir <- paste0('results/round2_CIs/sens/', sens, '/from_2_', which_round, '/')
   if (!dir.exists(new_dir)) {
     dir.create(new_dir)
+  }
+  
+  if (fit_canada) {
+    new_dir <- 'results/round2_CIs/sens/canada/'
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
+    
+    new_dir <- paste0('results/round2_CIs/sens/canada/from_2_', which_round, '/')
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
   }
   
 }
@@ -178,7 +198,13 @@ ci_start <- as.data.frame(rbind(summarise(res, across(.cols = everything(), \(x)
 
 # Possible that d2 ranges are missing if all top fits were > 10; if so, replace:
 if (any(ci_start == Inf)) {
-  ci_start$d2 <- c(0, 10)
+  if (any(ci_start$d2 == Inf)) {
+    ci_start$d2 <- c(0, 10)
+  } else if (any(ci_start$delta1 == Inf)) {
+    ci_start$delta1 <- c(7 / 60, 7)
+  } else {
+    print('Range is NA for some other parameter.')
+  }
 }
 
 # Check that sums of initial conditions can't sum to >1:

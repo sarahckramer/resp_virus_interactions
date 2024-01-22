@@ -22,6 +22,14 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'main'
 }
 
+# Check whether Canada or Hong Kong:
+if (str_detect(res_dir, 'canada')) {
+  fit_canada <- TRUE
+  sens <- 'sinusoidal_forcing'
+} else {
+  fit_canada <- FALSE
+}
+
 # Check for missing results files:
 res_files <- list.files(path = res_dir, full.names = FALSE)
 res_exist <- res_files %>%
@@ -70,7 +78,11 @@ no_best <- max(no_best, 50)
 pars_top <- pars_df[1:no_best, ]
 
 # Get/set relevant model parameters:
-vir1 <- 'flu_h1_plus_b'
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
 prof_lik <- FALSE
 lag_val <- 0
 
