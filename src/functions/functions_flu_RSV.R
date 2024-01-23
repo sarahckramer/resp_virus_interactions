@@ -12,6 +12,13 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
   # param sens: main analysis or the name of a specific sensitivity analysis
   # param test_diff: are there a different number of tests performed for the two viruses being modeled?
   
+  # Are data from Canada?:
+  if (test_diff) {
+    loc <- 'canada'
+  } else {
+    loc <- 'hk'
+  }
+  
   # Read model C code:
   mod_code <- readLines('src/resp_interaction_model.c')
   components_nm <- c('globs', 'toest', 'fromest', 'dmeas_orig', 'dmeas_testdiff', 'rmeas_orig', 'rmeas_testdiff', 'rinit', 'skel', 'rsim')
@@ -24,12 +31,13 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
     
     if(nm == 'globs') {
       components_l[[nm]] <- paste(components_l[[nm]], 
-                                  sprintf('static int debug = %d; \nstatic double Ri1_max = %f; \nstatic double Ri2_max = %f; \nstatic double d2_max = %f; \nstatic char sens[] = "%s";', 
+                                  sprintf('static int debug = %d; \nstatic double Ri1_max = %f; \nstatic double Ri2_max = %f; \nstatic double d2_max = %f; \nstatic char sens[] = "%s"; \nstatic char loc[] = "%s";', 
                                           as.integer(debug_bool),
                                           as.numeric(Ri1_max),
                                           as.numeric(Ri2_max),
                                           as.numeric(d2_max),
-                                          as.character(sens)),
+                                          as.character(sens),
+                                          as.character(loc)),
                                   sep = '\n')
     }
     

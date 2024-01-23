@@ -44,7 +44,14 @@ T_theta_lambda1 = logit(theta_lambda1);
 T_theta_lambda2 = logit(theta_lambda2);
 T_theta_rho1 = log(theta_rho1);
 T_theta_rho2 = log(theta_rho2);
-T_rho1 = logit(rho1); 
+
+if (strcmp("canada", loc) == 0) {
+  T_rho1 = log(rho1);
+} else {
+  T_rho1 = logit(rho1);
+}
+//T_rho1 = logit(rho1); 
+
 T_rho2 = logit(rho2);
 //T_rho1 = log(rho1); 
 //T_rho2 = log(rho2);
@@ -92,7 +99,14 @@ theta_lambda1 = expit(T_theta_lambda1);
 theta_lambda2 = expit(T_theta_lambda2);
 theta_rho1 = exp(T_theta_rho1);
 theta_rho2 = exp(T_theta_rho2);
-rho1 = expit(T_rho1);
+
+if (strcmp("canada", loc) == 0) {
+  rho1 = exp(T_rho1);
+} else {
+  rho1 = expit(T_rho1);
+}
+//rho1 = expit(T_rho1);
+
 rho2 = expit(T_rho2);
 //rho1 = exp(T_rho1);
 //rho2 = exp(T_rho2);
