@@ -22,10 +22,11 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 
 if (fit_canada) {
   yr <- c('s10-11', 's11-12', 's12-13', 's13-14')[(ceiling(jobid / no_jobs) - 1) %% 4 + 1]; print(yr)
+  vir1 <- 'flu'
 } else {
   yr <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')[(ceiling(jobid / no_jobs) - 1) %% 6 + 1]; print(yr)
+  vir1 <- 'flu_h1_plus_b'
 }
-vir1 <- 'flu_h1_plus_b'
 jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 
 # # Set parameters for local runs (temp):
@@ -44,7 +45,7 @@ jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 # Set parameters for run:
 vir2 <- 'rsv'
 
-time_max <- 1.75 # Maximal execution time (in hours)
+time_max <- 1.75 # 5.0 # Maximal execution time (in hours)
 debug_bool <- FALSE
 
 Ri_max1 <- 3.0
