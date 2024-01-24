@@ -18,6 +18,7 @@ final_round <- as.integer(Sys.getenv("FINALROUND")); print(final_round)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
+fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -27,6 +28,7 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # final_round <- 3
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
 # sens <- 'main'
+# fit_canada <- FALSE
 
 # Determine which synthetic dataset and start values to use:
 jobid_orig <- ceiling(jobid / no_jobs)
@@ -41,6 +43,9 @@ vir2 <- 'rsv'
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 if (sens == 'less_circ_h3') {
   seasons <- c('s17-18', 's18-19')
+}
+if (fit_canada) {
+  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
 }
 
 time_max <- 23.75 # Maximal execution time (in hours)

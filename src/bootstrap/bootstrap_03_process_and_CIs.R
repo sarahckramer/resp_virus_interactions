@@ -11,6 +11,11 @@ library(gt)
 # Get names of all results files:
 file_list <- list.files(path = 'results/bootstrapping/flu_H1_plus_B/', full.names = TRUE)
 
+# Results from Canada?:
+if (str_detect(file_list[[1]], 'canada')) {
+  fit_canada <- TRUE
+}
+
 # Ensure no results missing:
 expect_true(length(file_list) == 500 * 10)
 
@@ -88,23 +93,47 @@ true_estpars <- c(shared_estpars, unit_estpars)
 #   unlist()))
 
 # Calculate composite parameters:
-res_df_unit <- res_df %>%
-  select(contains('I') | contains('R') | dataset) %>%
-  select(-c(phi, rho1, rho2)) %>%
-  pivot_longer(-c(loglik, dataset)) %>%
-  mutate(season = str_sub(name, 1, 6),
-         name = str_sub(name, 8)) %>%
-  pivot_wider(names_from = name,
-              values_from = value) %>%
-  mutate(`R10 + R120` = R10 + R120,
-         `R20 + R120` = R20 + R120,
-         R01 = Ri1 / (1 - (I10 + R10 + R120)),
-         R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
-  pivot_longer(Ri1:R02,
-               names_to = 'parameter',
-               values_to = 'value') %>%
-  mutate(parameter = paste(season, parameter, sep = '_')) %>%
-  select(parameter:value)
+if (fit_canada) {
+  
+  res_df_unit <- res_df %>%
+    select(contains('I') | contains('R') | dataset) %>%
+    select(-c(phi, rho1, rho2, phi1, phi2)) %>%
+    pivot_longer(-c(loglik, dataset)) %>%
+    mutate(season = str_sub(name, 1, 6),
+           name = str_sub(name, 8)) %>%
+    pivot_wider(names_from = name,
+                values_from = value) %>%
+    mutate(`R10 + R120` = R10 + R120,
+           `R20 + R120` = R20 + R120,
+           R01 = Ri1 / (1 - (I10 + R10 + R120)),
+           R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
+    pivot_longer(Ri1:R02,
+                 names_to = 'parameter',
+                 values_to = 'value') %>%
+    mutate(parameter = paste(season, parameter, sep = '_')) %>%
+    select(parameter:value)
+  
+} else {
+  
+  res_df_unit <- res_df %>%
+    select(contains('I') | contains('R') | dataset) %>%
+    select(-c(phi, rho1, rho2)) %>%
+    pivot_longer(-c(loglik, dataset)) %>%
+    mutate(season = str_sub(name, 1, 6),
+           name = str_sub(name, 8)) %>%
+    pivot_wider(names_from = name,
+                values_from = value) %>%
+    mutate(`R10 + R120` = R10 + R120,
+           `R20 + R120` = R20 + R120,
+           R01 = Ri1 / (1 - (I10 + R10 + R120)),
+           R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
+    pivot_longer(Ri1:R02,
+                 names_to = 'parameter',
+                 values_to = 'value') %>%
+    mutate(parameter = paste(season, parameter, sep = '_')) %>%
+    select(parameter:value)
+  
+}
 
 res_df_shared <- res_df %>%
   select(all_of(shared_estpars), loglik, dataset) %>%
@@ -129,28 +158,58 @@ ci_res <- res_df %>%
 #   mutate(vir1 = 'flu_h1_plus_b')
 
 # Write results to file:
-write_csv(ci_res, file = 'results/95CI_from_boostrapping_HPDI.csv')
+if (fit_canada) {
+  write_csv(ci_res, file = 'results/round2_fit/sens/canada/95CI_from_boostrapping_HPDI.csv')
+} else {
+  write_csv(ci_res, file = 'results/95CI_from_boostrapping_HPDI.csv')
+}
 
 # Read in MLEs and add to data frame:
-mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
-
-mle_unit <- mle %>%
-  select(contains('I') | contains('R')) %>%
-  select(-c(phi, rho1, rho2)) %>%
-  pivot_longer(everything()) %>%
-  mutate(season = str_sub(name, 1, 6),
-         name = str_sub(name, 8)) %>%
-  pivot_wider(names_from = name,
-              values_from = value) %>%
-  mutate(`R10 + R120` = R10 + R120,
-         `R20 + R120` = R20 + R120,
-         R01 = Ri1 / (1 - (I10 + R10 + R120)),
-         R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
-  pivot_longer(Ri1:R02,
-               names_to = 'parameter',
-               values_to = 'mle') %>%
-  mutate(parameter = paste(season, parameter, sep = '_')) %>%
-  select(parameter:mle)
+if (fit_canada) {
+  
+  mle <- read_rds('results/round2_fit/sens/canada/MLEs_flu.rds')[1, ]
+  
+  mle_unit <- mle %>%
+    select(contains('I') | contains('R')) %>%
+    select(-c(phi, rho1, rho2, phi1, phi2)) %>%
+    pivot_longer(everything()) %>%
+    mutate(season = str_sub(name, 1, 6),
+           name = str_sub(name, 8)) %>%
+    pivot_wider(names_from = name,
+                values_from = value) %>%
+    mutate(`R10 + R120` = R10 + R120,
+           `R20 + R120` = R20 + R120,
+           R01 = Ri1 / (1 - (I10 + R10 + R120)),
+           R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
+    pivot_longer(Ri1:R02,
+                 names_to = 'parameter',
+                 values_to = 'mle') %>%
+    mutate(parameter = paste(season, parameter, sep = '_')) %>%
+    select(parameter:mle)
+  
+} else {
+  
+  mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
+  
+  mle_unit <- mle %>%
+    select(contains('I') | contains('R')) %>%
+    select(-c(phi, rho1, rho2)) %>%
+    pivot_longer(everything()) %>%
+    mutate(season = str_sub(name, 1, 6),
+           name = str_sub(name, 8)) %>%
+    pivot_wider(names_from = name,
+                values_from = value) %>%
+    mutate(`R10 + R120` = R10 + R120,
+           `R20 + R120` = R20 + R120,
+           R01 = Ri1 / (1 - (I10 + R10 + R120)),
+           R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
+    pivot_longer(Ri1:R02,
+                 names_to = 'parameter',
+                 values_to = 'mle') %>%
+    mutate(parameter = paste(season, parameter, sep = '_')) %>%
+    select(parameter:mle)
+  
+}
 
 mle_shared <- mle %>%
   select(all_of(shared_estpars)) %>%
@@ -166,7 +225,11 @@ ci_res <- ci_res %>%
   select(parameter, mle, lower:upper)
 
 # Write results to file:
-write_csv(ci_res, file = 'results/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+if (fit_canada) {
+  write_csv(ci_res, file = 'results/round2_fit/sens/canada/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+} else {
+  write_csv(ci_res, file = 'results/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+}
 
 # Generate tables of results:
 res_table <- ci_res %>%
@@ -175,7 +238,11 @@ res_table <- ci_res %>%
   fmt_number(columns = c(mle, lower, upper), decimals = 3, suffixing = TRUE)
 print(res_table)
 
-gtsave(res_table, filename = 'results/plots/table_CIs_h1_plus_b.html')
+if (fit_canada) {
+  gtsave(res_table, filename = 'results/round2_fit/sens/canada/table_CIs_h1_plus_b.html')
+} else {
+  gtsave(res_table, filename = 'results/plots/table_CIs_h1_plus_b.html')
+}
 
 # Check whether MLEs fall within CIs:
 ci_res %>% filter(mle <= lower)
@@ -199,7 +266,11 @@ p2 <- ggplot(data = res_df_unit, aes(x = value, y = after_stat(count)/nrow(res_d
 print(p1)
 print(p2)
 
-pdf('results/plots/plot_params_plus_ci.pdf', width = 15, height = 8)
+if (fit_canada) {
+  pdf('results/plots/plot_params_plus_ci_CANADA.pdf', width = 15, height = 8)
+} else {
+  pdf('results/plots/plot_params_plus_ci.pdf', width = 15, height = 8)
+}
 print(p1)
 print(p2)
 dev.off()
