@@ -10,8 +10,16 @@ library(corrplot)
 library(ppcor)
 library(gridExtra)
 
+# Sensitivity analysis?:
+sens <- 'main'
+fit_canada <- FALSE
+
 # Set directory where results from round1 fits are stored:
-res_dir <- 'results/round1_fitsharedFALSE/'
+if (fit_canada) {
+  res_dir <- 'results/round2_fit/sens/canada/round1_fitsharedFALSE/'
+} else {
+  res_dir <- 'results/round1_fitsharedFALSE/'
+}
 
 # Check that directory for storing plots exists, and create if not:
 if (!dir.exists('results/')) {
@@ -27,9 +35,6 @@ date <- format(Sys.Date(), '%d%m%y')
 # Specify parameters estimated:
 estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 
-# Sensitivity analysis?:
-sens <- 'main'
-
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Plot results by flu type/season
@@ -39,7 +44,11 @@ pars_list <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_TOP.rds'))
 slice_list <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_SLICE.rds'))
 
 # Get vector of seasons:
-seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+if (fit_canada) {
+  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
+} else {
+  seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+}
 
 # Create lists to store results:
 cor_list = pcor_list = vector('list', length(pars_list))
@@ -49,7 +58,11 @@ names(cor_list) = names(pcor_list) = names(pars_list)
 for (yr in seasons) {
   
   # Get list position:
-  vir_seas <- paste('flu_h1_plus_b', yr, sep = '_')
+  if (fit_canada) {
+    vir_seas <- paste('flu', yr, sep = '_')
+  } else {
+    vir_seas <- paste('flu_h1_plus_b', yr, sep = '_')
+  }
   print(vir_seas)
   
   # Check that results exist for this flu/season:
@@ -91,8 +104,13 @@ pcor_list <- pcor_list[lapply(pcor_list, length) > 0]
 rm(vir_seas, yr)
 
 # Output plots to file:
-pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE.pdf'),
-    width = 15, height = 10)
+if (fit_canada) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE_CANADA.pdf'),
+      width = 15, height = 10)
+} else {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE.pdf'),
+      width = 15, height = 10)
+}
 
 # Pairs plots:
 lapply(pars_list, function(ix) {
@@ -131,7 +149,14 @@ plot_list <- vector('list', length = length(pars_list))
 for (i in 1:length(pars_list)) {
   yr <- pars_list[[i]] %>% pull(year) %>% unique()
   print(yr)
-  vir1 <- 'flu_h1_plus_b'; vir2 <- 'rsv'; debug_bool <- FALSE; Ri_max1 <- 3.0; Ri_max2 <- 3.0; d2_max <- 10.0
+  
+  if (fit_canada) {
+    vir1 <- 'flu'
+  } else {
+    vir1 <- 'flu_h1_plus_b'
+  }
+  vir2 <- 'rsv'; debug_bool <- FALSE; Ri_max1 <- 3.0; Ri_max2 <- 3.0; d2_max <- 10.0
+  
   source('src/resp_interaction_model.R')
   
   x0s <- pars_list[[i]] %>% select(all_of(estpars))
@@ -211,8 +236,14 @@ p4 <- ggplot(data = pars_mle, aes(x = virus1, y = mle)) +
   labs(x = 'Virus', y = 'Parameter Value', title = 'MLE Values')
 
 # Save plots to file:
-pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE.pdf'),
-    width = 15, height = 8)
+if (fit_canada) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE_CANADA.pdf'),
+      width = 15, height = 8)
+} else {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE.pdf'),
+      width = 15, height = 8)
+}
+
 print(p1)
 print(p2)
 print(p3)

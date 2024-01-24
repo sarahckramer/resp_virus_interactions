@@ -9,9 +9,21 @@ library(tidyverse)
 library(testthat)
 library(gridExtra)
 
+# Data from Canada?:
+fit_canada <- FALSE
+
+if (fit_canada) {
+  sens <- 'sinusoidal_forcing'
+}
+
 # Set directory where final results from round2 fits are stored:
-res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
-res_dir_round1 <- 'results/round1_fitsharedFALSE/'
+if (fit_canada) {
+  res_dir <- 'results/round2_fit/sens/canada/round2_3_flu/'
+  res_dir_round1 <- 'results/round2_fit/sens/canada/round1_fitsharedFALSE/'
+} else {
+  res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
+  res_dir_round1 <- 'results/round1_fitsharedFALSE/'
+}
 
 # Check that directory for storing plots exists, and create if not:
 if (!dir.exists('results/')) {
@@ -59,7 +71,7 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
     arrange(desc(loglik))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  expect_equal(df_use, 54)
+  # expect_equal(df_use, 54)
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   print(no_best)
@@ -103,15 +115,20 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
 # Read in and format results for all runs
 
 # Set shared and unit parameters:
-shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                    'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+if (fit_canada) {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+} else {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+}
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
-# H1 + B:
-res_h1_plus_b <- load_and_format_mega_results(filepath = res_dir,
-                                              shared_estpars = shared_estpars,
-                                              unit_estpars = unit_estpars,
-                                              run_name = 'H1_plus_B')
+# Round 2 results:
+res_r2 <- load_and_format_mega_results(filepath = res_dir,
+                                       shared_estpars = shared_estpars,
+                                       unit_estpars = unit_estpars,
+                                       run_name = 'round2')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -135,6 +152,10 @@ res_r1 <- res_r1 %>%
          eta_temp2 = NA,
          eta_ah1 = NA,
          eta_ah2 = NA,
+         b1 = NA,
+         b2 = NA,
+         phi1 = NA,
+         phi2 = NA,
          method = 'round1_noInt') %>%
   select(year:method) %>%
   pivot_longer(-c(year, loglik, method),
@@ -146,15 +167,21 @@ res_r1 <- res_r1 %>%
 # Visualize results
 
 # Save pairs plots/estimate comparisons as pdf:
-pdf(paste0('results/plots/', date, '_trajectory_matching_round2.pdf'),
-    width = 22, height = 12)
+if (fit_canada) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_CANADA.pdf'),
+      width = 22, height = 12)
+} else {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2.pdf'),
+      width = 22, height = 12)
+}
 
 # Pairs plots:
-pairs(res_h1_plus_b[[3]][, c(shared_estpars, unit_estpars, 'loglik')], pch = 20, main = unique(res_h1_plus_b[[3]]$method))
+pairs(res_r2[[3]][, c(shared_estpars, unit_estpars, 'loglik')], pch = 20, main = unique(res_r2[[3]]$method))
 
 # Compare estimates across methods/subtypes:
-res <- res_h1_plus_b[[2]] %>%
-  bind_rows(res_r1)
+res <- res_r2[[2]] %>%
+  bind_rows(res_r1) %>%
+  filter(param %in% c(shared_estpars, unit_estpars))
 rm(res_r1)
 res$param <- factor(res$param)
 res$param <- factor(res$param, levels = c(shared_estpars, unit_estpars))
@@ -167,11 +194,16 @@ print(p1)
 dev.off()
 
 # Plot correlations between global parameters and Ris/initial conditions:
-pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr.pdf'),
-    width = 18, height = 10)
+if (fit_canada) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr_CANADA.pdf'),
+      width = 18, height = 10)
+} else {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr.pdf'),
+      width = 18, height = 10)
+}
 
 for (param in unit_estpars) {
-  res_h1_plus_b[[1]] %>%
+  res_r2[[1]] %>%
     select(all_of(shared_estpars),
            contains(param)) %>%
     plot(pch = 20,
@@ -179,28 +211,39 @@ for (param in unit_estpars) {
 }
 
 # And calculate correlation between estimates of eta_temp and eta_ah:
-par(mfrow = c(2, 1), mar = c(4, 4, 1, 0.5))
-pars_temp <- res_h1_plus_b[[1]] %>% select(eta_temp1:eta_ah2)
-plot(pars_temp$eta_temp1, pars_temp$eta_ah1, pch = 20)
-plot(pars_temp$eta_temp2, pars_temp$eta_ah2, pch = 20)
-cor.test(pars_temp$eta_temp1, pars_temp$eta_ah1) %>% print()
-cor.test(pars_temp$eta_temp2, pars_temp$eta_ah2) %>% print()
+if (!fit_canada) {
+  par(mfrow = c(2, 1), mar = c(4, 4, 1, 0.5))
+  pars_temp <- res_r2[[1]] %>% select(eta_temp1:eta_ah2)
+  plot(pars_temp$eta_temp1, pars_temp$eta_ah1, pch = 20)
+  plot(pars_temp$eta_temp2, pars_temp$eta_ah2, pch = 20)
+  cor.test(pars_temp$eta_temp1, pars_temp$eta_ah1) %>% print()
+  cor.test(pars_temp$eta_temp2, pars_temp$eta_ah2) %>% print()
+}
 
 dev.off()
 
 # Plot slices:
-pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices.pdf'),
-    width = 20, height = 20)
+if (fit_canada) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices_CANADA.pdf'),
+      width = 20, height = 20)
+} else {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices.pdf'),
+      width = 20, height = 20) 
+}
 
 true_estpars <- c(shared_estpars, unit_estpars)
 prof_lik <- FALSE
 lag_val <- 0
 
 # Set estpars:
-estpars <- names(res_h1_plus_b[[1]])[1:(length(names(res_h1_plus_b[[1]])) - 1)]
+estpars <- names(res_r2[[1]])[1:(length(names(res_r2[[1]])) - 1)]
 
 # Set vir1:
-vir1 <- 'flu_h1_plus_b'
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
 
 # Read in pomp models:
 source('src/functions/setup_global_likelilhood.R')
@@ -209,26 +252,47 @@ source('src/functions/setup_global_likelilhood.R')
 par(mfrow = c(10, 6), bty = 'l')
 
 for (j in 1:5) {
-  mle <- setNames(object = as.numeric(res_h1_plus_b[[1]][j, 1:(length(names(res_h1_plus_b[[1]])) - 1)]),
+  mle <- setNames(object = as.numeric(res_r2[[1]][j, 1:(length(names(res_r2[[1]])) - 1)]),
                   nm = estpars)
   
-  slices <- slice_design(center = mle,
-                         rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
-                         rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20),
-                         theta_lambda1 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda1'], to = 1.1 * mle['theta_lambda1'], length.out = 20),
-                         theta_lambda2 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda2'], to = 1.1 * mle['theta_lambda2'], length.out = 20),
-                         delta1 = seq(from = 0.9 * mle['delta1'], to = 1.1 * mle['delta1'], length.out = 20),
-                         d2 = seq(from = 0.9 * mle['d2'], to = 1.1 * mle['d2'], length.out = 20),
-                         alpha = seq(from = 0.9 * mle['alpha'], to = 1.1 * mle['alpha'], length.out = 20),
-                         phi = seq(from = 0, to = 52, length.out = 20),#seq(from = 0.9 * mle['phi'], to = 1.1 * mle['phi'], length.out = 20),
-                         eta_temp1 = seq(from = 0.9 * mle['eta_temp1'], to = 1.1 * mle['eta_temp1'], length.out = 20),
-                         eta_temp2 = seq(from = 0.9 * mle['eta_temp2'], to = 1.1 * mle['eta_temp2'], length.out = 20),
-                         eta_ah1 = seq(from = 0.9 * mle['eta_ah1'], to = 1.1 * mle['eta_ah2'], length.out = 20),
-                         eta_ah2 = seq(from = 0.9 * mle['eta_ah2'], to = 1.1 * mle['eta_ah2'], length.out = 20)) %>%
-    mutate(ll = NA)
+  if (fit_canada) {
+    
+    slices <- slice_design(center = mle,
+                           rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
+                           rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20),
+                           theta_lambda1 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda1'], to = 1.1 * mle['theta_lambda1'], length.out = 20),
+                           theta_lambda2 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda2'], to = 1.1 * mle['theta_lambda2'], length.out = 20),
+                           delta1 = seq(from = 0.9 * mle['delta1'], to = 1.1 * mle['delta1'], length.out = 20),
+                           d2 = seq(from = 0.9 * mle['d2'], to = 1.1 * mle['d2'], length.out = 20),
+                           alpha = seq(from = 0.9 * mle['alpha'], to = 1.1 * mle['alpha'], length.out = 20),
+                           phi = seq(from = 0, to = 52, length.out = 20),#seq(from = 0.9 * mle['phi'], to = 1.1 * mle['phi'], length.out = 20),
+                           b1 = seq(from = 0.9 * mle['b1'], to = 1.1 * mle['b1'], length.out = 20),
+                           b2 = seq(from = 0.9 * mle['b2'], to = 1.1 * mle['b2'], length.out = 20),
+                           phi1 = seq(from = 0.9 * mle['phi1'], to = 1.1 * mle['phi1'], length.out = 20),
+                           phi2 = seq(from = 0.9 * mle['phi2'], to = 1.1 * mle['phi2'], length.out = 20)) %>%
+      mutate(ll = NA)
+    
+  } else {
+    
+    slices <- slice_design(center = mle,
+                           rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
+                           rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20),
+                           theta_lambda1 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda1'], to = 1.1 * mle['theta_lambda1'], length.out = 20),
+                           theta_lambda2 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda2'], to = 1.1 * mle['theta_lambda2'], length.out = 20),
+                           delta1 = seq(from = 0.9 * mle['delta1'], to = 1.1 * mle['delta1'], length.out = 20),
+                           d2 = seq(from = 0.9 * mle['d2'], to = 1.1 * mle['d2'], length.out = 20),
+                           alpha = seq(from = 0.9 * mle['alpha'], to = 1.1 * mle['alpha'], length.out = 20),
+                           phi = seq(from = 0, to = 52, length.out = 20),#seq(from = 0.9 * mle['phi'], to = 1.1 * mle['phi'], length.out = 20),
+                           eta_temp1 = seq(from = 0.9 * mle['eta_temp1'], to = 1.1 * mle['eta_temp1'], length.out = 20),
+                           eta_temp2 = seq(from = 0.9 * mle['eta_temp2'], to = 1.1 * mle['eta_temp2'], length.out = 20),
+                           eta_ah1 = seq(from = 0.9 * mle['eta_ah1'], to = 1.1 * mle['eta_ah2'], length.out = 20),
+                           eta_ah2 = seq(from = 0.9 * mle['eta_ah2'], to = 1.1 * mle['eta_ah2'], length.out = 20)) %>%
+      mutate(ll = NA) 
+    
+  }
   
   for (k in 1:nrow(slices)) {
-    x0 <- slices[k, 1:(length(names(res_h1_plus_b[[1]])) - 1)]
+    x0 <- slices[k, 1:(length(names(res_r2[[1]])) - 1)]
     expect_true(all(names(x0) == estpars))
     x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
     slices$ll[k] <- -1 * calculate_global_loglik(x0_trans)
@@ -250,8 +314,13 @@ rm(j, mle, slices)
 dev.off()
 
 # Plot simulations:
-pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations.pdf'),
-    width = 18, height = 10)
+if (fit_canada) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations_CANADA.pdf'),
+      width = 18, height = 10)
+} else {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations.pdf'),
+      width = 18, height = 10)
+}
 
 # # Read in pomp models:
 # source('src/functions/setup_global_likelilhood.R')
@@ -269,7 +338,7 @@ for (j in 1:length(seasons)) {
   resp_mod <- po_list[[j]]
   
   # Get parameter values:
-  pars_temp <- res_h1_plus_b[[1]] %>%
+  pars_temp <- res_r2[[1]] %>%
     select(all_of(shared_estpars),
            contains(yr))
   names(pars_temp)[(length(names(pars_temp)) - 6):length(names(pars_temp))] <- unit_estpars
