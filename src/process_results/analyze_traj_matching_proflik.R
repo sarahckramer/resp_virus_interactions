@@ -9,8 +9,15 @@ library(tidyverse)
 library(patchwork)
 library(testthat)
 
+# Data from Canada?:
+fit_canada <- FALSE
+
 # Set directory where profile likelihood results are stored:
-res_dir <- 'results/prof_lik_thetalambda1/'
+if (fit_canada) {
+  res_dir <- 'results/round2_fit/sens/canada/prof_lik_thetalambda1/'
+} else {
+  res_dir <- 'results/prof_lik_thetalambda1/'
+}
 
 # Check that directory for storing plots exists, and create if not:
 if (!dir.exists('results/')) {
@@ -26,7 +33,7 @@ date <- format(Sys.Date(), '%d%m%y')
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Function to read in and format results:
-load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) {
+load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars, fit_canada) {
   
   # Remove prof_par from shared_estpars:
   shared_estpars <- shared_estpars[!(shared_estpars == prof_par)]
@@ -41,20 +48,42 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
   }
   
   # Get estimated parameter and log-likelihood values:
-  res_temp <- lapply(res_full, getElement, 'estpars') %>%
-    bind_rows() %>%
-    select(all_of(shared_estpars)) %>%
-    bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
-                unlist()) %>%
-    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
-                unlist()) %>%
-    bind_cols(map_chr(str_split(res_files, '_'), 10),
-              paste0('0.', map_chr(str_split(map_chr(str_split(res_files, '_'), 11), fixed('.')), 2))) %>%
-    rename(run = '...14',
-           profpar = '...15') %>%
-    mutate(run = as.numeric(run),
-           profpar = as.numeric(profpar)) %>%
-    arrange(profpar, run)
+  if (fit_canada) {
+    
+    res_temp <- lapply(res_full, getElement, 'estpars') %>%
+      bind_rows() %>%
+      select(all_of(shared_estpars)) %>%
+      bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                  unlist()) %>%
+      bind_cols('message' = lapply(res_full, getElement, 'message') %>%
+                  unlist()) %>%
+      bind_cols(map_chr(str_split(res_files, '_'), 8),
+                paste0('0.', map_chr(str_split(map_chr(str_split(res_files, '_'), 9), fixed('.')), 2))) %>%
+      rename(run = '...14',
+             profpar = '...15') %>%
+      mutate(run = as.numeric(run),
+             profpar = as.numeric(profpar)) %>%
+      arrange(profpar, run)
+    
+  } else {
+    
+    res_temp <- lapply(res_full, getElement, 'estpars') %>%
+      bind_rows() %>%
+      select(all_of(shared_estpars)) %>%
+      bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                  unlist()) %>%
+      bind_cols('message' = lapply(res_full, getElement, 'message') %>%
+                  unlist()) %>%
+      bind_cols(map_chr(str_split(res_files, '_'), 10),
+                paste0('0.', map_chr(str_split(map_chr(str_split(res_files, '_'), 11), fixed('.')), 2))) %>%
+      rename(run = '...14',
+             profpar = '...15') %>%
+      mutate(run = as.numeric(run),
+             profpar = as.numeric(profpar)) %>%
+      arrange(profpar, run)
+    
+  }
+  
   expect_true(nrow(res_temp) == length(res_files))
   expect_true(all(is.finite(res_temp$loglik)))
   
@@ -72,13 +101,19 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
 # Read in and format results for all runs
 
 # Set shared estimated parameters:
-shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                    'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+if (fit_canada) {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+} else {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+}
 
 # Read in and format results:
 res <- load_and_format_proflik_results(filepath = res_dir,
                                        prof_par = 'theta_lambda1',
-                                       shared_estpars = shared_estpars)
+                                       shared_estpars = shared_estpars,
+                                       fit_canada = fit_canada)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
