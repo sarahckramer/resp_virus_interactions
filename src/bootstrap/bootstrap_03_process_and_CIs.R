@@ -14,6 +14,8 @@ file_list <- list.files(path = 'results/bootstrapping/flu_H1_plus_B/', full.name
 # Results from Canada?:
 if (str_detect(file_list[[1]], 'canada')) {
   fit_canada <- TRUE
+} else {
+  fit_canada <- FALSE
 }
 
 # Ensure no results missing:
@@ -66,19 +68,24 @@ true_estpars <- c(shared_estpars, unit_estpars)
 # prof_lik <- FALSE
 # lag_val <- 0
 # 
-# vir1 <- 'flu_h1_plus_b'
+# if (fit_canada) {
+#   vir1 <- 'flu'
+# } else {
+#   vir1 <- 'flu_h1_plus_b'
+# }
+# 
 # source('src/functions/setup_global_likelilhood.R')
 # 
 # traj_list <- lapply(1:length(seasons), function(ix) {
 #   pars_temp <- res_df %>%
 #     select(all_of(shared_estpars), contains(seasons[ix]))
 #   names(pars_temp) <- true_estpars
-#   
+# 
 #   p_mat <- parmat(coef(po_list[[ix]]), nrep = nrow(pars_temp))
 #   for (param in names(pars_temp)) {
 #     p_mat[param, ] <- pars_temp %>% pull(param)
 #   }
-#   
+# 
 #   trajectory(object = po_list[[ix]],
 #              params = p_mat,
 #              format = 'data.frame') %>%
