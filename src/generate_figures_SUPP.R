@@ -481,6 +481,7 @@ rm(mle, force_t, p7a, p7b, p_legend, fig7s, min_val, max_val, gamma1, gamma2)
 
 true_estpars <- c(shared_estpars, unit_estpars)
 prof_lik <- FALSE
+fit_canada <- FALSE
 
 vir1 <- 'flu_h1_plus_b'
 source('src/functions/setup_global_likelilhood.R')
