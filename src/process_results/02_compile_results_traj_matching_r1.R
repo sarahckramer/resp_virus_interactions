@@ -11,6 +11,7 @@ library(testthat)
 # Get cluster environmental variables:
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_shared <- as.logical(Sys.getenv("FITSHARED")); print(fit_shared)
+fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 
 # Set estimated parameter names:
 if (fit_shared) {
@@ -28,7 +29,11 @@ if (fit_shared) {
 }
 
 # Set parameter values:
-vir1 <- 'flu_h1_plus_b'
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
 vir2 <- 'rsv'
 debug_bool <- FALSE
 
@@ -47,9 +52,15 @@ d2_max <- 10.0
 res_files <- list.files(path = 'results', pattern = 'res_', full.names = TRUE)
 
 # Get season for each result:
-yrs <- str_split(res_files, pattern = '_') %>%
-  map(~ .x[7]) %>%
-  unlist()
+if (fit_canada) {
+  yrs <- str_split(res_files, pattern = '_') %>%
+    map(~ .x[4]) %>%
+    unlist()
+} else {
+  yrs <- str_split(res_files, pattern = '_') %>%
+    map(~ .x[7]) %>%
+    unlist()
+}
 
 # Read in all results:
 res_full = list()

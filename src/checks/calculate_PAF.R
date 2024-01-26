@@ -16,6 +16,7 @@ true_estpars <- c(shared_estpars, unit_estpars)
 # Set parameter values necessary for loading models:
 prof_lik <- FALSE
 lag_val <- 0
+fit_canada <- FALSE
 
 # ---------------------------------------------------------------------------------------------------------------------
 

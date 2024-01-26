@@ -84,6 +84,7 @@ mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 
 vir1 <- 'flu_h1_plus_b'
 prof_lik <- FALSE; lag_val <- 0
+fit_canada <- FALSE
 source('src/functions/setup_global_likelilhood.R')
 
 sim_list <- vector('list', length = length(seasons))

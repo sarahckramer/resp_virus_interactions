@@ -8,8 +8,15 @@
 library(tidyverse)
 library(gridExtra)
 
+# Data from Canada?:
+fit_canada <- FALSE
+
 # Set directory where results from round1 fits are stored:
-res_dir <- 'results/round1_fitsharedFALSE/'
+if (fit_canada) {
+  res_dir <- 'results/round2_fit/sens/canada/round1_fitsharedFALSE/'
+} else {
+  res_dir <- 'results/round1_fitsharedFALSE/'
+}
 
 # Check that directory for storing plots exists, and create if not:
 if (!dir.exists('results/')) {
@@ -23,7 +30,11 @@ if (!dir.exists('results/plots/')) {
 estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 
 # Get vector of seasons:
-seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+if (fit_canada) {
+  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
+} else {
+  seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+}
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -65,7 +76,11 @@ p3 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, ymin = min, ymax = max
 grid.arrange(p2, p3, ncol = 2)
 
 # Output plots to file:
-pdf('results/plots/param_est_single_seasons_fitsharedFALSE.pdf', width = 9.5, height = 11)
+if (fit_canada) {
+  pdf('results/plots/param_est_single_seasons_fitsharedFALSE_CANADA.pdf', width = 9.5, height = 11)
+} else {
+  pdf('results/plots/param_est_single_seasons_fitsharedFALSE.pdf', width = 9.5, height = 11)
+}
 # print(p1)
 grid.arrange(p2, p3, ncol = 2)
 dev.off()

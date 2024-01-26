@@ -100,6 +100,7 @@ estpars <- names(res_h1_plus_b[[1]])[1:(length(names(res_h1_plus_b[[1]])) - 1)]
 prof_lik <- FALSE
 lag_val <- 0
 vir1 <- 'flu_h1_plus_b'
+fit_canada <- FALSE
 
 source('src/functions/setup_global_likelilhood.R')
 

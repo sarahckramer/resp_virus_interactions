@@ -361,6 +361,7 @@ for (yr_index in 1:length(seasons)) {
   vir1 <- 'flu_h1'; vir2 <- 'rsv'
   Ri_max1 <- 3.0; Ri_max2 <- 2.0; d2_max <- 10.0
   sens <- 'main'
+  fit_canada <- FALSE
   source('src/resp_interaction_model.R')
   
   # Set parameters

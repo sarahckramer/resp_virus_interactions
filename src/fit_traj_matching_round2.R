@@ -22,6 +22,7 @@ vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
+fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -33,7 +34,8 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
-# sens <- 'rhino_covar' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
+# sens <- 'sinusoidal_forcing' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
+# fit_canada <- TRUE
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -42,6 +44,9 @@ vir2 <- 'rsv'
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 if (sens == 'less_circ_h3') {
   seasons <- c('s17-18', 's18-19')
+}
+if (fit_canada) {
+  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
 }
 
 time_max <- 14.75 # 23.75 # Maximal execution time (in hours)

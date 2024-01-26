@@ -14,6 +14,7 @@ library(tidyverse)
 n <- 500 # How many synthetic datasets to create?
 vir1 <- 'flu_h1_plus_b'
 sens <- 'main'
+fit_canada <- FALSE
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -21,7 +22,13 @@ sens <- 'main'
 
 # Get MLE:
 if (sens != 'main') {
-  mle <- read_rds(paste0('results/round2_fit/sens/', sens, '/MLEs_flu_h1_plus_b.rds'))[1, ]
+  
+  if (fit_canada) {
+    mle <- read_rds(paste0('results/round2_fit/sens/canada/MLEs_flu_h1_plus_b.rds'))[1, ]
+  } else {
+    mle <- read_rds(paste0('results/round2_fit/sens/', sens, '/MLEs_flu_h1_plus_b.rds'))[1, ]
+  }
+  
 } else {
   mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
 }
@@ -50,6 +57,10 @@ prof_lik <- FALSE
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 if (sens == 'less_circ_h3') {
   seasons <- c('s17-18', 's18-19')
+}
+if (fit_canada) {
+  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
+  vir1 <- 'flu'
 }
 
 Ri_max1 <- 2.0
@@ -173,7 +184,15 @@ for (i in 1:length(seasons)) {
 # Save synthetic data:
 if (sens != 'main') {
   
-  write_rds(synth_LIST, paste0('results/round2_fit/sens/', sens, '/synth_data_for_bootstrapping_', vir1, '.rds'))
+  if (fit_canada) {
+    
+    write_rds(synth_LIST, 'results/round2_fit/sens/canada/synth_data_for_bootstrapping_flu.rds')
+    
+  } else {
+    
+    write_rds(synth_LIST, paste0('results/round2_fit/sens/', sens, '/synth_data_for_bootstrapping_', vir1, '.rds'))
+    
+  }
   
 } else {
   
