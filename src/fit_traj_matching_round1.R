@@ -17,7 +17,6 @@ no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
-fit_shared <- as.logical(Sys.getenv("FITSHARED")); print(fit_shared)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 
 if (fit_canada) {
@@ -38,7 +37,6 @@ jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 # 
 # sobol_size <- 500
 # search_type <- 'broad'
-# fit_shared <- FALSE
 # sens <- 'main'
 # fit_canada <- FALSE
 
@@ -67,18 +65,10 @@ source('src/resp_interaction_model.R')
 if (exists('resp_mod')) {
   
   # Set start ranges for estimated parameters:
-  if (fit_shared) {
-    estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2',
-                 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2', 'alpha', 'phi',
-                 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+  if (sens == 'no_rsv_immune') {
+    estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'rho1', 'rho2')
   } else {
-    
-    if (sens == 'no_rsv_immune') {
-      estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'rho1', 'rho2')
-    } else {
-      estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
-    }
-    
+    estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
   }
   
   start_range <- data.frame(Ri1 = c(1.0, Ri_max1),
