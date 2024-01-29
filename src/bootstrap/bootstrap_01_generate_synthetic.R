@@ -12,9 +12,14 @@ library(tidyverse)
 
 # Set key parameters:
 n <- 500 # How many synthetic datasets to create?
-vir1 <- 'flu_h1_plus_b'
 sens <- 'main'
 fit_canada <- FALSE
+
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -41,6 +46,9 @@ if (sens == 'sinusoidal_forcing') {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                       'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
                       'beta_h3')
+} else if (sens == 'no_ah') {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'alpha', 'phi', 'eta_temp1', 'eta_temp2')
 } else if (sens == 'no_int') {
   shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 } else {
@@ -60,7 +68,6 @@ if (sens == 'less_circ_h3') {
 }
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
-  vir1 <- 'flu'
 }
 
 Ri_max1 <- 2.0
