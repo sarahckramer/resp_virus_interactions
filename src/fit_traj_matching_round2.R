@@ -403,7 +403,7 @@ if (search_type == 'round2_CIs') {
   
   start_range_thetarho <- start_range %>% select(theta_rho1:theta_rho2)
   
-  start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1_plus_B.rds'))
+  start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals.rds'))
   
   if (int_eff == 'both') {
     start_range <- start_range %>%
