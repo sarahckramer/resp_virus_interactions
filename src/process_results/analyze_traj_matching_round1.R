@@ -203,11 +203,16 @@ rm(pars_list)
 pars_df <- pars_df %>%
   pivot_longer(all_of(estpars), names_to = 'param', values_to = 'value') %>%
   group_by(year, param) %>%
-  mutate(param = factor(param)) %>%
+  mutate(param = factor(param, levels = estpars)) %>%
   mutate(mle = value[which.max(loglik)]) %>%
   mutate(par_mle = paste0(param, '=', signif(mle, 3))) %>%
   ungroup()
-pars_df$param <- factor(pars_df$param, levels = estpars)
+
+mle_ranges_df <- pars_df %>%
+  group_by(year, param) %>%
+  summarise(mle = value[loglik == max(loglik)],
+            min = min(value),
+            max = max(value))
 
 # Plot best estimates by loglik and virus:
 p1 <- ggplot(data = pars_df, aes(x = value, y = loglik)) + geom_point() +
@@ -235,6 +240,19 @@ p4 <- ggplot(data = pars_mle, aes(x = virus1, y = mle)) +
   theme_classic() + facet_wrap(~ param, scales = 'free_y') +
   labs(x = 'Virus', y = 'Parameter Value', title = 'MLE Values')
 
+# Plot violin plots of all values within 95% CI:
+p5 <- ggplot(data = pars_df, aes(x = year, y = value, group = year)) + geom_violin(fill = 'gray90') +
+  theme_classic() + facet_wrap(~ param, scales = 'free_y', ncol = 3) +
+  scale_fill_brewer(palette = 'Set1') + labs(x = 'Season', y = 'Parameter Value')
+
+# Plot parameter values and ranges:
+p6 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, col = param)) + geom_point(size = 2.5) +
+  theme_bw() + facet_wrap(~ param, scales = 'free_y', ncol = 1) +
+  theme(legend.position = 'none', axis.text.x = element_text(angle = 45, vjust = 0.7))
+p7 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, ymin = min, ymax = max, col = param)) + geom_pointrange() +
+  theme_bw() + facet_wrap(~ param, scales = 'free_y', ncol = 1) +
+  theme(legend.position = 'none', axis.text.x = element_text(angle = 45, vjust = 0.7))
+
 # Save plots to file:
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE_CANADA.pdf'),
@@ -248,6 +266,14 @@ print(p1)
 print(p2)
 print(p3)
 print(p4)
+dev.off()
+
+if (fit_canada) {
+  pdf('results/plots/param_est_single_seasons_fitsharedFALSE_CANADA.pdf', width = 9.5, height = 11)
+} else {
+  pdf('results/plots/param_est_single_seasons_fitsharedFALSE.pdf', width = 9.5, height = 11)
+}
+grid.arrange(p6, p7, ncol = 2)
 dev.off()
 
 # ---------------------------------------------------------------------------------------------------------------------

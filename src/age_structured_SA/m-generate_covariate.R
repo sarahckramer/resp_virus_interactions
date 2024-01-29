@@ -5,7 +5,9 @@
 # Setup
 
 rm(list = ls())
-source("src/age_structured_SA/s-base_packages.R")
+
+library(tidyverse)
+library(testthat)
 library(socialmixr)
 
 # Functions
@@ -74,20 +76,8 @@ fr_dat <- fr_dat %>%
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Calculate rates of ARI and testing by age group
+# Calculate average rate of testing by age group
 
-# Calculate average attack rate in each age group, both actual and relative to population-level attack rate:
-ari_rate_per_pop <- fr_dat %>%
-  filter(virus == 'flu_A') %>%
-  group_by(agecat) %>%
-  summarise(n_ARI = sum(n_ARI),
-            pop_eff = sum(pop_eff),
-            i_ARI = sum(n_ARI) / sum(pop_eff)) %>%
-  ungroup() %>%
-  mutate(i_ARI_rel = (n_ARI / pop_eff) / (sum(n_ARI) / sum(pop_eff))) %>%
-  select(agecat, i_ARI:i_ARI_rel)
-
-# Calculate average rate of testing by age group:
 test_rate_per_pop <- fr_dat %>%
   filter(virus == 'flu_A') %>%
   group_by(agecat) %>%
@@ -116,18 +106,7 @@ rm(age_limits, CM_all)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Proportionally allocate cases and tests in Hong Kong
-
-# Inflate or reduce ILI attack rate based on relative attack rates in France:
-hk_dat <- hk_dat %>%
-  mutate(i_ILI1 = i_ILI * ari_rate_per_pop$i_ARI_rel[1],
-         i_ILI2 = i_ILI * ari_rate_per_pop$i_ARI_rel[1],
-         i_ILI3 = i_ILI * ari_rate_per_pop$i_ARI_rel[2],
-         i_ILI4 = i_ILI * ari_rate_per_pop$i_ARI_rel[3],
-         i_ILI5 = i_ILI * ari_rate_per_pop$i_ARI_rel[4])
-
-# Alternative scenario: Assign same ARI rate to all age groups:
-# For this, just use the values in column i_ARI
+# Proportionally allocate tests in Hong Kong
 
 # Allocate total tests proportionally to test rates in France:
 hk_dat <- hk_dat %>%
@@ -153,27 +132,9 @@ hk_dat %>%
   all(na.rm = TRUE) %>%
   expect_true()
 
-# Alternative scenario: Only two youngest age groups report:
-hk_dat <- hk_dat %>%
-  mutate(n_T1_s2 = test_rate_per_pop$i_samp[1] * N[1],
-         n_T2_s2 = test_rate_per_pop$i_samp[1] * N[2],
-         n_T_tot = n_T1_s2 + n_T2_s2) %>%
-  mutate(n_T1_s2 = n_T * (n_T1_s2 / n_T_tot),
-         n_T2_s2 = n_T * (n_T2_s2 / n_T_tot)) %>%
-  select(-n_T_tot)
-
-hk_dat[, c('n_T1_s2', 'n_T2_s2')] <- apply(hk_dat[, c('n_T1_s2', 'n_T2_s2')], 1, round_preserve_sum) %>% t()
-
-hk_dat %>%
-  mutate(n_T_tot = n_T1_s2 + n_T2_s2,
-         diff_0 = (n_T_tot - n_T == 0)) %>%
-  pull(diff_0) %>%
-  all(na.rm = TRUE) %>%
-  expect_true()
-
 # Reorder columns:
 hk_dat <- hk_dat %>%
-  select(time:Year, Week:season, i_ILI, n_T, i_ILI1:n_T2_s2)
+  select(time:Year, Week:season, i_ILI, n_T, n_T1:n_T5)
 
 # Save covariate "data":
 if (!dir.exists('data/age_structured_SA/')) {

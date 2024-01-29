@@ -49,9 +49,9 @@ if (age_structured) {
   
   dat_pomp <- read_csv('data/age_structured_SA/synthetic_obs_combined.csv') %>%
     filter(season == yr) %>%
-    select(time:n_T, obs1_s1b, obs2_s1b, i_ILI:pop) %>%
-    rename('n_P1' = 'obs1_s1b',
-           'n_P2' = 'obs2_s1b')
+    select(time:n_T, obs1:obs2, i_ILI:pop) %>%
+    rename('n_P1' = 'obs1',
+           'n_P2' = 'obs2')
   nrow_check <- nrow(dat_pomp)
   print(dat_pomp)
   

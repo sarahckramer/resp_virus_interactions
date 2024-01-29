@@ -3,10 +3,15 @@
 #######################################################################################################
 
 rm(list = ls())
-source("src/age_structured_SA/s-base_packages.R")
-source("src/age_structured_SA/f-CreateInteractionMod.R")
+
+library(tidyverse)
+library(testthat)
+library(pomp)
 library(socialmixr)
 library(rootSolve)
+
+source("src/age_structured_SA/f-CreateInteractionMod.R")
+
 debug_bool <- FALSE
 par(bty = "l", las = 1, lwd = 2)
 print(packageVersion("pomp"))
@@ -211,18 +216,8 @@ for (yr_index in 1:length(seasons)) {
     filter(season == yr)
   
   hk_dat_covar <- hk_dat_covar %>%
-    mutate(n_T3_s2 = ifelse(is.na(n_T1_s2), NA, 0),
-           n_T4_s2 = ifelse(is.na(n_T1_s2), NA, 0),
-           n_T5_s2 = ifelse(is.na(n_T1_s2), NA, 0)) %>%
-    pivot_longer(i_ILI1:i_ILI5, names_to = 'age1', values_to = 'i_ILI_age') %>%
-    pivot_longer(n_T1:n_T5, names_to = 'age2', values_to = 'n_T_age') %>%
-    pivot_longer(n_T1_s2:n_T5_s2, names_to = 'age3', values_to = 'n_T_s2_age') %>%
-    mutate(age1 = str_sub(age1, 6, 6),
-           age2 = str_sub(age2, 4, 4),
-           age3 = str_sub(age3, 4, 4)) %>%
-    filter(age1 == age2, age2 == age3) %>%
-    mutate(age = age1) %>%
-    select(time:n_T, age, i_ILI_age, n_T_age, n_T_s2_age) %>%
+    pivot_longer(n_T1:n_T5, names_to = 'age', values_to = 'n_T_age') %>%
+    mutate(age = str_sub(age, 4, 4)) %>%
     arrange(time, age)
   
   # Set season-specific parameter values:
@@ -250,49 +245,25 @@ for (yr_index in 1:length(seasons)) {
              'H2' = paste0('H2_', i))
     expect_equal(nrow(dat_covar_temp), nrow(tj_temp))
     
-    # Calculate weekly probability of viral detection:
-    rho1w_list = rho2w_list = vector('list', length = 2)
+    # Calculate weekly probability of viral detection (assume same ILI attack rate in all age groups):
+    rho1_w <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ILI)
+    rho1_w[rho1_w > 1.0 & !is.na(rho1_w)] <- 1.0
     
-    # Scenario a: Allow for proportionally inflated/decreased ILI attack rates by age group:
-    rho1w_list[[1]] <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ILI_age)
-    rho1w_list[[1]][rho1w_list[[1]] > 1.0 & !is.na(rho1w_list[[1]])] <- 1.0
+    rho2_w <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ILI)
+    rho2_w[rho2_w > 1.0 & !is.na(rho2_w)] <- 1.0
     
-    rho2w_list[[1]] <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ILI_age)
-    rho2w_list[[1]][rho2w_list[[1]] > 1.0 & !is.na(rho2w_list[[1]])] <- 1.0
-    
-    # Scenario b: Assume same ILI attack rate in all age groups:
-    rho1w_list[[2]] <- rho1 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H1 / dat_covar_temp$i_ILI)
-    rho1w_list[[2]][rho1w_list[[2]] > 1.0 & !is.na(rho1w_list[[2]])] <- 1.0
-    
-    rho2w_list[[2]] <- rho2 * (1.0 + alpha * cos(omega * (dat_covar_temp$time - phi))) * (tj_temp$H2 / dat_covar_temp$i_ILI)
-    rho2w_list[[2]][rho2w_list[[2]] > 1.0 & !is.na(rho2w_list[[2]])] <- 1.0
-    
-    # Generate synthetic observations:
+    # Generate synthetic observations (assume all age groups report):
     set.seed(1890435)
-    obs1 = obs2 = vector('list', length = 4)
     
-    # Scenario 1: All age groups report:
-    obs1[[1]] <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho1w_list[[1]])
-    obs2[[1]] <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho2w_list[[1]])
-    
-    obs1[[2]] <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho1w_list[[2]])
-    obs2[[2]] <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho2w_list[[2]])
-    
-    # Scenario 2: Assume only youngest age groups report:
-    obs1[[3]] <- rbinom(n = length(dat_covar_temp$n_T_s2_age), size = dat_covar_temp$n_T_s2_age, prob = rho1w_list[[1]])
-    obs2[[3]] <- rbinom(n = length(dat_covar_temp$n_T_s2_age), size = dat_covar_temp$n_T_s2_age, prob = rho2w_list[[1]])
-    
-    obs1[[4]] <- rbinom(n = length(dat_covar_temp$n_T_s2_age), size = dat_covar_temp$n_T_s2_age, prob = rho1w_list[[2]])
-    obs2[[4]] <- rbinom(n = length(dat_covar_temp$n_T_s2_age), size = dat_covar_temp$n_T_s2_age, prob = rho2w_list[[2]])
+    obs1 <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho1_w)
+    obs2 <- rbinom(n = length(dat_covar_temp$n_T_age), size = dat_covar_temp$n_T_age, prob = rho2_w)
     
     # Compile synthetic observations into tibble:
-    names(obs1) <- c('obs1_s1a', 'obs1_s1b', 'obs1_s2a', 'obs1_s2b')
-    names(obs2) <- c('obs2_s1a', 'obs2_s1b', 'obs2_s2a', 'obs2_s2b')
-    
     res_temp <- dat_covar_temp %>%
       select(time:age) %>%
-      bind_cols(bind_cols(obs1)) %>%
-      bind_cols(bind_cols(obs2)) %>%
+      bind_cols(obs1, obs2) %>%
+      rename('obs1' = '...8',
+             'obs2' = '...9') %>%
       mutate(pop = N[i])
     
     # Store observations:
@@ -307,12 +278,12 @@ for (yr_index in 1:length(seasons)) {
   # Calculate total observations for all scenarios and store:
   res_temp_combined <- res_temp_all_ages %>%
     group_by(time, Year, Week, season) %>%
-    summarise(across(obs1_s1a:obs2_s2b, sum),
+    summarise(across(obs1:obs2, sum),
               i_ILI = unique(i_ILI),
               n_T = unique(n_T),
               pop = sum(pop)) %>%
     ungroup() %>%
-    select(time:season, i_ILI:pop, obs1_s1a:obs2_s2b)
+    select(time:season, i_ILI:pop, obs1:obs2)
   res_combined[[yr_index]] <- res_temp_combined
   
 }
@@ -323,23 +294,22 @@ res_combined <- bind_rows(res_combined)
 
 # Reorder columns:
 res_combined <- res_combined %>%
-  select(time:Year, n_T, i_ILI, Week:season, pop, obs1_s1a:obs2_s2b)
+  select(time:Year, n_T, i_ILI, Week:season, pop, obs1:obs2)
 
 # Visualize "observations" based on different sets of assumptions:
 res_combined_long <- res_combined %>%
-  pivot_longer(obs1_s1a:obs2_s2b,
-               names_to = 'scenario',
+  pivot_longer(obs1:obs2,
+               names_to = 'virus',
                values_to = 'val') %>%
-  mutate(virus = str_sub(scenario, 1, 4),
-         scenario = str_sub(scenario, 6, 8)) %>%
   mutate(virus = if_else(virus == 'obs1', 'Influenza', 'RSV'))
 
 pl <- ggplot(data = res_combined_long,
-             aes(x = time, y = val, color = scenario)) +
+             aes(x = time, y = val, color = virus)) +
   geom_line() +
-  facet_grid(season ~ virus, scale = 'free') +
+  facet_wrap(~ season, scale = 'free', ncol = 1) +
   theme_classic() +
-  labs(x = 'Time (Weeks)', y = '# of Cases', color = 'Scenario')
+  theme(legend.position = 'bottom') +
+  labs(x = 'Time (Weeks)', y = '# of Cases', color = 'Virus')
 print(pl)
 
 # Compare to observed data, synthetic data from homogeneous mixing model ------
@@ -399,12 +369,8 @@ hk_dat_long <- hk_dat %>%
                values_to = 'obs') %>%
   mutate(virus = if_else(virus == 'n_P1', 'Influenza', 'RSV'))
 
-res_combined_long <- res_combined %>%
-  select(time:pop, obs1_s1b, obs2_s1b) %>%
-  pivot_longer(obs1_s1b:obs2_s1b,
-               names_to = 'virus',
-               values_to = 'synth') %>%
-  mutate(virus = if_else(virus == 'obs1_s1b', 'Influenza', 'RSV'))
+res_combined_long <- res_combined_long %>%
+  rename('synth' = 'val')
 
 res_combined_long <- res_combined_long %>%
   inner_join(hk_dat_long,
