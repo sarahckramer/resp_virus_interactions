@@ -73,8 +73,8 @@ if (prof_lik) {
   } else if (prof_param == 'd2') {
     prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid_orig]
   } else {
-    prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
-    # prof_val <- seq(0, 0.02, by = 0.001)[jobid_orig]
+    # prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
+    prof_val <- seq(0, 0.02, by = 0.001)[jobid_orig]
   }
   print(prof_val)
   
