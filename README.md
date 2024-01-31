@@ -34,27 +34,24 @@ Model Code
 Fitting the interaction model to data
 -------------------------------------
 
-1. Run "fit_traj_matching_round1.R" to obtain initial fits for all season-specific parameters. The parameter "fit_shared" should be set to FALSE; "sobol_size" should be set to 500, and "search_type" should be set to "broad". The ranges of values fit will be used to generate starting values for the next round of estimations.
-    * Run "process_results/01_check_missing_files_traj_matching_r1.R" to check whether estimation failed for any virus, season, or starting parameter set.
-    * Run "process_results/02_compile_results_traj_matching_r1.R" to format and compile individual results into comprehensive output files.
-2. Run "fit_traj_matching_round2.R" to fit all parameters, both shared and season-specific, and obtain maximum likelihood estimates. Parameter "search_type" should be set to "round1_CIs"; "sobol_size" should be set to 500, "interaction_effect" to "susc", and both "prof_lik" and "no_ah" to FALSE.
-    * Run "checks/check_no_states_below_0.R" to ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables. Update line 10 to the location of the results of interest.
+1. Run "fit_traj_matching_round1.R" to obtain initial fits for all season-specific parameters. The parameter "sobol_size" should be set to 500, "search_type" should be set to "broad", "sens" should be set to "main", and "fit_canada" should be set to FALSE. The ranges of values fit will be used to generate starting values for the next round of estimations.
+    * Run "process_results/01_check_missing_files_traj_matching_r1.R" with "fit_canada" set to FALSE to check whether estimation failed for any virus, season, or starting parameter set.
+    * Run "process_results/02_compile_results_traj_matching_r1.R" to format and compile individual results into comprehensive output files. Again, "sens" should be set to "main" and "fit_canada" to FALSE.
+2. Run "fit_traj_matching_round2.R" to fit all parameters, both shared and season-specific, and obtain maximum likelihood estimates. Parameter "search_type" should be set to "round1_CIs", "which_round" to 1, "sobol_size" should be set to 500, "int_eff" to "susc", "prof_lik" to FALSE, "sens" to "main", and "fit_canada" to FALSE.
+    * Run "get_start_ranges_from_round2.R", with line 10 set to be the location of the current results. This will ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables, and obtain the range of starting parameter values for the next round of fitting.
     * If only one parameter set is statistically supported (has log-likelihood value falling within qchisq(0.95, df = 46) / 2 of the log-likelihood of the MLE) at this point, we assume that the MLE has not yet been reached, and run an additional round of fits.
-    * Run "get_start_ranges_from_round2.R" to get range of starting parameter values for second run of round 2. Ensure that lines 10 and 11 reflect the locations of the most recent set of fit results.
-3. Rerun "fit_traj_matching_round2.R", this time with "search_type" set to "round2_CIs".
-    * Run "checks/check_no_states_below_0.R" to ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables.
-    * Again, if only one parameter set is supported, repeat the procedure under point 2 above and run again.
-4. Once multiple parameter sets are supported, run "get_start_ranges_from_round2.R" again. Then, perform one final round of model fits by running "fit_traj_matching_round2.R," again with "search_type" set to "round2_CIs".
-    * Run "checks/check_no_states_below_0.R" to ensure that none of the best-fit parameter values lead to impossible (i.e., negative) values for any of the state variables.
-    * Run "get_MLEs.R" to obtain the maximum likelihood estimates of each parameter and save them. Ensure that lines 10 and 11 are updated to the location of the final results.
-    * Run "get_start_ranges_from-round2.R" in order to get parameter start ranges for parametric bootstrapping.
-5. Run parametric bootstrapping to get 99% confidence intervals for all parameters.
+3. Rerun "fit_traj_matching_round2.R", this time with "search_type" set to "round2_CIs" and "which_round" set to 2.
+    * Again, run "get_start_ranges_from_round2.R".
+    * Repeat this step until multiple parameter sets are supported, each time increasing "which_round" by one.
+4. Once multiple parameter sets are supported, perform one final round of model fits by running "fit_traj_matching_round2.R," again with "search_type" set to "round2_CIs".
+    * Run "get_start_ranges_from_round2.R". This will calculate the parameter start ranges for parametric bootstrapping, as well as save the maximum likelihood estimates for all parameters.
+5. Run parametric bootstrapping to get 95% confidence intervals for all parameters.
     * First, run "bootstrap_01_generate_synthetic.R" to generate several synthetic datasets at the MLEs.
-    * Next, run "bootstrap_02_fit.R" with "sobol_size" set to 10 and "interaction_effect" to "susc" to fit the model to each synthetic dataset.
-    * Finally, run "bootstrap_03_process_and_CIs.R" to compile results and calculate the 99% confidence intervals.
-6. Run profile likelihood on theta_lambda1 in order to check that model is converging to the MLE.
-    * Run "fit_traj_matching_round2.R" with "sobol_size" set to 50, "search_type" set to "round2_CIs", "interaction_effect" set to "susc", "no_AH" set to FALSE, and "prof_lik" set to TRUE.
-    * Run "process_results/analyze_traj_matching_proflik.R" to determine which values of theta_lambda1 are supported by the analysis and plot the results. Before running, set "res_dir" to the location of the profile likelihood results.
+    * Next, run "bootstrap_02_fit.R" with "sobol_size" set to 10 and "final_round" set to the number of rounds of fitting run in steps 2-4. All other parameters should be set to the same values as in step 2. This will fit the model to each synthetic dataset.
+    * Finally, run "bootstrap_03_process_and_CIs.R" to compile results and calculate the 99% confidence intervals. Line 12 should be the location of the results.
+6. Run profile likelihood on $\theta_{\lambda1}$ and $\theta_{\lambda2}$ in order to check that model is converging to the MLE.
+    * Run "fit_traj_matching_round2.R" with "sobol_size" set to 100, "search_type" set to "round2_CIs", "final_round" set to the number of rounds of fitting run in steps 2-4, and "prof_lik" set to TRUE.
+    * Comment out line 66, uncomment line 67, and repeat the above step.
 
 Code to explore data/model fit
 ------------------------------
@@ -65,36 +62,48 @@ Code to explore data/model fit
   * Code to check for obvious seasonal patterns in all-cause mortality in Hong Kong
 * "explore_data/explore_data_smoothness.R":
   * Code to calculate lag-one autocorrelation for all available data
-* "process_results/analyze_fit_parameter_vals_round1.R":
-  * Code to explore and plot best-fit values from round 1 fits. Before running, set "res_dir" to the location of the results of the "round 1" fits (step 1 above).
 * "process_results/analyze_traj_matching_round1.R":
   * Code to explore fit values from round 1, and to check for convergence, correlations between fit parameter values, and agreement between data and simulations at the best-fit values. Before running, set "res_dir" to the location of the results of the "round 1" fits (step 1 above).
 * "process_results/analyze_traj_matching_round2.R":
-  * Code to explore fit values from round 2; to compare fit values to those from round 1; and to check for convergence, correlations between fit parameter values, and agreement between data and simulations at the best-fit values. Before running, set "res_dir_h1" and "res_dir_b" to the location of the results of the final "round 2" fits (step 4 above) for H1/RSV and B/RSV, respectively, and set "res_dir_round1" to the location of the results of the "round 1" fits.
+  * Code to explore fit values from round 2; to compare fit values to those from round 1; and to check for convergence, correlations between fit parameter values, and agreement between data and simulations at the best-fit values. Before running, set "res_dir" sto the location of the results of the final "round 2" fits (step 4 above), and set "res_dir_round1" to the location of the results of the "round 1" fits.
+* "process_results/compare_sensitivity.R":
+  * Code to compare the parameter estimates and log-likelihoods of the main model and several sensitivity analyses. Lines 13-20 should be set to the locations of the various results.
 * "checks/calculate_PAF.R":
   * Code to estimate how the seasonal attack rate of one virus would differ in the absence of the other virus
 * "checks/calculate_simulated_AR.R":
   * Code to calculate attack rates of influenza and RSV when model is simulated at the MLE
-
-Check for inclusion of humidity data
----------------------------------------------------------
-
-1. Run "fit_traj_matching_round2.R" with "search_type" set to "round1_CIs" as described above under "Fitting the interaction model to data," but with the parameter "no_ah" set to TRUE.
-2. Continue the model fitting process as described above, until the "final" estimates are obtained.
-3. Run "compare_AHvnoAH.R" (with lines 13-17 indicating the locations of all relevant results files) to evaluate whether there is a significant difference in model fit between models including and excluding an effect of absolute humidity.
+* "checks/calculate_simulated_metrics.R":
+  * Code to compare predicted and observed outbreak metrics for influenza and RSV at the MLE
+* "checks/check_determ_vs_stoch.R":
+  * Code to expore the extent to which stochasticity leads to substantial variations from deterministic trajectory at the MLE
+* "checks/stat_quantify_similarity.R":
+  * Code to quantify the correlation between observed rates of influenza, RSV, and rhinovirus
 
 Age-Structured Sensitivity Analysis
 -----------------------------------
 
 1. Run "age_structured_SA/m-generate_covariate.R" to generate synthetic, age-structured covariate data (ILI rates and number of tests performed).
-2. Run "age_structured_SA/m-run_model.R" to generate synthetic, age-structured case data at the MLE of the model fits to the A(H1N1)-RSV virus-virus pair.
+2. Run "age_structured_SA/m-run_model.R" to generate synthetic, age-structured case data at the MLE of the model fits.
 3. To fit the model to the age-structured synthetic data, uncomment line 47 in "fit_traj_matching_round1.R," line 32 in "02_compile_results_traj_matching_r1.R," and line 76 in "fit_traj_matching_round2.R," so that "age_structured" is equal to TRUE. Then, simply follow the same fitting procedure as outlined in numbers 1-4 under "Fitting the interaction model to data" above.
+
+Additional Sensitivity Analyses
+-------------------------------
+
+Various sensitivity analyses can be conducted by running steps 2-5 above with "sens" set to:
+
+* "sinusoidal_forcing": Fits a model using a sine wave to capture seasonal changes in the force of infection of influenza and RSV, rather than explicitly including climate data. Rough start ranges for the parameters $b_1$ and $b_2$, describing the extent to which the strength of forcing varies over the year, can be obtained by running "process_results/get_start_ranges_sinusoidal.R", which fits sine waves to the force of infection for both viruses at the MLE from the main analysis. The resulting values are then used in lines 314-315 in "fit_traj_matching_round2.R".
+* "no_ah": Fits the model exluding an effect of absolute humidity on the force of infection of influenza and RSV, such that both are modulated by temperature only.
+* "no_rsv_immune": Fits a model assuming, as in Waterlow et al. (2022), that the entire model population is susceptible to RSV at the beginning of each season. Before running steps 2-5 above, step 1 should also be repeated, this time with "sens" also set to "no_rsv_immune".
+* "no_int": Fits a model in which no interaction occurs between influenza and RSV.
+* "h3_covar": Fits a model allowing H3N2 incidence to modulate susceptibility to RSV. In order to explore different lags on H3N2 incidence, lines 113-120 in "resp_interaction_model.R" can be updated.
+* "less_circ_h3": Fits the model only for those seasons with little H3N2 circulation (2017-18 and 2018-19).
+* "rhino_covar": Fits a model allowing rhinovirus incidence to modulate susceptibility to influenza.
 
 Simulation Study of Vaccine Impact
 ----------------------------------
 
 1. Run "vaccination_simulation_study/choose_temperate_parameters.R" to select and save initial conditions yielding temperate-like outbreaks.
-2. Run "vaccination_simulation_study/run_vaccination_simulation_study.R" to get simulations for all seasons, vaccine coverage levels, and vaccine timings. By default, this is the scenario where vaccination confers the same protection against RSV as does natural influenza infection. To change this, uncomment lines 55/177. To run sensitivity analyses regarding vaccine efficacy against influenza and duration of protection against RSV, lines 15 or 56/178, respectively, can be changed accordingly.
+2. Run "vaccination_simulation_study/run_vaccination_simulation_study.R" to get simulations for all seasons, vaccine coverage levels, and vaccine timings. When "sens" is set to "main", this is the scenario where vaccination confers the same protection against RSV as does natural influenza infection. To change this, set "sens" to "thetalambdavacc0.50", "deltavacc1month", "deltavacc6months", "vacceff60", and "vacceff95", in turn. This will run sensitivity analyses with different values for the impact of vaccination on RSV susceptibility, the duration of the effect on RSV susceptibility, and the efficacy of vaccination against influenza.
 3. Run "vaccination_simulation_study/analyze_vaccination_simulation_study.R" to explore and plot results for both the temperate and subtropical scenarios.
 
 Generate publication-ready figures for manuscript
