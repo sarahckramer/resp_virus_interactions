@@ -25,6 +25,8 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'no_ah'
 } else if (str_detect(res_dir, 'rhino_covar')) {
   sens <- 'rhino_covar'
+} else if (str_detect(res_dir, 'no_int')) {
+  sens <- 'no_int'
 } else {
   sens <- 'main'
 }
@@ -161,8 +163,10 @@ load_and_format_mega_results <- function(filepath) {
   #   filter(!(d2 > 10.0 & theta_lambda2 < 0.99))
   
   # Set unrealistic values to NA:
-  pars_top$delta1[pars_top$delta1 > 7.0] <- NA
-  pars_top$d2[pars_top$d2 > 10.0] <- NA
+  if (!str_detect(filepath, 'no_int')) {
+    pars_top$delta1[pars_top$delta1 > 7.0] <- NA
+    pars_top$d2[pars_top$d2 > 10.0] <- NA
+  }
   pars_top$rho1[pars_top$rho1 == 1.0] <- NA
   pars_top$rho2[pars_top$rho2 == 1.0] <- NA
   
