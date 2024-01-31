@@ -91,8 +91,8 @@ for (j in 1:length(seasons)) {
 }
 
 # Clean up:
-rm(dat_pomp, hk_dat, obj_fun_list, po_list, resp_mod, traj_temp,
-   debug_bool, vir1, vir2, Ri_max1, Ri_max2, d2_max, prof_lik, lag_val, age_structured,
+rm(dat_pomp, hk_dat, obj_fun_list, po_list, resp_mod, traj_temp, debug_bool,
+   vir1, vir2, Ri_max1, Ri_max2, d2_max, prof_lik, age_structured,
    j, yr, yr_index)
 
 # Save results for supplementary figure:

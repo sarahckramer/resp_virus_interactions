@@ -55,8 +55,6 @@ Ri_max1 <- 2.0
 Ri_max2 <- 3.0
 d2_max <- 10.0
 
-lag_val <- 0
-
 if (prof_lik) {
   
   jobid_orig <- ceiling(jobid / no_jobs)

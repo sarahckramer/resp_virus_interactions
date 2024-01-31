@@ -205,7 +205,7 @@ if (fit_canada) {
 } else {
   vir1 <- 'flu_h1_plus_b'
 }
-prof_lik <- FALSE; lag_val <- 0
+prof_lik <- FALSE
 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 if (sens == 'no_rsv_immune') {

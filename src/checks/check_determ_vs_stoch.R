@@ -98,7 +98,6 @@ estpars <- names(res_h1_plus_b[[1]])[1:(length(names(res_h1_plus_b[[1]])) - 1)]
 
 # Load pomp models:
 prof_lik <- FALSE
-lag_val <- 0
 vir1 <- 'flu_h1_plus_b'
 fit_canada <- FALSE
 
@@ -174,7 +173,7 @@ for (i in 1:length(seasons)) {
 # Clean up:
 rm(i, traj_temp, sim_temp, yr, resp_mod, pars_temp, rho1, rho2, alpha, phi,
    rho1_w, rho2_w, vir1, vir2, yr_index, Ri_max1, Ri_max2, d2_max, debug_bool,
-   age_structured, lag_val, prof_lik, sens, nrow_check)
+   age_structured, prof_lik, sens, nrow_check)
 
 # Combine and format trajectories:
 dat_traj <- traj_list %>%

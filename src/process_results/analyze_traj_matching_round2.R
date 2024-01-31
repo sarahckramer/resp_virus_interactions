@@ -233,7 +233,6 @@ if (fit_canada) {
 
 true_estpars <- c(shared_estpars, unit_estpars)
 prof_lik <- FALSE
-lag_val <- 0
 
 # Set estpars:
 estpars <- names(res_r2[[1]])[1:(length(names(res_r2[[1]])) - 1)]

@@ -99,7 +99,7 @@ for (i in 1:length(seasons)) {
 # Clean up:
 rm(dat_temp, dat_pomp, hk_dat, obj_fun_list, po_list, resp_mod, pars_temp,
    sim_temp, sim_metrics, obs_metrics, debug_bool, vir1, vir2, Ri_max1, Ri_max2,
-   d2_max, prof_lik, lag_val, nrow_check, sens, age_structured, i, yr, yr_index)
+   d2_max, prof_lik, nrow_check, sens, age_structured, i, yr, yr_index)
 
 # Determine % of simulations within 2wk/25% of observed values:
 res_list <- lapply(res_list, function(ix) {

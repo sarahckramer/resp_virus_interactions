@@ -840,7 +840,7 @@ fig11s <- arrangeGrob(p11a, p11b, ncol = 1)
 # ggsave('results/plots/figures_for_manuscript/supp/FigureS11.svg', width = 18, height = 7, fig11s)
 
 rm(p11a, p11b, fig11s, res, pars_top, seasons, vir1, vir2, age_structured, sens,
-   d2_max, debug_bool, lag_val, prof_lik, Ri_max1, Ri_max2)
+   d2_max, debug_bool, prof_lik, Ri_max1, Ri_max2)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

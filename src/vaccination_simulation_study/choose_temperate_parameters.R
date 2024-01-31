@@ -24,7 +24,6 @@ Ri_max2 <- 3.0
 d2_max <- 10.0
 
 debug_bool <- FALSE
-lag_val <- 0
 
 # Load relevant functions:
 source('src/functions/functions_flu_RSV.R')
