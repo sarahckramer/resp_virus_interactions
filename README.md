@@ -51,7 +51,7 @@ Fitting the interaction model to data
     * Finally, run "bootstrap_03_process_and_CIs.R" to compile results and calculate the 99% confidence intervals. Line 12 should be the location of the results.
 6. Run profile likelihood on $\theta_{\lambda1}$ and $\theta_{\lambda2}$ in order to check that model is converging to the MLE.
     * Run "fit_traj_matching_round2.R" with "sobol_size" set to 100, "search_type" set to "round2_CIs", "final_round" set to the number of rounds of fitting run in steps 2-4, and "prof_lik" set to TRUE.
-    * Comment out line 66, uncomment line 67, and repeat the above step.
+    * Comment out line 70, uncomment line 71, and repeat the above step.
 
 Code to explore data/model fit
 ------------------------------
@@ -67,7 +67,7 @@ Code to explore data/model fit
 * "process_results/analyze_traj_matching_round2.R":
   * Code to explore fit values from round 2; to compare fit values to those from round 1; and to check for convergence, correlations between fit parameter values, and agreement between data and simulations at the best-fit values. Before running, set "res_dir" sto the location of the results of the final "round 2" fits (step 4 above), and set "res_dir_round1" to the location of the results of the "round 1" fits.
 * "process_results/compare_sensitivity.R":
-  * Code to compare the parameter estimates and log-likelihoods of the main model and several sensitivity analyses. Lines 13-20 should be set to the locations of the various results.
+  * Code to compare the parameter estimates and log-likelihoods of the main model and several sensitivity analyses. Lines 13-23 should be set to the locations of the various results.
 * "checks/calculate_PAF.R":
   * Code to estimate how the seasonal attack rate of one virus would differ in the absence of the other virus
 * "checks/calculate_simulated_AR.R":
@@ -84,18 +84,18 @@ Age-Structured Sensitivity Analysis
 
 1. Run "age_structured_SA/m-generate_covariate.R" to generate synthetic, age-structured covariate data (ILI rates and number of tests performed).
 2. Run "age_structured_SA/m-run_model.R" to generate synthetic, age-structured case data at the MLE of the model fits.
-3. To fit the model to the age-structured synthetic data, uncomment line 47 in "fit_traj_matching_round1.R," line 32 in "02_compile_results_traj_matching_r1.R," and line 76 in "fit_traj_matching_round2.R," so that "age_structured" is equal to TRUE. Then, simply follow the same fitting procedure as outlined in numbers 1-4 under "Fitting the interaction model to data" above.
+3. To fit the model to the age-structured synthetic data, uncomment line 53 in "fit_traj_matching_round1.R," line 36 in "02_compile_results_traj_matching_r1.R," and line 82 in "fit_traj_matching_round2.R," so that "age_structured" is equal to TRUE. Then, simply follow the same fitting procedure as outlined in numbers 1-4 under "Fitting the interaction model to data" above.
 
 Additional Sensitivity Analyses
 -------------------------------
 
 Various sensitivity analyses can be conducted by running steps 2-5 above with "sens" set to:
 
-* "sinusoidal_forcing": Fits a model using a sine wave to capture seasonal changes in the force of infection of influenza and RSV, rather than explicitly including climate data. Rough start ranges for the parameters $b_1$ and $b_2$, describing the extent to which the strength of forcing varies over the year, can be obtained by running "process_results/get_start_ranges_sinusoidal.R", which fits sine waves to the force of infection for both viruses at the MLE from the main analysis. The resulting values are then used in lines 314-315 in "fit_traj_matching_round2.R".
+* "sinusoidal_forcing": Fits a model using a sine wave to capture seasonal changes in the force of infection of influenza and RSV, rather than explicitly including climate data. Rough start ranges for the parameters $b_1$ and $b_2$, describing the extent to which the strength of forcing varies over the year, can be obtained by running "process_results/get_start_ranges_sinusoidal.R", which fits sine waves to the force of infection for both viruses at the MLE from the main analysis. The resulting values are then used in lines 310-311 in "fit_traj_matching_round2.R".
 * "no_ah": Fits the model exluding an effect of absolute humidity on the force of infection of influenza and RSV, such that both are modulated by temperature only.
 * "no_rsv_immune": Fits a model assuming, as in Waterlow et al. (2022), that the entire model population is susceptible to RSV at the beginning of each season. Before running steps 2-5 above, step 1 should also be repeated, this time with "sens" also set to "no_rsv_immune".
 * "no_int": Fits a model in which no interaction occurs between influenza and RSV.
-* "h3_covar": Fits a model allowing H3N2 incidence to modulate susceptibility to RSV. In order to explore different lags on H3N2 incidence, lines 113-120 in "resp_interaction_model.R" can be updated.
+* "h3_covar": Fits a model allowing H3N2 incidence to modulate susceptibility to RSV. In order to explore different lags on H3N2 incidence, lines 115-125 in "resp_interaction_model.R" can be updated.
 * "less_circ_h3": Fits the model only for those seasons with little H3N2 circulation (2017-18 and 2018-19).
 * "rhino_covar": Fits a model allowing rhinovirus incidence to modulate susceptibility to influenza.
 
