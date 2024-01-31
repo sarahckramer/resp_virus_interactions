@@ -98,26 +98,31 @@ if (!fit_canada) {
   
   dat_h3 <- dat_h3 %>%
     mutate(h3_inc_lag1 = lag(h3_inc, 1),
-           h3_inc_lag2 = lag(h3_inc, 2))
+           h3_inc_lag2 = lag(h3_inc, 2),
+           h3_inc_lagd = lag(h3_inc, 15))
   
   dat_pomp <- dat_pomp %>%
     inner_join(dat_h3,
                by = c('time', 'Year', 'Week', 'season')) %>%
-    select(time:Year, Week:season, n_T:i_ILI, pop:h3_inc_lag2) %>%
+    select(time:Year, Week:season, n_T:i_ILI, pop:h3_inc_lagd) %>%
     mutate(h3_inc = if_else(is.na(h3_inc), 0, h3_inc),
            h3_inc_lag1 = if_else(is.na(h3_inc_lag1), 0, h3_inc_lag1),
-           h3_inc_lag2 = if_else(is.na(h3_inc_lag2), 0, h3_inc_lag2))
+           h3_inc_lag2 = if_else(is.na(h3_inc_lag2), 0, h3_inc_lag2),
+           h3_inc_lagd = if_else(is.na(h3_inc_lagd), 0, h3_inc_lagd))
   expect_true(nrow(dat_pomp) == nrow_check)
   rm(dat_h3)
   
   dat_pomp <- dat_pomp %>%
     select(-h3_inc_lag1, -h3_inc_lag2)
   # dat_pomp <- dat_pomp %>%
-  #   select(-h3_inc, -h3_inc_lag2) %>%
+  #   select(-h3_inc, -h3_inc_lag2, -h3_inc_lagd) %>%
   #   rename('h3_inc' = 'h3_inc_lag1')
   # dat_pomp <- dat_pomp %>%
-  #   select(-h3_inc, -h3_inc_lag1) %>%
+  #   select(-h3_inc, -h3_inc_lag1, -h3_inc_lagd) %>%
   #   rename('h3_inc' = 'h3_inc_lag2')
+  # dat_pomp <- dat_pomp %>%
+  #   select(-h3_inc, -h3_inc_lag1, -h3_inc_lag2) %>%
+  #   rename('h3_inc' = 'h3_inc_lagd')
   
 } else {
   
