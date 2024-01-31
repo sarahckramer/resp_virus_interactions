@@ -65,17 +65,9 @@ if (prof_lik) {
   
   prof_param <- 'theta_lambda1'
   # prof_param <- 'theta_lambda2'
-  # prof_param <- 'delta1'
-  # prof_param <- 'd2'
   
-  if (prof_param == 'delta1') {
-    prof_val <- (7 / seq(5, 255, by = 5))[jobid_orig]
-  } else if (prof_param == 'd2') {
-    prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid_orig]
-  } else {
-    # prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
-    prof_val <- seq(0, 0.02, by = 0.001)[jobid_orig]
-  }
+  # prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
+  prof_val <- seq(0, 0.02, by = 0.001)[jobid_orig]
   print(prof_val)
   
 } else {
@@ -276,7 +268,7 @@ if (int_eff == 'susc') {
   }
 } else if (int_eff == 'both') {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
-                        'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+                      'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 } else {
   stop('Unrecognized int_eff value.')
 }
