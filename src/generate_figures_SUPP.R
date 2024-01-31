@@ -483,7 +483,12 @@ true_estpars <- c(shared_estpars, unit_estpars)
 prof_lik <- FALSE
 fit_canada <- FALSE
 
-vir1 <- 'flu_h1_plus_b'
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
+
 source('src/functions/setup_global_likelilhood.R')
 
 set.seed(12075)
@@ -683,7 +688,12 @@ rm(fig9s, p9a, p9b, p9a_main, p9a_insert, p9b_main, p9b_insert,
 
 mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 
-vir1 <- 'flu_h1_plus_b'
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
+
 source('src/functions/setup_global_likelilhood.R')
 dat_temp <- hk_dat$h1_plus_b_rsv
 

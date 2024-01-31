@@ -18,7 +18,6 @@ sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 which_round <- as.integer(Sys.getenv("WHICHROUND")); print(which_round)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
-vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
@@ -27,7 +26,6 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # # Set parameters for local run:
 # jobid <- 1
 # no_jobs <- 1
-# vir1 <- 'flu_h1_plus_b'
 # 
 # sobol_size <- 10
 # which_round <- 2
@@ -40,6 +38,12 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
+
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
 
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 if (sens == 'less_circ_h3') {

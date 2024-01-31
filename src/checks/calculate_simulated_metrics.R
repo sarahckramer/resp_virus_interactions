@@ -10,9 +10,14 @@ library(testthat)
 mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 
 # Set necessary parameters:
-vir1 <- 'flu_h1_plus_b'
 prof_lik <- FALSE
 fit_canada <- FALSE
+
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
 
 # Set shared and unit parameters:
 shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',

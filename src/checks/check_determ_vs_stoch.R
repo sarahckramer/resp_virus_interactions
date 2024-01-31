@@ -98,8 +98,13 @@ estpars <- names(res_h1_plus_b[[1]])[1:(length(names(res_h1_plus_b[[1]])) - 1)]
 
 # Load pomp models:
 prof_lik <- FALSE
-vir1 <- 'flu_h1_plus_b'
 fit_canada <- FALSE
+
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
 
 source('src/functions/setup_global_likelilhood.R')
 

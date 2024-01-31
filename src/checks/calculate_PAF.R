@@ -17,6 +17,12 @@ true_estpars <- c(shared_estpars, unit_estpars)
 prof_lik <- FALSE
 fit_canada <- FALSE
 
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Generate synthetic data at the MLE, with and without interaction
@@ -25,7 +31,6 @@ fit_canada <- FALSE
 mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 
 # Get synthetic data:
-vir1 <- 'flu_h1_plus_b'
 source('src/functions/setup_global_likelilhood.R')
 
 traj_list <- vector('list', length = length(seasons))

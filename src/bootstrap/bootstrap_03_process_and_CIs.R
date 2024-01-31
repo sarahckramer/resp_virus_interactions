@@ -178,8 +178,7 @@ ci_res <- res_df %>%
 # ci_res <- res_df_long %>%
 #   group_by(parameter) %>%
 #   summarise(lower = quantile(value, p = 0.025),
-#             upper = quantile(value, p = 0.975)) %>%
-#   mutate(vir1 = 'flu_h1_plus_b')
+#             upper = quantile(value, p = 0.975))
 
 # Write results to file:
 if (fit_canada) {
