@@ -82,9 +82,15 @@ true_estpars <- c(shared_estpars, unit_estpars)
 dat_h1_plus_b <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv
 mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 
-vir1 <- 'flu_h1_plus_b'
 prof_lik <- FALSE
 fit_canada <- FALSE
+
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
+
 source('src/functions/setup_global_likelilhood.R')
 
 sim_list <- vector('list', length = length(seasons))

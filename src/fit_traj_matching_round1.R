@@ -19,6 +19,18 @@ search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 
+# # Set parameters for local runs (temp):
+# jobid <- 1
+# no_jobs <- 10
+# 
+# yr <- 's15-16'
+# 
+# sobol_size <- 500
+# search_type <- 'broad'
+# sens <- 'main'
+# fit_canada <- FALSE
+
+# Set parameters for run:
 if (fit_canada) {
   yr <- c('s10-11', 's11-12', 's12-13', 's13-14')[(ceiling(jobid / no_jobs) - 1) %% 4 + 1]; print(yr)
   vir1 <- 'flu'
@@ -28,19 +40,6 @@ if (fit_canada) {
 }
 jobid <- (jobid - 1) %% no_jobs + 1; print(jobid)
 
-# # Set parameters for local runs (temp):
-# jobid <- 1
-# no_jobs <- 10
-# 
-# vir1 <- 'flu_h1_plus_b'
-# yr <- 's15-16'
-# 
-# sobol_size <- 500
-# search_type <- 'broad'
-# sens <- 'main'
-# fit_canada <- FALSE
-
-# Set parameters for run:
 vir2 <- 'rsv'
 
 time_max <- 1.75 # 5.0 # Maximal execution time (in hours)

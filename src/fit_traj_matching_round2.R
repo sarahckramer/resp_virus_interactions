@@ -18,7 +18,6 @@ sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 which_round <- as.integer(Sys.getenv("WHICHROUND")); print(which_round)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
-vir1 <- as.character(Sys.getenv("VIRUS1")); print(vir1)
 prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
@@ -27,7 +26,6 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # # Set parameters for local run:
 # jobid <- 1
 # no_jobs <- 1
-# vir1 <- 'flu_h1_plus_b'
 # 
 # sobol_size <- 10
 # which_round <- 2
@@ -40,6 +38,12 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
+
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
 
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 if (sens == 'less_circ_h3') {
@@ -65,17 +69,9 @@ if (prof_lik) {
   
   prof_param <- 'theta_lambda1'
   # prof_param <- 'theta_lambda2'
-  # prof_param <- 'delta1'
-  # prof_param <- 'd2'
   
-  if (prof_param == 'delta1') {
-    prof_val <- (7 / seq(5, 255, by = 5))[jobid_orig]
-  } else if (prof_param == 'd2') {
-    prof_val <- c(0.01, seq(0.1, 0.9, by = 0.1), seq(1, 5, by = 0.1))[jobid_orig]
-  } else {
-    prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
-    # prof_val <- seq(0, 0.02, by = 0.001)[jobid_orig]
-  }
+  # prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
+  prof_val <- seq(0, 0.02, by = 0.001)[jobid_orig]
   print(prof_val)
   
 } else {
@@ -276,7 +272,7 @@ if (int_eff == 'susc') {
   }
 } else if (int_eff == 'both') {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
-                        'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+                      'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 } else {
   stop('Unrecognized int_eff value.')
 }
