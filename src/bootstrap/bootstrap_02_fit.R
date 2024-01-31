@@ -54,7 +54,6 @@ Ri_max1 <- 2.0
 Ri_max2 <- 3.0
 d2_max <- 10.0
 
-lag_val <- 0
 prof_lik <- FALSE
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -252,6 +251,9 @@ if (int_eff == 'susc') {
     shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                         'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
                         'beta_h3')
+  } else if (sens == 'no_ah') {
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'alpha', 'phi', 'eta_temp1', 'eta_temp2')
   } else if (sens == 'no_int') {
     shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   } else {
@@ -281,7 +283,7 @@ true_estpars <- c(shared_estpars, unit_estpars)
 estpars <- c(shared_estpars, unit_sp_estpars)
 
 # Get start ranges for all parameters:
-start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals_H1_plus_B.rds'))
+start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/round2CI_startvals.rds'))
 
 # Get starting values for each parameter:
 start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),

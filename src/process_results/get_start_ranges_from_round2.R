@@ -25,6 +25,8 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'no_ah'
 } else if (str_detect(res_dir, 'rhino_covar')) {
   sens <- 'rhino_covar'
+} else if (str_detect(res_dir, 'no_int')) {
+  sens <- 'no_int'
 } else {
   sens <- 'main'
 }
@@ -129,8 +131,11 @@ load_and_format_mega_results <- function(filepath) {
   
   # If only one parameter set is in this range, MLE has not yet been reached; take top 5% of fits instead:
   if (no_best == 1) {
+    is_mle <- FALSE
     print('MLE not reached!')
     no_best <- 25
+  } else {
+    is_mle <- TRUE
   }
   print(no_best)
   
@@ -150,13 +155,18 @@ load_and_format_mega_results <- function(filepath) {
   print(no_best)
   print(summary(pars_top$loglik))
   
+  # Store original results before removing unrealistic parameter values:
+  pars_top_orig <- pars_top
+  
   # # Remove where d2 > 10 and theta_lambda2 != 1.0:
   # pars_top <- pars_top %>%
   #   filter(!(d2 > 10.0 & theta_lambda2 < 0.99))
   
   # Set unrealistic values to NA:
-  pars_top$delta1[pars_top$delta1 > 7.0] <- NA
-  pars_top$d2[pars_top$d2 > 10.0] <- NA
+  if (!str_detect(filepath, 'no_int')) {
+    pars_top$delta1[pars_top$delta1 > 7.0] <- NA
+    pars_top$d2[pars_top$d2 > 10.0] <- NA
+  }
   pars_top$rho1[pars_top$rho1 == 1.0] <- NA
   pars_top$rho2[pars_top$rho2 == 1.0] <- NA
   
@@ -184,17 +194,112 @@ load_and_format_mega_results <- function(filepath) {
   }
   
   # Return formatted results:
-  return(pars_top)
+  return(list(pars_top, pars_top_orig, is_mle))
   
 }
 
 # Read in results:
-res <- load_and_format_mega_results(res_dir) %>%
+res <- load_and_format_mega_results(res_dir)
+
+# Check that best-fit parameter values do not lead trajectories to drop below 0:
+res_orig <- res[[2]]
+
+if (fit_canada) {
+  vir1 <- 'flu'
+} else {
+  vir1 <- 'flu_h1_plus_b'
+}
+prof_lik <- FALSE
+
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+if (sens == 'no_rsv_immune') {
+  unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10')
+}
+
+shared_estpars <- res_orig %>% select(!contains(unit_estpars) & !'loglik') %>% names()
+true_estpars <- c(shared_estpars, unit_estpars)
+
+source('src/functions/setup_global_likelilhood.R')
+
+traj_list <- lapply(1:length(seasons), function(ix) {
+  pars_temp <- res_orig %>%
+    select(all_of(shared_estpars), contains(seasons[ix]))
+  names(pars_temp) <- true_estpars
+  
+  p_mat <- parmat(coef(po_list[[ix]]), nrep = nrow(pars_temp))
+  for (param in names(pars_temp)) {
+    p_mat[param, ] <- pars_temp %>% pull(param)
+  }
+  
+  trajectory(object = po_list[[ix]],
+             params = p_mat,
+             format = 'data.frame') %>%
+    select(!(H1_tot:H2_tot)) %>%
+    pivot_longer(X_SS:H2,
+                 names_to = 'state')
+})
+
+expect_false(any(lapply(traj_list, function(ix) {
+  any(ix[, 'value'] < 0)
+}) %>%
+  unlist()))
+
+# Are results the MLE?
+is_mle <- res[[3]]
+
+res_dir_comp <- str_split(res_dir, '_')[[1]]
+res_dir_comp[which(!is.na(as.numeric(res_dir_comp)))] <- as.character(as.numeric(which_round) - 1)
+res_dir_prev <- paste(res_dir_comp, collapse = '_')
+
+is_mle_prev <- try(
+  load_and_format_mega_results(res_dir_prev)[[3]]
+)
+
+if (inherits(is_mle_prev, 'try-error')) {
+  is_mle_prev <- FALSE
+}
+
+# Save MLEs:
+if (is_mle & is_mle_prev) {
+  
+  res_orig <- res_orig %>%
+    select(-loglik)
+  
+  if (str_detect(res_dir, 'sens')) {
+    
+    if (str_detect(res_dir, 'canada')) {
+      write_rds(res_orig, file = 'results/round2_fit/sens/canada/MLEs_flu.rds')
+    } else {
+      write_rds(res_orig, file = paste0(paste(str_split(res_dir, '/')[[1]][1:(length(str_split(res_dir, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1_plus_b.rds'))
+    }
+    
+  } else if (str_detect(res_dir, 'age_structured')) {
+    write_rds(res_orig, file = 'results/age_structured_SA/MLEs_flu_h1_plus_b.rds')
+  } else {
+    write_rds(res_orig, file = 'results/MLEs_flu_h1_plus_b.rds')
+  }
+  
+}
+
+# Get results for determining start ranges:
+res <- res[[1]] %>%
   select(-loglik)
 
 # Get minimum and maximum start values:
 ci_start <- as.data.frame(rbind(summarise(res, across(.cols = everything(), \(x) min(x, na.rm = TRUE))),
                                 summarise(res, across(.cols = everything(), \(x) max(x, na.rm = TRUE)))))
+
+# Any parameters where minimum and maximum are equal?:
+no_range <- c()
+for (i in 1:ncol(ci_start)) {
+  if (identical(ci_start[1, i], ci_start[2, i])) {
+    no_range <- c(no_range, i)
+  }
+}
+if (length(no_range) > 0) {
+  print('Warning: Some parameters have same min and max values!')
+  print(names(ci_start)[no_range])
+}
 
 # Possible that d2 ranges are missing if all top fits were > 10; if so, replace:
 if (any(ci_start == Inf)) {
@@ -266,7 +371,7 @@ if (any(sums %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
 }
 
 # Write start ranges to file:
-write_rds(ci_start, file = paste0(new_dir, 'round2CI_startvals_H1_plus_B.rds'))
+write_rds(ci_start, file = paste0(new_dir, 'round2CI_startvals.rds'))
 
 # Clean up:
 rm(list = ls())

@@ -19,12 +19,6 @@ if (!exists('early_start_val')) {
   early_start_val <- FALSE
 }
 
-# Set lag_val if it doesn't exist:
-if (!exists('lag_val')) {
-  lag_val <- 0
-}
-print(lag_val)
-
 # # Set additional variables locally (for testing):
 # vir1 <- 'flu_h1_plus_b'
 # vir2 <- 'rsv'
@@ -52,17 +46,14 @@ nrow_check <- nrow(dat_pomp)
 
 # Get climate data:
 dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
-if (lag_val > 0) {
-  dat_clim <- dat_clim %>%
-    mutate(temp = lag(temp, n = lag_val),
-           ah = lag(ah, n = lag_val))
-}
+
 dat_pomp <- dat_pomp %>%
   inner_join(dat_clim,
              by = c('Year' = 'year',
                     'Week' = 'week')) %>%
   select(time:pop, temp, ah, rh)
 expect_true(nrow(dat_pomp) == nrow_check)
+
 rm(dat_clim)
 
 # If no data for this season, skip:

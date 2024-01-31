@@ -78,56 +78,6 @@ rm(yr_index, seas, dat_temp, mle_temp, beta1_temp, beta2_temp, force1_temp, forc
 # Combine results into tibble:
 beta_t <- bind_rows(beta_t)
 
-# Get minimum and maximum values for plotting:
-min_val <- min(c(min(beta_t$force1), min(beta_t$force2)))
-max_val <- max(c(max(beta_t$force1), max(beta_t$force2)))
-
-# Plot climate forcing over time for all seasons:
-p_a <- ggplot(data = beta_t, aes(x = time, y = force1, col = season)) +
-  geom_line() +
-  theme_classic() +
-  theme(title = element_text(size = 14),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.02, 0.97)) +
-  scale_x_continuous(breaks = seq(1, 52, by = 5),
-                     labels = c(46, 51, seq(4, 45, by = 5))) +
-  scale_y_continuous(limits = c(min_val, max_val)) +
-  # scale_y_log10(limits = c(min_val, max_val)) +
-  scale_color_manual(values = viridis(6)) +
-  labs(x = 'Week Number', y = 'Climate Forcing', title = 'Influenza')
-p_b <- ggplot(data = beta_t, aes(x = time, y = force2, col = season)) +
-  geom_line() +
-  theme_classic() +
-  theme(title = element_text(size = 14),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.02, 0.97)) +
-  scale_x_continuous(breaks = seq(1, 52, by = 5),
-                     labels = c(46, 51, seq(4, 45, by = 5))) +
-  scale_y_continuous(limits = c(min_val, max_val)) +
-  # scale_y_log10(limits = c(min_val, max_val)) +
-  scale_color_manual(values = viridis(6)) +
-  labs(x = 'Week Number', y = 'Climate Forcing', title = 'RSV')
-
-p_legend <- ggplot(data = beta_t, aes(x = time, y = force1, col = season)) +
-  geom_line() +
-  theme_classic() +
-  theme(legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'bottom') +
-  guides(color = guide_legend(nrow = 1)) +
-  scale_color_viridis(discrete = TRUE) +
-  labs(color = 'Season')
-p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
-
-p_beta <- arrangeGrob(arrangeGrob(p_a, p_b, ncol = 1), p_legend, nrow = 2, heights = c(15, 1))
-plot(p_beta)
-
 # Fit sine wave to each seasonal beta and get range of amplitudes:
 amp1_vec = amp2_vec = c()
 for (seas in seasons) {

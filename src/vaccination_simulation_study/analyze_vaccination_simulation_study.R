@@ -62,7 +62,7 @@ write_rds(res_metrics, 'results/vaccine_simulation_study/res_METRICS_simulation_
 
 # Limit results to coverage levels of 60% and lower:
 res_metrics <- res_metrics %>%
-  filter(vacc_cov <= 0.60)
+  filter(vacc_cov <= 0.70)
 
 # Plot results:
 res_metrics <- res_metrics %>%
@@ -222,7 +222,7 @@ write_rds(res_metrics, 'results/vaccine_simulation_study/res_METRICS_simulation_
 
 # Limit results to coverage levels of 60% and lower:
 res_metrics <- res_metrics %>%
-  filter(vacc_cov <= 0.60)
+  filter(vacc_cov <= 0.70)
 
 # Plot results:
 res_metrics <- res_metrics %>%

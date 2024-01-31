@@ -91,8 +91,8 @@ for (j in 1:length(seasons)) {
 }
 
 # Clean up:
-rm(dat_pomp, hk_dat, obj_fun_list, po_list, resp_mod, traj_temp,
-   debug_bool, vir1, vir2, Ri_max1, Ri_max2, d2_max, prof_lik, lag_val, age_structured,
+rm(dat_pomp, hk_dat, obj_fun_list, po_list, resp_mod, traj_temp, debug_bool,
+   vir1, vir2, Ri_max1, Ri_max2, d2_max, prof_lik, age_structured,
    j, yr, yr_index)
 
 # Save results for supplementary figure:
@@ -102,25 +102,9 @@ ar_df <- bind_rows(ar_list) %>%
   mutate(virus = if_else(virus == 'H1', 'Influenza', 'RSV'))
 write_rds(ar_df, 'results/simulated_ar.rds')
 
-# Plot attack rates by virus/season:
-ar_df <- bind_rows(ar_list) %>%
-  select(-c(obs1:obs2)) %>%
-  pivot_longer(H1:H2, names_to = 'virus', values_to = 'attack_rate') %>%
-  mutate(virus = if_else(virus == 'H1', 'Influenza', 'RSV'),
-         attack_rate = attack_rate * 100)
-rm(ar_list)
-
-p1 <- ggplot(data = ar_df,
-             aes(x = virus, y = attack_rate, group = virus)) +
-  geom_violin(fill = 'gray90') +
-  theme_classic() +
-  labs(x = 'Virus', y = 'Attack Rate (%)')
-print(p1)
-
 # Print attack rate ranges:
 ar_df %>% filter(virus == 'Influenza') %>% pull(attack_rate) %>% summary() %>% print()
 ar_df %>% filter(virus == 'RSV') %>% pull(attack_rate) %>% summary() %>% print()
 
 # Clean up:
 rm(list = ls())
-dev.off()

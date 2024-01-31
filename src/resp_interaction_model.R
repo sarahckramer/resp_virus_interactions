@@ -13,11 +13,6 @@ library(gridExtra)
 source('src/functions/functions_flu_RSV.R')
 source('src/functions/test_code.R')
 
-# Set lag_val if it doesn't exist:
-if (!exists('lag_val')) {
-  lag_val <- 0
-}
-
 # Fit to observed data, not synthetic data from age-structured model:
 if (!exists('age_structured')) {
   age_structured <- FALSE
@@ -49,9 +44,9 @@ if (age_structured) {
   
   dat_pomp <- read_csv('data/age_structured_SA/synthetic_obs_combined.csv') %>%
     filter(season == yr) %>%
-    select(time:n_T, obs1_s1b, obs2_s1b, i_ILI:pop) %>%
-    rename('n_P1' = 'obs1_s1b',
-           'n_P2' = 'obs2_s1b')
+    select(time:n_T, obs1:obs2, i_ILI:pop) %>%
+    rename('n_P1' = 'obs1',
+           'n_P2' = 'obs2')
   nrow_check <- nrow(dat_pomp)
   print(dat_pomp)
   
@@ -71,17 +66,14 @@ if (age_structured) {
 if (!fit_canada) {
   
   dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
-  if (lag_val > 0) {
-    dat_clim <- dat_clim %>%
-      mutate(temp = lag(temp, n = lag_val),
-             ah = lag(ah, n = lag_val))
-  }
+  
   dat_pomp <- dat_pomp %>%
     inner_join(dat_clim,
                by = c('Year' = 'year',
                       'Week' = 'week')) %>%
     select(time:pop, temp, ah, rh)
   expect_true(nrow(dat_pomp) == nrow_check)
+  
   rm(dat_clim)
   
 } else {

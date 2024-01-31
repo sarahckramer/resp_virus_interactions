@@ -11,6 +11,23 @@ library(gt)
 # Get names of all results files:
 file_list <- list.files(path = 'results/bootstrapping/flu_H1_plus_B/', full.names = TRUE)
 
+# Are results from a sensitivity analysis?:
+if (str_detect(file_list[[1]], 'sinusoidal')) {
+  sens <- 'sinusoidal_forcing'
+} else if (str_detect(file_list[[1]], 'h3_covar')) {
+  sens <- 'h3_covar'
+} else if (str_detect(file_list[[1]], 'less_circ_h3')) {
+  sens <- 'less_circ_h3'
+} else if (str_detect(file_list[[1]], 'no_rsv_immune')) {
+  sens <- 'no_rsv_immune'
+} else if (str_detect(file_list[[1]], 'no_ah')) {
+  sens <- 'no_ah'
+} else if (str_detect(file_list[[1]], 'rhino_covar')) {
+  sens <- 'rhino_covar'
+} else {
+  sens <- 'main'
+}
+
 # Results from Canada?:
 if (str_detect(file_list[[1]], 'canada')) {
   fit_canada <- TRUE
@@ -168,7 +185,13 @@ ci_res <- res_df %>%
 if (fit_canada) {
   write_csv(ci_res, file = 'results/round2_fit/sens/canada/95CI_from_boostrapping_HPDI.csv')
 } else {
-  write_csv(ci_res, file = 'results/95CI_from_boostrapping_HPDI.csv')
+  
+  if (sens != 'main') {
+    write_csv(ci_res, file = paste0('results/round2_fit/sens/', sens, '/95CI_from_boostrapping_HPDI.csv'))
+  } else {
+    write_csv(ci_res, file = 'results/95CI_from_boostrapping_HPDI.csv')
+  }
+  
 }
 
 # Read in MLEs and add to data frame:
@@ -196,7 +219,11 @@ if (fit_canada) {
   
 } else {
   
-  mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
+  if (sens != 'main') {
+    mle <- read_rds(paste0('results/round2_fit/sens/', sens, '/MLEs_flu_h1_plus_b.rds'))[1, ]
+  } else {
+    mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
+  }
   
   mle_unit <- mle %>%
     select(contains('I') | contains('R')) %>%
@@ -235,7 +262,13 @@ ci_res <- ci_res %>%
 if (fit_canada) {
   write_csv(ci_res, file = 'results/round2_fit/sens/canada/MLE_plus_95CI_from_boostrapping_HPDI.csv')
 } else {
-  write_csv(ci_res, file = 'results/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+  
+  if (sens != 'main') {
+    write_csv(ci_res, file = paste0('results/round2_fit/sens/', sens, '/MLE_plus_95CI_from_boostrapping_HPDI.csv'))
+  } else {
+    write_csv(ci_res, file = 'results/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+  }
+  
 }
 
 # Generate tables of results:
@@ -246,9 +279,15 @@ res_table <- ci_res %>%
 print(res_table)
 
 if (fit_canada) {
-  gtsave(res_table, filename = 'results/round2_fit/sens/canada/table_CIs_h1_plus_b.html')
+  gtsave(res_table, filename = 'results/round2_fit/sens/canada/table_CIs.html')
 } else {
-  gtsave(res_table, filename = 'results/plots/table_CIs_h1_plus_b.html')
+  
+  if (sens != 'main') {
+    gtsave(res_table, filename = paste0('results/round2_fit/sens/', sens, '/table_CIs_h1_plus_b.html'))
+  } else {
+    gtsave(res_table, filename = 'results/plots/table_CIs_h1_plus_b.html')
+  }
+  
 }
 
 # Check whether MLEs fall within CIs:
@@ -276,7 +315,13 @@ print(p2)
 if (fit_canada) {
   pdf('results/plots/plot_params_plus_ci_CANADA.pdf', width = 15, height = 8)
 } else {
-  pdf('results/plots/plot_params_plus_ci.pdf', width = 15, height = 8)
+  
+  if (sens != 'main') {
+    pdf(paste0('results/plots/plot_params_plus_ci_', sens, '.pdf'), width = 15, height = 8)
+  } else {
+    pdf('results/plots/plot_params_plus_ci.pdf', width = 15, height = 8)
+  }
+  
 }
 print(p1)
 print(p2)

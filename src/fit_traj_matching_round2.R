@@ -55,8 +55,6 @@ Ri_max1 <- 2.0
 Ri_max2 <- 3.0
 d2_max <- 10.0
 
-lag_val <- 0
-
 if (prof_lik) {
   
   jobid_orig <- ceiling(jobid / no_jobs)
@@ -276,24 +274,9 @@ if (int_eff == 'susc') {
     }
     
   }
-} else if (int_eff == 'sev') {
-  if (prof_lik) {
-    shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
-                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
-    shared_estpars <- shared_estpars[shared_estpars != prof_param]
-  } else {
-    shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
-                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
-  }
 } else if (int_eff == 'both') {
-  if (prof_lik) {
-    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
                         'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
-    shared_estpars <- shared_estpars[shared_estpars != prof_param]
-  } else {
-    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
-                        'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
-  }
 } else {
   stop('Unrecognized int_eff value.')
 }
@@ -403,7 +386,7 @@ if (search_type == 'round2_CIs') {
   
   start_range_thetarho <- start_range %>% select(theta_rho1:theta_rho2)
   
-  start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1_plus_B.rds'))
+  start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals.rds'))
   
   if (int_eff == 'both') {
     start_range <- start_range %>%

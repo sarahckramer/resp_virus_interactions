@@ -15,7 +15,6 @@ true_estpars <- c(shared_estpars, unit_estpars)
 
 # Set parameter values necessary for loading models:
 prof_lik <- FALSE
-lag_val <- 0
 fit_canada <- FALSE
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -70,36 +69,6 @@ for (i in 1:length(seasons)) {
   traj_temp <- traj_temp %>%
     filter(.id %in% c(1, 3, 5))
   
-  # # Also look at how # of observed cases changes:
-  # rho1 <- as.numeric(pars_temp['rho1'])
-  # rho2 <- as.numeric(pars_temp['rho2'])
-  # alpha <- as.numeric(pars_temp['alpha'])
-  # phi <- as.numeric(pars_temp['phi'])
-  # 
-  # dat_temp <- hk_dat$h1_rsv
-  # traj_temp <- traj_temp %>%
-  #   left_join(dat_temp, by = c('time', 'season')) %>%
-  #   rename('i_ILI' = 'GOPC') %>%
-  #   mutate(i_ILI = i_ILI / 1000) %>%
-  #   select(time:H2, n_T, i_ILI)
-  # 
-  # rho1_w <- rho1 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H1 / traj_temp$i_ILI
-  # rho2_w <- rho2 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (traj_temp$time - phi))) * traj_temp$H2 / traj_temp$i_ILI
-  # 
-  # rho1_w[rho1_w > 1.0 & !is.na(rho1_w)] <- 1.0
-  # rho2_w[rho2_w > 1.0 & !is.na(rho2_w)] <- 1.0
-  # 
-  # expect_equal(nrow(traj_temp), length(rho1_w))
-  # expect_equal(nrow(traj_temp), length(rho2_w))
-  # 
-  # traj_temp$rho1_w <- rho1_w
-  # traj_temp$rho2_w <- rho2_w
-  # 
-  # traj_temp <- traj_temp %>%
-  #   mutate(mean_obs1 = rho1_w * n_T,
-  #          mean_obs2 = rho2_w * n_T) %>%
-  #   select(time:H2, mean_obs1:mean_obs2)
-  
   # Store:
   traj_list[[i]] <- traj_temp
   
@@ -146,51 +115,3 @@ for (yr in unique(res_ars$season)) {
 
 print(summary(paf_fluOnRSV))
 print(summary(paf_RSVonFlu))
-
-# Plot how interaction influences outbreak dynamics:
-p1 <- ggplot() +
-  geom_line(data = res %>%
-              filter(.id %in% c(1, 3)) %>%
-              mutate(.id = if_else(.id == 1, 'Interaction', 'No Interaction')),
-            aes(x = time, y = H2, col = .id)) +
-  geom_line(data = res %>%
-              filter(.id == 1),
-            aes(x = time, y = H1), lty = 2) +
-  facet_wrap(~ season, scales = 'free_x', nrow = 1) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        strip.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'bottom',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_continuous(breaks = seq(0, 53, by = 10)) +
-  scale_color_manual(values = c('#3182bd', '#9ecae1')) +
-  labs(x = 'Time (Weeks)', y = 'RSV Incidence', color = '', tag = 'A')
-
-p2 <- ggplot() +
-  geom_line(data = res %>%
-              filter(.id %in% c(1, 5)) %>%
-              mutate(.id = if_else(.id == 1, 'Interaction', 'No Interaction')),
-            aes(x = time, y = H1, col = .id)) +
-  geom_line(data = res %>%
-              filter(.id == 1),
-            aes(x = time, y = H2), lty = 2) +
-  facet_wrap(~ season, scales = 'free_x', nrow = 1) +
-  theme_classic() +
-  theme(axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        strip.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'bottom',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_x_continuous(breaks = seq(0, 53, by = 10)) +
-  scale_color_manual(values = c('#de2d26', '#fc9272')) +
-  labs(x = 'Time (Weeks)', y = 'Influenza Incidence', color = '', tag = 'B')
-
-fig <- arrangeGrob(p1, p2, ncol = 1, heights = c(1, 1))
-plot(fig)
