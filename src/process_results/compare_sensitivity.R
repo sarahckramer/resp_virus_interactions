@@ -16,6 +16,9 @@ res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1
 res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
 res_dir_noRSVimmune <- 'results/round2_fit/sens/no_rsv_immune/round2_5_fluH1_plus_B/'
 res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
+res_dir_h3covar_lag1 <- 'results/round2_fit/sens/h3_covar/lag1/round2_3_fluH1_plus_B/'
+res_dir_h3covar_lag2 <- 'results/round2_fit/sens/h3_covar/lag2/round2_3_fluH1_plus_B/'
+res_dir_h3covar_lag15 <- 'results/round2_fit/sens/h3_covar/lag15/round2_3_fluH1_plus_B/'
 res_dir_lesscirch3 <- 'results/round2_fit/sens/less_circ_h3/round2_5_fluH1_plus_B/'
 res_dir_rhino <- 'results/round2_fit/sens/rhino_covar/round2_3_fluH1_plus_B/'
 
@@ -76,6 +79,9 @@ res_sinusoidal <- load_and_format_mega_results(res_dir_sinusoidal, cond = 'Sinus
 res_noint <- load_and_format_mega_results(res_dir_noint, cond = 'No Interaction')
 res_noRSVimmune <- load_and_format_mega_results(res_dir_noRSVimmune, cond = 'No Immunity to RSV')
 res_h3covar <- load_and_format_mega_results(res_dir_h3covar, cond = 'H3 as Covariate')
+res_h3covar_lag1 <- load_and_format_mega_results(res_dir_h3covar_lag1, cond = 'H3 as Covariate (Lag 1)')
+res_h3covar_lag2 <- load_and_format_mega_results(res_dir_h3covar_lag2, cond = 'H3 as Covariate (Lag 2)')
+res_h3covar_lag15 <- load_and_format_mega_results(res_dir_h3covar_lag15, cond = 'H3 as Covariate (Lag 15)')
 res_lesscirch3 <- load_and_format_mega_results(res_dir_lesscirch3, cond = 'Low H3 Circulation Seasons')
 res_rhino <- load_and_format_mega_results(res_dir_rhino, cond = 'Rhinovirus as Covariate')
 
@@ -96,6 +102,12 @@ summary(res_noRSVimmune %>%
           select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
 summary(res_h3covar %>%
           select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
+summary(res_h3covar_lag1 %>%
+          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
+summary(res_h3covar_lag2 %>%
+          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
+summary(res_h3covar_lag15 %>%
+          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
 summary(res_lesscirch3 %>%
           select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
 summary(res_rhino %>%
@@ -108,6 +120,9 @@ res <- bind_rows(res_main,
                  res_noint,
                  res_noRSVimmune,
                  res_h3covar,
+                 res_h3covar_lag1,
+                 res_h3covar_lag2,
+                 res_h3covar_lag15,
                  res_rhino)
 
 p1 <- ggplot(data = res, aes(x = condition, y = loglik, group = condition)) + geom_jitter() + theme_classic()# + geom_boxplot()
