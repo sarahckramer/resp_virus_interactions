@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Set directory where results from round2 fits are stored:
-res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
+res_dir <- 'results/round2_fit/sens/hk_plus_canada/round2_1_/'
 
 # Which round of fits?:
 which_round <- str_split(res_dir, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir, '_')[[1]])))]
@@ -31,14 +31,6 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'main'
 }
 
-# Check whether Canada or Hong Kong:
-if (str_detect(res_dir, 'canada')) {
-  fit_canada <- TRUE
-  sens <- 'sinusoidal_forcing'
-} else {
-  fit_canada <- FALSE
-}
-
 # Check that directory for storing results exists, and create if not:
 if (!dir.exists('results/')) {
   dir.create('results/')
@@ -48,11 +40,6 @@ if (!dir.exists('results/round2_CIs/')) {
 }
 
 if (sens == 'main') {
-  
-  new_dir <- paste0('results/round2_CIs/from_2_', which_round, '/')
-  if (!dir.exists(new_dir)) {
-    dir.create(new_dir)
-  }
   
   if (str_detect(res_dir, 'age_structured')) {
     
@@ -67,6 +54,20 @@ if (sens == 'main') {
     if (!dir.exists(new_dir)) {
       dir.create(new_dir)
     }
+  } else {
+    
+    if(!dir.exists('results/round2_CIs/sens/')) {
+      dir.create('results/round2_CIs/sens/')
+    }
+    if(!dir.exists('results/round2_CIs/sens/hk_plus_canada/')) {
+      dir.create('results/round2_CIs/sens/hk_plus_canada/')
+    }
+    
+    new_dir <- paste0('results/round2_CIs/sens/hk_plus_canada/from_2_', which_round, '/')
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
+    
   }
   
 } else {
@@ -81,18 +82,6 @@ if (sens == 'main') {
   new_dir <- paste0('results/round2_CIs/sens/', sens, '/from_2_', which_round, '/')
   if (!dir.exists(new_dir)) {
     dir.create(new_dir)
-  }
-  
-  if (fit_canada) {
-    new_dir <- 'results/round2_CIs/sens/canada/'
-    if (!dir.exists(new_dir)) {
-      dir.create(new_dir)
-    }
-    
-    new_dir <- paste0('results/round2_CIs/sens/canada/from_2_', which_round, '/')
-    if (!dir.exists(new_dir)) {
-      dir.create(new_dir)
-    }
   }
   
 }
@@ -124,7 +113,7 @@ load_and_format_mega_results <- function(filepath) {
     arrange(desc(loglik))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  # expect_equal(df_use, 54)
+  # expect_equal(df_use, 90)
   
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   print(table(pars_df$message))
@@ -167,29 +156,39 @@ load_and_format_mega_results <- function(filepath) {
     pars_top$delta1[pars_top$delta1 > 7.0] <- NA
     pars_top$d2[pars_top$d2 > 10.0] <- NA
   }
-  pars_top$rho1[pars_top$rho1 == 1.0] <- NA
-  pars_top$rho2[pars_top$rho2 == 1.0] <- NA
+  pars_top$hk_rho1[pars_top$hk_rho1 == 1.0] <- NA
+  pars_top$hk_rho2[pars_top$hk_rho2 == 1.0] <- NA
+  pars_top$can_rho2[pars_top$can_rho2 == 1.0] <- NA
   
   # Since phi=0 is equivalent to phi=52.25, don't use full range; transform so that we can select from only best-supported range:
-  par(mfrow = c(2, 1))
-  hist(pars_top$phi, breaks = 50)
+  par(mfrow = c(2, 2))
+  hist(pars_top$hk_phi, breaks = 50)
+  hist(pars_top$can_phi, breaks = 50)
   pars_top <- pars_top %>%
-    mutate(phi = if_else(phi < 5, phi + 52.25, phi))
-  hist(pars_top$phi, breaks = 50)
+    mutate(hk_phi = if_else(hk_phi < 5, hk_phi + 52.25, hk_phi),
+           can_phi = if_else(can_phi < 5, can_phi + 52.25, can_phi))
+  hist(pars_top$hk_phi, breaks = 50)
+  hist(pars_top$can_phi, breaks = 50)
   
   # If using sinusoidal forcing, do the same for phi1 and phi2:
-  if ('phi1' %in% names(pars_top)) {
+  if ('can_phi1' %in% names(pars_top)) {
     
-    par(mfrow = c(2, 2))
-    hist(pars_top$phi1, breaks = 50)
-    hist(pars_top$phi2, breaks = 50)
+    par(mfrow = c(4, 2))
+    hist(pars_top$hk_phi1, breaks = 50)
+    hist(pars_top$hk_phi2, breaks = 50)
+    hist(pars_top$can_phi1, breaks = 50)
+    hist(pars_top$can_phi2, breaks = 50)
     
     pars_top <- pars_top %>%
-      mutate(phi1 = if_else(phi1 < 5, phi1 + 52.25, phi1),
-             phi2 = if_else(phi2 < 5, phi2 + 52.25, phi2))
+      mutate(hk_phi1 = if_else(hk_phi1 < 5, hk_phi1 + 52.25, hk_phi1),
+             hk_phi2 = if_else(hk_phi2 < 5, hk_phi2 + 52.25, hk_phi2),
+             can_phi1 = if_else(can_phi1 < 5, can_phi1 + 52.25, can_phi1),
+             can_phi2 = if_else(can_phi2 < 5, can_phi2 + 52.25, can_phi2))
     
-    hist(pars_top$phi1, breaks = 50)
-    hist(pars_top$phi2, breaks = 50)
+    hist(pars_top$hk_phi1, breaks = 50)
+    hist(pars_top$hk_phi2, breaks = 50)
+    hist(pars_top$can_phi1, breaks = 50)
+    hist(pars_top$can_phi2, breaks = 50)
     
   }
   
@@ -204,39 +203,49 @@ res <- load_and_format_mega_results(res_dir)
 # Check that best-fit parameter values do not lead trajectories to drop below 0:
 res_orig <- res[[2]]
 
-if (fit_canada) {
-  vir1 <- 'flu'
-} else {
-  vir1 <- 'flu_h1_plus_b'
-}
-prof_lik <- FALSE
-
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 if (sens == 'no_rsv_immune') {
   unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10')
 }
 
-shared_estpars <- res_orig %>% select(!contains(unit_estpars) & !'loglik') %>% names()
-true_estpars <- c(shared_estpars, unit_estpars)
+global_estpars <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
+shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+true_estpars <- c(global_estpars, shared_estpars, unit_estpars)
 
 source('src/functions/setup_global_likelilhood.R')
 
-traj_list <- lapply(1:length(seasons), function(ix) {
-  pars_temp <- res_orig %>%
-    select(all_of(shared_estpars), contains(seasons[ix]))
+traj_list <- lapply(1:length(c(seasons_hk, seasons_can)), function(ix) {
+  
+  if (ix <= length(seasons_hk)) {
+    
+    pars_temp <- res_orig %>%
+      select(all_of(global_estpars),
+             paste0('hk_', shared_estpars),
+             paste0(seasons_hk[ix], '_hk_', unit_estpars))
+    
+  } else {
+    
+    pars_temp <- res_orig %>%
+      select(all_of(global_estpars),
+             paste0('can_', shared_estpars),
+             paste0(seasons_can[ix - length(seasons_hk)], '_can_', unit_estpars))
+    
+  }
+  
   names(pars_temp) <- true_estpars
   
   p_mat <- parmat(coef(po_list[[ix]]), nrep = nrow(pars_temp))
   for (param in names(pars_temp)) {
     p_mat[param, ] <- pars_temp %>% pull(param)
   }
-  
+
   trajectory(object = po_list[[ix]],
              params = p_mat,
              format = 'data.frame') %>%
     select(!(H1_tot:H2_tot)) %>%
     pivot_longer(X_SS:H2,
                  names_to = 'state')
+  
 })
 
 expect_false(any(lapply(traj_list, function(ix) {
@@ -250,6 +259,7 @@ is_mle <- res[[3]]
 res_dir_comp <- str_split(res_dir, '_')[[1]]
 res_dir_comp[which(!is.na(as.numeric(res_dir_comp)))] <- as.character(as.numeric(which_round) - 1)
 res_dir_prev <- paste(res_dir_comp, collapse = '_')
+rm(res_dir_comp)
 
 is_mle_prev <- try(
   load_and_format_mega_results(res_dir_prev)[[3]]
@@ -267,16 +277,16 @@ if (is_mle & is_mle_prev) {
   
   if (str_detect(res_dir, 'sens')) {
     
-    if (str_detect(res_dir, 'canada')) {
-      write_rds(res_orig, file = 'results/round2_fit/sens/canada/MLEs_flu.rds')
+    if (str_detect(res_dir, 'hk_plus_canada')) {
+      write_rds(res_orig, file = 'results/round2_fit/sens/hk_plus_canada/MLEs.rds')
     } else {
-      write_rds(res_orig, file = paste0(paste(str_split(res_dir, '/')[[1]][1:(length(str_split(res_dir, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1_plus_b.rds'))
+      write_rds(res_orig, file = paste0(paste(str_split(res_dir, '/')[[1]][1:(length(str_split(res_dir, '/')[[1]]) - 2)], collapse = '/'), '/MLEs.rds'))
     }
     
   } else if (str_detect(res_dir, 'age_structured')) {
-    write_rds(res_orig, file = 'results/age_structured_SA/MLEs_flu_h1_plus_b.rds')
+    write_rds(res_orig, file = 'results/age_structured_SA/MLEs.rds')
   } else {
-    write_rds(res_orig, file = 'results/MLEs_flu_h1_plus_b.rds')
+    write_rds(res_orig, file = 'results/MLEs.rds')
   }
   
 }
@@ -315,32 +325,50 @@ if (any(ci_start == Inf)) {
 # Check that sums of initial conditions can't sum to >1:
 init_cond_estpars <- c('I10', 'I20', 'R10', 'R20', 'R120')
 
-sums <- ci_start %>%
-  mutate(minmax = c('min', 'max')) %>%
-  select(contains(init_cond_estpars), minmax) %>%
-  pivot_longer(-minmax) %>%
-  mutate(season = str_sub(name, 1, 6)) %>%
-  group_by(season, minmax) %>%
-  summarise(sum = sum(value))
+if (str_detect(res_dir, 'hk_plus_canada')) {
+  
+  sums <- ci_start %>%
+    mutate(minmax = c('min', 'max')) %>%
+    select(contains(init_cond_estpars), minmax) %>%
+    pivot_longer(-minmax) %>%
+    mutate(location = str_remove(str_sub(name, 8, 10), '_'),
+           season = str_sub(name, 1, 6)) %>%
+    group_by(location, season, minmax) %>%
+    summarise(sum = sum(value))
+  
+} else {
+  
+  sums <- ci_start %>%
+    mutate(minmax = c('min', 'max')) %>%
+    select(contains(init_cond_estpars), minmax) %>%
+    pivot_longer(-minmax) %>%
+    mutate(season = str_sub(name, 1, 6)) %>%
+    group_by(season, minmax) %>%
+    summarise(sum = sum(value))
+  
+}
 
 if (any(sums %>% filter(minmax == 'min') %>% pull(sum) > 1.0)) {
   print('Lower bounds sum to more than 1!')
 }
 
 if (any(sums %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
-  seasons <- sums %>%
+  ids <- sums %>%
     filter(minmax == 'max',
            sum > 1.0) %>%
-    pull(season)
+    select(location, season) %>%
+    mutate(id = paste(season, location, sep = '_')) %>%
+    pull(id)
   
-  for (yr in seasons) {
+  for (id_temp in ids) {
     
     # Reduce upper bounds proportionally:
     orig_upper_bounds <- ci_start[2, ] %>%
       select(contains(c('R10', 'R20', 'R120'))) %>%
-      select(contains(yr))
+      select(contains(id_temp))
     red_needed <- sums %>%
-      filter(season == yr,
+      mutate(id = paste(season, location, sep = '_')) %>%
+      filter(id == id_temp,
              minmax == 'max') %>%
       pull(sum) - 0.9999999
     new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
@@ -348,7 +376,7 @@ if (any(sums %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
     # Ensure upper bounds still greater than lower:
     orig_lower_bounds <- ci_start[1, ] %>%
       select(contains(c('R10', 'R20', 'R120'))) %>%
-      select(contains(yr))
+      select(contains(id_temp))
     
     if (!all(new_upper_bounds > orig_lower_bounds)) {
       new_upper_bounds_try <- orig_upper_bounds
@@ -360,14 +388,14 @@ if (any(sums %>% filter(minmax == 'max') %>% pull(sum) > 1.0)) {
     expect_true(all(new_upper_bounds > orig_lower_bounds))
     
     # Check that upper bounds now sum to 1 or less:
-    ci_start[2, which(str_detect(names(ci_start), yr) &
+    ci_start[2, which(str_detect(names(ci_start), id_temp) &
                         (str_detect(names(ci_start), 'R10') |
                            str_detect(names(ci_start), 'R20') |
                            str_detect(names(ci_start), 'R120')))] <- new_upper_bounds
-    expect_lt(ci_start[2, ] %>% select(contains(yr)) %>% select(contains(init_cond_estpars)) %>% sum(), 1.0)
+    expect_lt(ci_start[2, ] %>% select(contains(id_temp)) %>% select(contains(init_cond_estpars)) %>% sum(), 1.0)
     
   }
-  rm(yr)
+  rm(id_temp)
 }
 
 # Write start ranges to file:
