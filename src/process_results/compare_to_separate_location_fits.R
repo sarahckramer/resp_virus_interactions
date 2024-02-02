@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Set locations of all results:
-res_dir_hk <- 'results/round2_fit/round2_3_fluH1_plus_B/'
+res_dir_hk <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1_plus_B/'
 res_dir_can <- 'results/round2_fit/sens/canada/round2_3_flu/'
 res_dir_comb <- 'results/round2_fit/sens/hk_plus_canada/round2_1_/'
 
