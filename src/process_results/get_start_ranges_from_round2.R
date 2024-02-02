@@ -212,6 +212,7 @@ global_estpars <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
 shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
 true_estpars <- c(global_estpars, shared_estpars, unit_estpars)
 
+sens <- 'sinusoidal_forcing'
 source('src/functions/setup_global_likelilhood.R')
 
 traj_list <- lapply(1:length(c(seasons_hk, seasons_can)), function(ix) {
