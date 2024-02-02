@@ -632,12 +632,12 @@ get_maxloglik_and_ci_cutoff <- function(res) {
   
 }
 
-res_proflik1_ZOOM <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda1ZOOM/',
+res_proflik1_ZOOM <- load_and_format_proflik_results(filepath = 'results/prof_lik/prof_lik_thetalambda1ZOOM/',
                                                      prof_par = 'theta_lambda1',
                                                      shared_estpars = shared_estpars)
 res_proflik1_ZOOM <- get_maxloglik_and_ci_cutoff(res_proflik1_ZOOM)
 
-res_proflik2_ZOOM <- load_and_format_proflik_results(filepath = 'results/prof_lik_thetalambda2ZOOM/',
+res_proflik2_ZOOM <- load_and_format_proflik_results(filepath = 'results/prof_lik/prof_lik_thetalambda2ZOOM/',
                                                      prof_par = 'theta_lambda2',
                                                      shared_estpars = shared_estpars)
 res_proflik2_ZOOM <- get_maxloglik_and_ci_cutoff(res_proflik2_ZOOM)
