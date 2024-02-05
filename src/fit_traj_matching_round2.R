@@ -398,8 +398,8 @@ start_range <- start_range %>%
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Get 95% CI from round 1 for unit params:
-tj_res_list_hk <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
-tj_res_list_can <- read_rds('results/round2_fit/sens/canada/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
+tj_res_list_hk <- read_rds('results/round1_fitsharedFALSE/hk/traj_match_round1_byvirseas_TOP.rds')
+tj_res_list_can <- read_rds('results/round1_fitsharedFALSE/canada/traj_match_round1_byvirseas_TOP.rds')
 
 ci_list <- vector('list', length(c(seasons_hk, seasons_can)))
 
