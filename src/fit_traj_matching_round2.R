@@ -17,6 +17,7 @@ no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 which_round <- as.integer(Sys.getenv("WHICHROUND")); print(which_round)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
+continue_search <- as.logical(Sys.getenv("CONTINUESEARCH")); print(continue_search)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 
 # # Set parameters for local run:
@@ -486,25 +487,50 @@ if (search_type == 'round2_CIs') {
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Get starting values for each parameter:
-start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
-                             upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
-                             nseq = sobol_size)
-
-if (search_type == 'round2_CIs') {
-  start_values <- start_values %>%
-    mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+if (continue_search) {
   
-  if ('phi1' %in% names(start_values)) {
-    start_values <- start_values %>%
-      mutate(phi1 = if_else(phi1 > 52.25, phi1 - 52.25, phi1),
-             phi2 = if_else(phi2 > 52.25, phi2 - 52.25, phi2))
+  initial_res <- try(
+    read_rds(paste0('results/round2_fit/round2_', which_round, '_/res_', jobid, '_', jobid, '.rds'))
+  )
+  
+  if (inherits(initial_res, 'try-error')) {
+    stop(paste0('No results file found for jobid ', jobid, '.'))
   }
+  
+  start_values <- initial_res$estpars
+  
+  if (!str_detect(initial_res$message, 'maxtime')) {
+    saveRDS(initial_res, paste0('results/res_', jobid, '_', jobid, '.rds'))
+    stop('Search converged in first 24 hours.')
+  }
+  
+  # Check that starting values and estpars are correct:
+  print(start_values)
+  print(estpars)
+  
+} else {
+  
+  start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
+                               upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
+                               nseq = sobol_size)
+  
+  if (search_type == 'round2_CIs') {
+    start_values <- start_values %>%
+      mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+    
+    if ('phi1' %in% names(start_values)) {
+      start_values <- start_values %>%
+        mutate(phi1 = if_else(phi1 > 52.25, phi1 - 52.25, phi1),
+               phi2 = if_else(phi2 > 52.25, phi2 - 52.25, phi2))
+    }
+  }
+  
+  # Check that starting values and estpars are correct:
+  print(start_range)
+  print(summary(start_values))
+  print(estpars)
+  
 }
-
-# Check that starting values and estpars are correct:
-print(start_range)
-print(summary(start_values))
-print(estpars)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -526,7 +552,12 @@ for (i in seq_along(sub_start)) {
   print(paste0('Estimation: ', sub_start[i]))
   
   # Get start values:
-  x0 <- as.numeric(start_values[sub_start[i], ])
+  if (continue_search) {
+    x0 <- as.numeric(start_values)
+  } else {
+    x0 <- as.numeric(start_values[sub_start[i], ])
+  }
+  
   x0_trans <- transform_params(x0, po_list[[1]], po_list[[7]], seasons_hk, seasons_can, estpars, global_estpars, shared_estpars)
   x0_trans_names <- names(x0_trans)
   
