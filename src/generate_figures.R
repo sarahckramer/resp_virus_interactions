@@ -68,8 +68,110 @@ rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Figure 2: Model schematic
-# Not generated in R
+# Figure 2: Model schematic + influence of key model parameters
+# Model schematic (Figure 2a) not generated in R
+
+# Read in MLEs:
+mle <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ]
+
+# Set shared and unit parameters:
+shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                    'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
+true_estpars <- c(shared_estpars, unit_estpars)
+
+# Load pomp models:
+prof_lik <- FALSE
+vir1 <- 'flu_h1_plus_b'
+fit_canada <- FALSE
+
+source('src/functions/setup_global_likelilhood.R')
+
+# Use 2018-19:
+yr <- seasons[6]
+
+# Get pomp object:
+resp_mod <- po_list[[6]]
+
+# Get parameter values:
+pars_temp <- mle %>%
+  select(all_of(shared_estpars),
+         contains(yr))
+names(pars_temp)[(length(names(pars_temp)) - 6):length(names(pars_temp))] <- unit_estpars
+
+# Set coefficient values:
+coef(resp_mod, c(shared_estpars, unit_estpars)) <- pars_temp
+
+# Run model using various theta_lambda1 values:
+param_mat <- parmat(coef(resp_mod), nrep = 6)
+param_mat['theta_lambda1', ] <- seq(0, 1, by = 0.2)
+param_mat['theta_lambda2', ] <- 1.0
+
+traj_temp <- trajectory(resp_mod, params = param_mat, format = 'data.frame') %>%
+  as_tibble() %>%
+  mutate(season = yr,
+         theta_lambda1 = as.character(seq(0, 1, by = 0.2)[.id])) %>%
+  select(time, season, H1, H2, theta_lambda1)
+
+p2b <- ggplot(data = traj_temp) +
+  geom_line(aes(x = time, y = H1, group = theta_lambda1), linetype = 2) +
+  geom_line(aes(x = time, y = H2, group = theta_lambda1, col = theta_lambda1)) +
+  theme_classic() +
+  theme(legend.position = 'right',
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 11),
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.95, 0.97)) +
+  scale_x_continuous(n.breaks = 10) +
+  scale_y_continuous(n.breaks = 10) +
+  scale_color_viridis(discrete = TRUE) +
+  labs(x = 'Time (Weeks)', y = 'RSV Incidence', col = expr(theta[lambda*1]), tag = 'B')
+p2b <- reposition_legend(p2b, x = 0.7, y = 0.56, just = 0, plot = FALSE)
+
+# Run model using various delta1 values:
+param_mat <- parmat(coef(resp_mod), nrep = 5)
+param_mat['delta1', ] <- 7 / c(7, 15, 30, 60, 182.5)
+param_mat['theta_lambda1', ][1] <- 1.0
+param_mat['theta_lambda2', ] <- 1.0
+
+traj_temp <- trajectory(resp_mod, params = param_mat, format = 'data.frame') %>%
+  as_tibble() %>%
+  mutate(season = yr,
+         delta1 = as.character(round(c(7 / c(7, 15, 30, 60, 182.5)), 3)[.id]),
+         delta1 = if_else(delta1 == 1, 'No interaction', delta1)) %>%
+  select(time, season, H1, H2, delta1)
+
+traj_temp <- traj_temp %>%
+  mutate(delta1 = if_else(delta1 == '0.467', '0.467 (15 days)', delta1),
+         delta1 = if_else(delta1 == '0.233', '0.233 (1 month)', delta1),
+         delta1 = if_else(delta1 == '0.117', '0.117 (2 months)', delta1),
+         delta1 = if_else(delta1 == '0.038', '0.038 (6 months)', delta1))
+
+p2c <- ggplot(data = traj_temp) +
+  geom_line(aes(x = time, y = H1, group = delta1), linetype = 2) +
+  geom_line(aes(x = time, y = H2, group = delta1, col = delta1)) +
+  theme_classic() +
+  theme(legend.position = 'right',
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 11),
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.95, 0.97)) +
+  scale_x_continuous(n.breaks = 10) +
+  scale_y_continuous(n.breaks = 10) +
+  scale_color_viridis(discrete = TRUE) +
+  labs(x = 'Time (Weeks)', y = 'RSV Incidence', col = expr(delta[1]), tag = 'C')
+p2c <- reposition_legend(p2c, x = 0.58, y = 0.6, just = 0, plot = FALSE)
+
+# Combine plots and save:
+fig2 <- arrangeGrob(p2b, p2c, ncol = 2)
+plot(fig2)
+
+ggsave('results/plots/figures_for_manuscript/Figure2_bc.svg', width = 11.75, height = 3.75, fig2)
+rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
 
