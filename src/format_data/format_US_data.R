@@ -294,6 +294,11 @@ us_dat_mod <- us_dat_mod %>%
                                             'Region 6', 'Region 7', 'Region 8', 'Region 9', 'Region 10'))) %>%
   split(.$region)
 
+us_dat_mod <- lapply(us_dat_mod, function(ix) {
+  ix %>%
+    arrange(season, time)
+})
+
 # Write data to file:
 write_rds(us_dat_mod, file = 'data/formatted/dat_us_byRegion.rds')
 
