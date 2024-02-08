@@ -174,7 +174,7 @@ load_and_format_mega_results <- function(filepath) {
   par(mfrow = c(2, 1))
   hist(pars_top$phi, breaks = 50)
   pars_top <- pars_top %>%
-    mutate(phi = if_else(phi < 5, phi + 52.25, phi))
+    mutate(phi = if_else(phi < 1, phi + 52.25, phi))
   hist(pars_top$phi, breaks = 50)
   
   # If using sinusoidal forcing, do the same for phi1 and phi2:
@@ -185,9 +185,9 @@ load_and_format_mega_results <- function(filepath) {
     hist(pars_top$phi2, breaks = 50)
     
     pars_top <- pars_top %>%
-      mutate(phi1 = if_else(phi1 < 5, phi1 + 52.25, phi1),
-             phi2 = if_else(phi2 < 5, phi2 + 52.25, phi2))
     
+      mutate(phi1 = if_else(phi1 < 1, phi1 + 52.25, phi1),
+             phi2 = if_else(phi2 < 1, phi2 + 52.25, phi2))
     hist(pars_top$phi1, breaks = 50)
     hist(pars_top$phi2, breaks = 50)
     
