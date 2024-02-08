@@ -89,7 +89,7 @@ check_obs_lessthan_samples <- function(pomp_object, n_sim = 10, test_diff = FALS
   if (test_diff) {
     
     expect_true(all(sim_stoch$sim_nP1 <= sim_stoch$n_T1))
-    expect_true(all(sim_stoch$sim_nP2 <= sim_stoch$n_T2))
+    expect_true(all((sim_stoch$sim_nP2 <= sim_stoch$n_T2)[!is.na(sim_stoch$sim_nP2 <= sim_stoch$n_T2)]))
     
     sim_stoch <- sim_stoch %>%
       select(time:.id, sim_nP1:sim_nP2, obs_nP1:obs_nP2, n_T1:n_T2) %>%

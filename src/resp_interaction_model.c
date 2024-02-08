@@ -182,8 +182,16 @@ lik = (give_log) ? ll : exp(ll);
 double fP1, fP2, ll;
 double omega = (2 * M_PI) / 52.25;
 
-double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
-double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ILI); // Probability of detecting virus 2
+double rho1_w;
+double rho2_w;
+
+if (strcmp("us", loc) == 0) {
+  rho1_w = fmin2(1.0, rho1 * H1 / i_ILI); // Probability of detecting virus 1
+  rho2_w = fmin2(1.0, rho2 * H2 / i_ILI); // Probability of detecting virus 2
+} else {
+  rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
+  rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ILI); // Probability of detecting virus 2
+}
 
 if (rho1_w < 0) {
   rho1_w = 0.0;
@@ -222,8 +230,16 @@ n_P2 = rbinom(n_T, rho2_w); // Generate of tests positive to virus 2
 //start_rmeas_testdiff
 double omega = (2 * M_PI) / 52.25;
 
-double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
-double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ILI); // Probability of detecting virus 2
+double rho1_w;
+double rho2_w;
+
+if (strcmp("us", loc) == 0) {
+  rho1_w = fmin2(1.0, rho1 * H1 / i_ILI); // Probability of detecting virus 1
+  rho2_w = fmin2(1.0, rho2 * H2 / i_ILI); // Probability of detecting virus 2
+} else {
+  rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
+  rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ILI); // Probability of detecting virus 2
+}
 
 n_P1 = rbinom(n_T1, rho1_w); // Generate of tests positive to virus 1
 n_P2 = rbinom(n_T2, rho2_w); // Generate of tests positive to virus 2
