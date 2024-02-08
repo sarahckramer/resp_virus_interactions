@@ -161,12 +161,27 @@ if (exists('resp_mod')) {
                   etime = as.numeric(etime))
       
       # Write to file:
-      saveRDS(out,
-              file = sprintf('results/res_%s_%s_%s_%d.rds',
-                             vir1, vir2,
-                             as.character(yr),
-                             sub_start[i])
-      )
+      if (fit_us) {
+        
+        region_num <- str_remove(region, 'Region ')
+        saveRDS(out,
+                file = sprintf('results/res_%s_%s_%s_%s_%d.rds',
+                               vir1, vir2,
+                               region_num,
+                               as.character(yr),
+                               sub_start[i])
+        )
+        
+      } else {
+        
+        saveRDS(out,
+                file = sprintf('results/res_%s_%s_%s_%d.rds',
+                               vir1, vir2,
+                               as.character(yr),
+                               sub_start[i])
+        )
+        
+      }
       
       # Print results:
       print(out$ll)
