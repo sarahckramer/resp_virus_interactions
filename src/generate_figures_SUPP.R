@@ -1527,10 +1527,10 @@ rm(fig17s, dat_hk, dat_pos, x_lab_breaks, season_breaks)
 
 res_dir_main <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_noAH <- 'results/round2_fit/sens/no_ah/round2_3_fluH1_plus_B/'
-res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1_plus_B/'
+res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1_plus_B_OLD/'
 res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
 res_dir_noRSVimmune <- 'results/round2_fit/sens/no_rsv_immune/round2_5_fluH1_plus_B/'
-res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
+# res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
 res_dir_lesscirch3 <- 'results/round2_fit/sens/less_circ_h3/round2_5_fluH1_plus_B/'
 res_dir_rhino <- 'results/round2_fit/sens/rhino_covar/round2_3_fluH1_plus_B/'
 
@@ -1539,7 +1539,7 @@ res_noah <- load_and_format_mega_results(res_dir_noAH, run_name = 'Temperature O
 res_sinusoidal <- load_and_format_mega_results(res_dir_sinusoidal, run_name = 'Sinusoidal Forcing')
 res_noint <- load_and_format_mega_results(res_dir_noint, run_name = 'No Interaction')
 res_noRSVimmune <- load_and_format_mega_results(res_dir_noRSVimmune, run_name = 'R[20] + R[120] = 0')
-res_h3covar <- load_and_format_mega_results(res_dir_h3covar, run_name = 'H3 as Covariate')
+# res_h3covar <- load_and_format_mega_results(res_dir_h3covar, run_name = 'H3 as Covariate')
 res_lesscirch3 <- load_and_format_mega_results(res_dir_lesscirch3, run_name = 'Low H3 Circulation')
 res_rhino <- load_and_format_mega_results(res_dir_rhino, run_name = 'Rhino as Covariate')
 
@@ -1552,7 +1552,7 @@ res <- bind_rows(res_main,
                  res_sinusoidal,
                  res_noint,
                  res_noRSVimmune,
-                 res_h3covar,
+                 # res_h3covar,
                  res_lesscirch3,
                  res_rhino)
 
@@ -1581,11 +1581,11 @@ res <- res %>%
          parameter = if_else(parameter == 'rho2', 'rho[2]', parameter))
 
 res <- res %>%
-  mutate(condition = factor(condition, levels = c('Main', 'H3 as Covariate', 'Low H3 Circulation', 'No Interaction', 'Temperature Only', 'Sinusoidal Forcing', 'R[20] + R[120] = 0', 'Rhino as Covariate')),
+  mutate(condition = factor(condition, levels = c('Main', 'Low H3 Circulation', 'No Interaction', 'Temperature Only', 'Sinusoidal Forcing', 'R[20] + R[120] = 0', 'Rhino as Covariate')),
          parameter = factor(parameter, levels = c('theta[lambda*1]', 'theta[lambda*2]', '7 / delta[1]', '7 / delta[2]', 'eta[temp*1]', 'eta[temp*2]', 'eta[ah*1]', 'eta[ah*2]', 'rho[1]', 'rho[2]', 'alpha', 'phi')))
 
 xlabels <- levels(res$condition)
-xlabels[7] <- expression(R[20] + R[120] == 0)
+xlabels[6] <- expression(R[20] + R[120] == 0)
 
 fig18s <- ggplot(data = res, aes(x = condition, y = value)) +
   geom_point() +
@@ -1597,7 +1597,7 @@ fig18s <- ggplot(data = res, aes(x = condition, y = value)) +
   facet_wrap(~ parameter, scales = 'free_y', ncol = 2, labeller = 'label_parsed') +
   scale_x_discrete(labels = xlabels) +
   labs(x = 'Analysis', y = 'Parameter Value')
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS18.svg', width = 7.5, height = 12, fig18s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS18.svg', width = 7.2, height = 12, fig18s)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
