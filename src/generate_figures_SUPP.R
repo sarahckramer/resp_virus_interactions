@@ -590,8 +590,8 @@ load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) 
                 unlist()) %>%
     bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist()) %>%
-    bind_cols(map_chr(str_split(res_files, '_'), 10),
-              paste0('0.', map_chr(str_split(map_chr(str_split(res_files, '_'), 11), fixed('.')), 2))) %>%
+    bind_cols(map_chr(str_split(res_files, '_'), 11),
+              paste0('0.', map_chr(str_split(map_chr(str_split(res_files, '_'), 12), fixed('.')), 2))) %>%
     rename(run = '...14',
            profpar = '...15') %>%
     mutate(run = as.numeric(run),
@@ -679,8 +679,7 @@ p9b <- ggplot(res_proflik2_ZOOM, aes(x = profpar, y = loglik)) +
 fig9s <- arrangeGrob(p9a, p9b, nrow = 1)
 # ggsave('results/plots/figures_for_manuscript/supp/FigureS9.svg', width = 14, height = 5, fig9s)
 
-rm(fig9s, p9a, p9b, p9a_main, p9a_insert, p9b_main, p9b_insert,
-   res_proflik1, res_proflik1_ZOOM, res_proflik2, res_proflik2_ZOOM)
+rm(fig9s, p9a, p9b, res_proflik1_ZOOM, res_proflik2_ZOOM)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
