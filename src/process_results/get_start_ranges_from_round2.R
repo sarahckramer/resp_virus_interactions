@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Set directory where results from round2 fits are stored:
-res_dir <- 'results/round2_fit/sens/hk_plus_canada/round2_1_/'
+res_dir <- 'results/round2_fit/sens/hk_plus_canada/round2_1_cont2/'
 
 # Which round of fits?:
 which_round <- str_split(res_dir, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir, '_')[[1]])))]
