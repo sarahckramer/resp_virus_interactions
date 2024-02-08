@@ -44,7 +44,6 @@ us_ili <- us_ili %>%
 # Read in all data:
 us_vir_pre2015 <- read_csv('data/raw/us/FluViewPhase2Data/WHO_NREVSS_Combined_prior_to_2015_16.csv', skip = 1)
 us_vir_clin_post2015 <- read_csv('data/raw/us/FluViewPhase2Data/WHO_NREVSS_Clinical_Labs.csv', skip = 1)
-# us_vir_ph_post2015 <- read_csv('data/raw/us/FluViewPhase2Data/WHO_NREVSS_Public_Health_Labs.csv', skip = 1)
 
 # Prepare data for combining (pre 2015):
 us_vir_pre2015 <- us_vir_pre2015 %>%
@@ -66,16 +65,6 @@ expect_true(
 us_vir_pre2015 <- us_vir_pre2015 %>%
   select(region:n_test_flu, flu:tot_b)
 
-# # Prepare data for combining (post 2015, public health labs):
-# us_vir_ph_post2015 <- us_vir_ph_post2015 %>%
-#   select(REGION:H3N2v) %>%
-#   rename_with(tolower) %>%
-#   mutate(tot_a = `a (2009 h1n1)` + `a (h3)` + `a (subtyping not performed)` + h3n2v,
-#          tot_b = b + bvic + byam,
-#          flu = tot_a + tot_b) %>%
-#   rename('n_test_flu' = `total specimens`) %>%
-#   select(region:n_test_flu, flu, tot_a:tot_b)
-
 # Prepare data for combining (post 2015, clinical labs):
 us_vir_clin_post2015 <- us_vir_clin_post2015 %>%
   select(REGION:`PERCENT POSITIVE`) %>%
@@ -94,20 +83,6 @@ expect_true(
 
 us_vir_clin_post2015 <- us_vir_clin_post2015 %>%
   select(region:n_test_flu, flu, tot_a:tot_b)
-
-# # Combine post-2015 data:
-# us_vir_post2015 <- us_vir_clin_post2015 %>%
-#   inner_join(us_vir_ph_post2015,
-#              by = c('region', 'year', 'week'))
-# expect_true(nrow(us_vir_post2015) == nrow(us_vir_clin_post2015))
-# 
-# us_vir_post2015 <- us_vir_post2015 %>%
-#   mutate(n_test_flu = n_test_flu.x + n_test_flu.y,
-#          flu = flu.x + flu.y,
-#          tot_a = tot_a.x + tot_a.y,
-#          tot_b = tot_b.x + tot_b.y) %>%
-#   select(region:week, n_test_flu:tot_b)
-# rm(us_vir_clin_post2015)
 
 # Combine data from before and after 2015:
 us_vir_flu <- bind_rows(us_vir_pre2015,
@@ -145,17 +120,6 @@ us_vir_rsv <- us_vir_rsv %>%
          'n_test_rsv' = 'rsvtest',
          'rsv' = 'rsvpos') %>%
   mutate(region = paste('Region', region))
-
-# # Check flu data:
-# us_vir_check <- us_vir_ph_post2015 %>%
-#   inner_join(us_vir_rsv,
-#              by = c('region', 'year', 'week'))
-# 
-# expect_true(us_vir_check %>% filter(n_test_flu != flutest) %>% nrow == 0)
-# expect_true(us_vir_check %>% filter(flu != flupos) %>% nrow == 0)
-# expect_true(us_vir_check %>% filter(tot_a != fluapos) %>% nrow == 0)
-# expect_true(us_vir_check %>% filter(tot_b != flubpos) %>% nrow == 0)
-# rm(us_vir_check, us_vir_ph_post2015)
 
 # Join with flu virologic data:
 us_vir <- us_vir_flu %>%
