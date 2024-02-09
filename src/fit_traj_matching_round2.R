@@ -22,6 +22,12 @@ prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+fit_us <- as.logical(Sys.getenv("FITUS")); print(fit_us)
+
+if (fit_us) {
+  region_num <- as.integer(Sys.getenv("REGION")); print(region_num)
+  region <- paste0('Region ', region_num); print(region)
+}
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -32,14 +38,15 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
-# sens <- 'sinusoidal_forcing' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
-# fit_canada <- TRUE
+# sens <- 'main' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
+# fit_canada <- FALSE
+# fit_us <- FALSE
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
 
-if (fit_canada) {
+if (fit_canada | fit_us) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -52,8 +59,15 @@ if (sens == 'less_circ_h3') {
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
 }
+if (fit_us) {
+  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+}
 
-time_max <- 14.75 # 23.75 # Maximal execution time (in hours)
+if (sens == 'sinusoidal_forcing') {
+  time_max <- 23.75 # Maximal execution time (in hours)
+} else {
+  time_max <- 14.75 # Maximal execution time (in hours)
+}
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
@@ -256,6 +270,12 @@ if (int_eff == 'susc') {
     if (sens == 'sinusoidal_forcing') {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                           'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+      
+      if (fit_us) {
+        shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                            'b1', 'b2', 'phi1', 'phi2')
+      }
+      
     } else if (sens == 'h3_covar') {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                           'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
@@ -299,7 +319,6 @@ start_range <- data.frame(rho1 = c(0, 1.0),
                           theta_rho1 = c(0, 5.0),
                           theta_rho2 = c(0, 5.0),
                           delta1 = c(7 / 60, 7),
-                          # d2 = c(7 / 60, 7),
                           d2 = c(0, 10),
                           alpha = c(0, 0.5),
                           phi = c(0, 52.25),
@@ -332,6 +351,11 @@ if (sens == 'no_rsv_immune') {
 
 # Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
+
+if (fit_us) {
+  tj_res_list <- tj_res_list[str_detect(names(tj_res_list), paste0('_', region_num))]
+}
+
 ci_list <- vector('list', length(seasons))
 
 for (i in 1:length(ci_list)) {
@@ -427,8 +451,11 @@ start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), name
                              nseq = sobol_size)
 
 if (search_type == 'round2_CIs') {
-  start_values <- start_values %>%
-    mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+  
+  if (!fit_us) {
+    start_values <- start_values %>%
+      mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+  }
   
   if ('phi1' %in% names(start_values)) {
     start_values <- start_values %>%
