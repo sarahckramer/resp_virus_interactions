@@ -31,12 +31,19 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'main'
 }
 
-# Check whether Canada or Hong Kong:
+# Check whether Canada, US, or Hong Kong:
 if (str_detect(res_dir, 'canada')) {
   fit_canada <- TRUE
+  fit_us <- FALSE
   sens <- 'sinusoidal_forcing'
-} else {
+} else if (str_detect(res_dir, '/us/')) {
   fit_canada <- FALSE
+  fit_us <- TRUE
+  sens <- 'sinusoidal_forcing'
+  region <- 'Region 7'
+}else {
+  fit_canada <- FALSE
+  fit_us <- FALSE
 }
 
 # Check that directory for storing results exists, and create if not:
@@ -93,6 +100,16 @@ if (sens == 'main') {
     if (!dir.exists(new_dir)) {
       dir.create(new_dir)
     }
+  } else if (fit_us) {
+    new_dir <- 'results/round2_CIs/sens/us/'
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
+    
+    new_dir <- paste0('results/round2_CIs/sens/us/from_2_', which_round, '/')
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
   }
   
 }
@@ -124,8 +141,6 @@ load_and_format_mega_results <- function(filepath) {
     arrange(desc(loglik))
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
-  # expect_equal(df_use, 54)
-  
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
   print(table(pars_df$message))
   
@@ -171,11 +186,15 @@ load_and_format_mega_results <- function(filepath) {
   pars_top$rho2[pars_top$rho2 == 1.0] <- NA
   
   # Since phi=0 is equivalent to phi=52.25, don't use full range; transform so that we can select from only best-supported range:
-  par(mfrow = c(2, 1))
-  hist(pars_top$phi, breaks = 50)
-  pars_top <- pars_top %>%
-    mutate(phi = if_else(phi < 5, phi + 52.25, phi))
-  hist(pars_top$phi, breaks = 50)
+  if ('phi' %in% names(pars_top)) {
+    
+    par(mfrow = c(2, 1))
+    hist(pars_top$phi, breaks = 50)
+    pars_top <- pars_top %>%
+      mutate(phi = if_else(phi < 1, phi + 52.25, phi))
+    hist(pars_top$phi, breaks = 50)
+    
+  }
   
   # If using sinusoidal forcing, do the same for phi1 and phi2:
   if ('phi1' %in% names(pars_top)) {
@@ -185,8 +204,8 @@ load_and_format_mega_results <- function(filepath) {
     hist(pars_top$phi2, breaks = 50)
     
     pars_top <- pars_top %>%
-      mutate(phi1 = if_else(phi1 < 5, phi1 + 52.25, phi1),
-             phi2 = if_else(phi2 < 5, phi2 + 52.25, phi2))
+      mutate(phi1 = if_else(phi1 < 1, phi1 + 52.25, phi1),
+             phi2 = if_else(phi2 < 1, phi2 + 52.25, phi2))
     
     hist(pars_top$phi1, breaks = 50)
     hist(pars_top$phi2, breaks = 50)
@@ -204,7 +223,7 @@ res <- load_and_format_mega_results(res_dir)
 # Check that best-fit parameter values do not lead trajectories to drop below 0:
 res_orig <- res[[2]]
 
-if (fit_canada) {
+if (fit_canada | fit_us) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -269,6 +288,8 @@ if (is_mle & is_mle_prev) {
     
     if (str_detect(res_dir, 'canada')) {
       write_rds(res_orig, file = 'results/round2_fit/sens/canada/MLEs_flu.rds')
+    } else if (str_detect(res_dir, '/us/')) {
+      write_rds(res_orig, file = 'results/round2_fit/sens/us/MLEs_flu.rds')
     } else {
       write_rds(res_orig, file = paste0(paste(str_split(res_dir, '/')[[1]][1:(length(str_split(res_dir, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1_plus_b.rds'))
     }
