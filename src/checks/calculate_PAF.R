@@ -42,7 +42,7 @@ source('src/functions/setup_global_likelilhood.R')
 traj_list <- vector('list', length = length(seasons))
 for (i in 1:length(seasons)) {
   
-  traj_list[[i]] <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', obs_only = FALSE, analysis = 'paf')
+  traj_list[[i]] <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
   
 }
 
@@ -60,7 +60,7 @@ source('src/functions/setup_global_likelilhood.R')
 traj_list <- vector('list', length = length(seasons))
 for (i in 1:length(seasons)) {
   
-  traj_list[[i]] <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', obs_only = FALSE, analysis = 'paf')
+  traj_list[[i]] <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
   
 }
 

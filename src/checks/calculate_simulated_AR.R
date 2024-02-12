@@ -41,7 +41,7 @@ source('src/functions/setup_global_likelilhood.R')
 ar_list <- vector('list', length = length(seasons))
 for (i in 1:length(seasons)) {
   
-  res_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', obs_only = TRUE, analysis = 'basic')
+  res_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'basic')
   
   ar_temp <- res_temp %>%
     group_by(season) %>%
@@ -67,7 +67,7 @@ source('src/functions/setup_global_likelilhood.R')
 ar_list <- vector('list', length = length(seasons))
 for (i in 1:length(seasons)) {
   
-  res_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', obs_only = TRUE, analysis = 'basic')
+  res_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'basic')
   
   ar_temp <- res_temp %>%
     group_by(season) %>%
