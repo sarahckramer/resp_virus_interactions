@@ -14,6 +14,11 @@ source('src/functions/functions_flu_RSV.R')
 source('src/functions/test_code.R')
 source('src/vaccination_simulation_study/functions_simulation_study.R')
 
+# Set test_diff_use
+if (fit_canada) {
+  test_diff_use <- TRUE
+} else {
+  test_diff_use <- FALSE
 }
 
 # # Set additional variables locally (for testing):
@@ -33,49 +38,85 @@ source('src/vaccination_simulation_study/functions_simulation_study.R')
 
 # Load and format data
 
-# Read in data:
-hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
-
-# Get data of interest:
-dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
-  filter(season == yr)
+# Read in data and choose season:
+if (fit_canada) {
+  
+  can_dat <- read_csv('data/formatted/dat_canada.csv')
+  dat_pomp <- can_dat %>%
+    filter(season == yr)
+  
+} else {
+  
+  hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
+  dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
+    filter(season == yr)
+  
+}
 nrow_check <- nrow(dat_pomp)
 
 # Get climate data:
-dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
-
-dat_pomp <- dat_pomp %>%
-  inner_join(dat_clim,
-             by = c('Year' = 'year',
-                    'Week' = 'week')) %>%
-  select(time:pop, temp, ah, rh)
-expect_true(nrow(dat_pomp) == nrow_check)
-
-rm(dat_clim)
+if (fit_canada) {
+  
+  dat_pomp <- dat_pomp %>%
+    mutate(temp = 0,
+           ah = 0)
+  expect_true(nrow(dat_pomp) == nrow_check)
+  
+} else {
+  
+  dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
+  
+  dat_pomp <- dat_pomp %>%
+    inner_join(dat_clim,
+               by = c('Year' = 'year',
+                      'Week' = 'week')) %>%
+    select(time:pop, temp, ah, rh)
+  expect_true(nrow(dat_pomp) == nrow_check)
+  
+  rm(dat_clim)
+  
+}
 
 # If no data for this season, skip:
 if (nrow(dat_pomp) > 0) {
   
   # Format data:
-  dat_pomp <- dat_pomp %>%
-    rename('i_ILI' = 'GOPC') %>%
-    mutate(i_ILI = i_ILI / 1000)
-  # https://www.censtatd.gov.hk/en/
-  # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
+  if (!fit_canada) {
+    dat_pomp <- dat_pomp %>%
+      rename('i_ILI' = 'GOPC') %>%
+      mutate(i_ILI = i_ILI / 1000)
+    # https://www.censtatd.gov.hk/en/
+    # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
+  }
   
   # Plot data:
   if (debug_bool) {
+    
     # Plot ILI incidence:
     p1 <- ggplot(data = dat_pomp, aes(x = time, y = i_ILI)) + geom_line() +
       labs(x = 'Time (Weeks)', y = 'ILI Incidence Rate (per 1000 Consultations)') +
       theme_classic()
     print(p1)
     
-    p2 <- ggplot(data = dat_pomp %>% pivot_longer(n_P1:n_P2, names_to = 'virus', values_to = 'n_pos'),
-                 aes(x = time, y = n_pos / n_T, color = virus)) +
-      geom_line() + labs(x = 'Time (Weeks)', y = 'Positivity Fraction') +
-      theme_classic()
+    if (fit_canada) {
+      p2 <- ggplot(data = dat_pomp %>%
+                     pivot_longer(n_P1:n_P2, names_to = 'virus', values_to = 'n_pos') %>%
+                     pivot_longer(n_T1:n_T2, names_to = 'virus1', values_to = 'n_T') %>%
+                     mutate(virus = str_remove(virus, 'n_P'),
+                            virus1 = str_remove(virus1, 'n_T')) %>%
+                     filter(virus == virus1),
+                   aes(x = time, y = n_pos / n_T, color = virus)) +
+        geom_line() + labs(x = 'Time (Weeks)', y = 'Positivity Fraction') +
+        theme_classic()
+    } else {
+      p2 <- ggplot(data = dat_pomp %>%
+                     pivot_longer(n_P1:n_P2, names_to = 'virus', values_to = 'n_pos'),
+                   aes(x = time, y = n_pos / n_T, color = virus)) +
+        geom_line() + labs(x = 'Time (Weeks)', y = 'Positivity Fraction') +
+        theme_classic()
+    }
     print(p2)
+    
   }
   
   # ---------------------------------------------------------------------------------------------------------------------
@@ -83,18 +124,35 @@ if (nrow(dat_pomp) > 0) {
   # Create pomp model and run basic model checks
   
   # Create model:
-  resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
-                                        Ri1_max = Ri_max1,
-                                        Ri2_max = Ri_max2,
-                                        d2_max = d2_max,
-                                        t0_eff = 0,
-                                        debug_bool = debug_bool)
+  if (fit_canada) {
+    
+    resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
+                                          Ri1_max = Ri_max1,
+                                          Ri2_max = Ri_max2,
+                                          d2_max = d2_max,
+                                          t0_eff = 0,
+                                          debug_bool = debug_bool,
+                                          sens = sens,
+                                          test_diff = TRUE)
+    
+  } else {
+    
+    resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
+                                          Ri1_max = Ri_max1,
+                                          Ri2_max = Ri_max2,
+                                          d2_max = d2_max,
+                                          t0_eff = 0,
+                                          debug_bool = debug_bool,
+                                          sens = sens,
+                                          test_diff = FALSE)
+    
+  }
   
   # If parameter information available, update model parameters:
   if (exists('mle')) {
     
     model_params <- mle %>%
-      dplyr::select(rho1:eta_ah2, contains(yr)) %>%
+      dplyr::select(all_of(shared_estpars), contains(yr)) %>%
       rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
       unlist()
     
@@ -158,7 +216,7 @@ if (nrow(dat_pomp) > 0) {
     
   }
   
-  sim_determ <- run_simulation_with_vaccination(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+  sim_determ <- run_simulation_with_vaccination(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool, sens, test_diff = test_diff_use)
   
   # Check that correct proportion of people are vaccinated:
   if (debug_bool) {
@@ -179,7 +237,7 @@ if (nrow(dat_pomp) > 0) {
   
   # Now vaccinate in the middle of the season, and recheck:
   t_vacc = 15
-  sim_determ <- run_simulation_with_vaccination(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+  sim_determ <- run_simulation_with_vaccination(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool, sens, test_diff = test_diff_use)
   
   # Check that population size is constant:
   check_correct_N_CONST_VACC(sim_determ, unique(dat_pomp$pop))
@@ -190,7 +248,7 @@ if (nrow(dat_pomp) > 0) {
   
   # Check for t_vacc == 1:
   t_vacc = 1
-  sim_determ <- run_simulation_with_vaccination(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+  sim_determ <- run_simulation_with_vaccination(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool, sens, test_diff = test_diff_use)
   
   # Check that population size is constant:
   check_correct_N_CONST_VACC(sim_determ, unique(dat_pomp$pop))
@@ -252,12 +310,11 @@ if (nrow(dat_pomp) > 0) {
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
   
-  
-  p7 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+  p7 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool, sens, test_diff = test_diff_use)
   if (debug_bool) print(p7)
   
   t_vacc <- 10
-  p8 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+  p8 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool, sens, test_diff = test_diff_use)
   if (debug_bool) print(p8)
   
   # Check that only RSV impacted if vaccine only affects RSV:
@@ -268,12 +325,11 @@ if (nrow(dat_pomp) > 0) {
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
   
-  
-  p9 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+  p9 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool, sens, test_diff = test_diff_use)
   if (debug_bool) print(p9)
   
   t_vacc <- 10
-  p10 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
+  p10 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool, sens, test_diff = test_diff_use)
   if (debug_bool) print(p10)
   
   # Clean up:
