@@ -39,6 +39,9 @@ if (sens_sim == 'vacceff60') {
 }
 print(vacc_eff)
 
+# Set interaction parameter names:
+int_params <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
+
 # Read in MLEs:
 mle_hk <- read_rds('results/MLEs_hk.rds')[1, ]
 mle_can <- read_rds('results/MLEs_canada.rds')[1, ]
@@ -71,9 +74,12 @@ model_params <- mle %>%
   dplyr::select(all_of(shared_estpars), contains(yr)) %>%
   rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
   unlist()
+model_params[int_params] <- mle_hk %>% select(all_of(int_params)) %>% unlist()
 
-if (sens_sim == 'thetalambdavacc0.50') {
-  model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
+if (sens_sim == 'fit_can') {
+  model_params[int_params] <- mle_can %>% select(all_of(int_params)) %>% unlist()
+  model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
+  # model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
 } else if (sens_sim == 'deltavacc1month') {
   model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 30, vacc_eff)
 } else if (sens_sim == 'deltavacc6months') {
@@ -164,9 +170,12 @@ if (!is.na(yr)) {
     dplyr::select(all_of(shared_estpars), contains(yr)) %>%
     rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
     unlist()
+  model_params[int_params] <- mle_hk %>% select(all_of(int_params)) %>% unlist()
   
-  if (sens_sim == 'thetalambdavacc0.50') {
-    model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
+  if (sens_sim == 'fit_can') {
+    model_params[int_params] <- mle_can %>% select(all_of(int_params)) %>% unlist()
+    model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
+    # model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
   } else if (sens_sim == 'deltavacc1month') {
     model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 30, vacc_eff)
   } else if (sens_sim == 'deltavacc6months') {
