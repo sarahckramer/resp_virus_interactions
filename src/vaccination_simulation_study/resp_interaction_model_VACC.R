@@ -14,9 +14,6 @@ source('src/functions/functions_flu_RSV.R')
 source('src/functions/test_code.R')
 source('src/vaccination_simulation_study/functions_simulation_study.R')
 
-# Set early start value if it doesn't exist:
-if (!exists('early_start_val')) {
-  early_start_val <- FALSE
 }
 
 # # Set additional variables locally (for testing):
