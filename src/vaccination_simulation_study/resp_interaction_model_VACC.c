@@ -176,11 +176,11 @@ double X_SS_offset;
 
 if (xss0 < 0) {
   
-  X_SS = nearbyint((1.0 - p_vacc) * (1.0 - I10 - I20 - R10 - R20 - R120) * N);
+  X_SS = nearbyint((1.0 - I10 - I20 - R10 - R20 - R120) * N);
   X_IS = nearbyint(I10 * N);
   X_TS = 0;
-  X_RS = nearbyint((1.0 - p_vacc) * R10 * N);
-  X_SI = nearbyint((1.0 - p_vacc) * I20 * N);
+  X_RS = nearbyint(R10 * N);
+  X_SI = nearbyint(I20 * N);
   X_II = 0;
   X_TI = 0;
   X_RI = 0;
@@ -188,20 +188,25 @@ if (xss0 < 0) {
   X_IT = 0;
   X_TT = 0;
   X_RT = 0;
-  X_SR = nearbyint((1.0 - p_vacc) * R20 * N);
+  X_SR = nearbyint(R20 * N);
   X_IR = 0;
   X_TR = 0;
   X_RR = nearbyint(R120 * N);
   
-  //V_SS1 = nearbyint(p_vacc * (1.0 - R10 - R20 - R120) * N);
-  V_SS1 = nearbyint(p_vacc * (1.0 - I10 - I20 - R10 - R20 - R120) * N);
-  V_SR = nearbyint(p_vacc * R20 * N);
-  V_RS = nearbyint(p_vacc * R10 * N);
-  V_SI = nearbyint(p_vacc * I20 * N);
+  V_SS1 = nearbyint(p_vacc * X_SS);
+  V_SR = nearbyint(p_vacc * X_SR);
+  V_RS = nearbyint(p_vacc * X_RS);
+  V_SI = nearbyint(p_vacc * X_SI);
   V_ST = 0;
+  
+  X_SS = X_SS - V_SS1;
+  X_SR = X_SR - V_SR;
+  X_RS = X_RS - V_RS;
+  X_SI = X_SI - V_SI;
   
   X_SS_offset = X_IS + X_RS + X_SI + X_SR + X_RR + V_SS1 + V_SR + V_RS + V_SI;
   if ((X_SS + X_SS_offset) != N) {
+    //Rprintf("X_SS=%.11f, sum=%.11f, N=%.1f\n", X_SS, X_SS + X_SS_offset, N);
     X_SS = nearbyint(N - X_SS_offset);
   }
   
@@ -253,7 +258,9 @@ if ((X_SS + X_SS_offset) != N) {
 
 if(debug) {
   Rprintf("%f, %f, %f, %f, %f, %f, %f\n", Ri1, Ri2, I10, I20, R10, R20, R120);
+  Rprintf("%f, %f, %f, %f, %f, %f\n", X_SS, X_SR, X_RS, X_SI, X_ST, N);
   Rprintf("%f, %f, %f, %f, %f, %f\n", V_SS1, V_SR, V_RS, V_SI, V_ST, N);
+  Rprintf("%f, %f, %f, %f, %f, %f\n", X_SS + V_SS1, X_SR + V_SR, X_RS + V_RS, X_SI + V_SI, X_ST + V_ST, N);
 }
 
 //end_rinit

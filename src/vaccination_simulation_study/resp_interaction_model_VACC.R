@@ -255,13 +255,6 @@ if (nrow(dat_pomp) > 0) {
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
   
-  if (exists('mle')) {
-    if (yr == 's15-16') {
-      model_params['I20', ] <- round(mle$`s15-16_I20`, 6)
-    } else if (yr == 's17-18') {
-      model_params['R20', ] <- round(mle$`s17-18_R20`, 7)
-    }
-  }
   
   p7 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   if (debug_bool) print(p7)
@@ -278,12 +271,6 @@ if (nrow(dat_pomp) > 0) {
   model_params['theta_lambda1', ] <- 1.0
   model_params['theta_lambda2', ] <- 1.0
   
-  if (exists('mle')) {
-    if (yr == 's15-16') {
-      model_params['I20', ] <- round(mle$`s15-16_I20`, 6)
-      model_params['R10', ] <- round(mle$`s15-16_R10`, 6)
-    }
-  }
   
   p9 <- check_single_virus_impact(dat_pomp, t_vacc, model_params, Ri_max1, Ri_max2, d2_max, debug_bool)
   if (debug_bool) print(p9)
