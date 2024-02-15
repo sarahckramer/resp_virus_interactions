@@ -11,7 +11,8 @@ library(patchwork)
 library(viridis)
 
 # List seasons:
-seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+seasons_hk <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+seasons_can <- c('s10-11', 's11-12', 's12-13', 's13-14')
 
 # Set vaccination coverage levels and time points:
 vacc_cov_vec <- round(seq(0.05, 1.0, by = 0.05), digits = 2) # seq(0.1, 1.0, by = 0.1)
@@ -98,7 +99,7 @@ ggsave('results/vaccine_simulation_study/plots/ar_impact_AVG.svg', p_hk, width =
 # Plot results by individual season:
 pdf('results/vaccine_simulation_study/plots/vacc_impact_AR.pdf',
     width = 20, height = 10)
-for (seas in seasons) {
+for (seas in seasons_hk) {
   
   sim_temp <- res %>%
     filter(season == seas, .id == 1, vacc_cov == 1, vacc_time == 0) %>%
@@ -150,7 +151,7 @@ dev.off()
 # Plot all outbreaks by vaccination timing and coverage:
 pdf('results/vaccine_simulation_study/plots/all_sims.pdf',
     width = 30, height = 11)
-for (seas in seasons) {
+for (seas in seasons_hk) {
   
   sim_temp_all <- res %>%
     filter(vacc_cov <= 0.6) %>%
@@ -182,9 +183,9 @@ for (i in 1:length(unique(res_metrics$season))) {
   
 }
 
-corr_mat_hk <- matrix(NA, nrow = 6, ncol = 6)
-for (i in 1:6) {
-  for (j in 1:6) {
+corr_mat_hk <- matrix(NA, nrow = length(seasons_hk), ncol = length(seasons_hk))
+for (i in 1:length(seasons_hk)) {
+  for (j in 1:length(seasons_hk)) {
     corr_mat_hk[i, j] <- cor.test(vec_hk[[i]], vec_hk[[j]], method = 'kendall')$estimate
   }
 }
@@ -271,7 +272,7 @@ ggsave('results/vaccine_simulation_study/plots/ar_impact_AVG_temperate.svg', p_t
 # Plot results by individual season:
 pdf('results/vaccine_simulation_study/plots/vacc_impact_AR_temperate.pdf',
     width = 20, height = 10)
-for (seas in seasons) {
+for (seas in seasons_can) {
   
   sim_temp <- res %>%
     filter(season == seas, .id == 1, vacc_cov == 1, vacc_time == 0) %>%
@@ -326,7 +327,7 @@ dev.off()
 # Plot all outbreaks by vaccination timing and coverage:
 pdf('results/vaccine_simulation_study/plots/all_sims_temperate.pdf',
     width = 30, height = 11)
-for (seas in seasons) {
+for (seas in seasons_can) {
   
   sim_temp_all <- res %>%
     filter(vacc_cov <= 0.6) %>%
@@ -358,9 +359,9 @@ for (i in 1:length(unique(res_metrics$season))) {
   
 }
 
-corr_mat_temp <- matrix(NA, nrow = 6, ncol = 6)
-for (i in 1:6) {
-  for (j in 1:6) {
+corr_mat_temp <- matrix(NA, nrow = length(seasons_can), ncol = length(seasons_can))
+for (i in 1:length(seasons_can)) {
+  for (j in 1:length(seasons_can)) {
     corr_mat_temp[i, j] <- cor.test(vec_temp[[i]], vec_temp[[j]], method = 'kendall')$estimate
   }
 }
