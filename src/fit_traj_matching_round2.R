@@ -526,7 +526,7 @@ print(sub_start)
 print(detectCores())
 
 n_cores <- length(sub_start)
-use_cluster <- makeCluster(n_cores)
+use_cluster <- makeCluster(n_cores, outfile = '')
 print(use_cluster)
 
 registerDoSNOW(cl = use_cluster)
