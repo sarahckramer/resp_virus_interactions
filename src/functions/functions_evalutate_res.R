@@ -15,6 +15,12 @@ run_sim <- function(pomp_object, seas, mle, shared_estpars, unit_estpars, model_
   # params analysis: Should any special analyses be performed? (options: 'paf')
   # returns: Tibble of simulated values for flu and RSV in a given season
   
+  # If mle is a list, get alternative interaction parameters:
+  if (!is_tibble(mle)) {
+    alt_int_params <- mle[[2]]
+    mle <- mle[[1]]
+  }
+  
   # Get all estpars:
   true_estpars <- c(shared_estpars, unit_estpars)
   
@@ -23,6 +29,11 @@ run_sim <- function(pomp_object, seas, mle, shared_estpars, unit_estpars, model_
     select(all_of(shared_estpars),
            contains(seas))
   names(pars)[(length(names(pars)) - 6):length(names(pars))] <- unit_estpars
+  
+  if (exists('alt_int_params')) {
+    pars[c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')] <- alt_int_params[1, ] %>%
+      select(all_of(c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')))
+  }
   
   coef(pomp_object, true_estpars) <- pars
   
