@@ -587,7 +587,7 @@ if (run_parallel) {
   # Process results:
   m <- lapply(m, function(ix) {
     
-    if (!inherits(ix, 'try_error')) {
+    if (!inherits(ix, 'try-error')) {
       
       x0_fit <- ix$solution
       names(x0_fit) <- x0_trans_names
