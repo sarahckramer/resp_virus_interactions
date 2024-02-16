@@ -9,6 +9,10 @@ set.seed(749501349)
 
 # Load libraries:
 library(nloptr)
+library(parallel)
+library(doParallel)
+library(doSNOW)
+library(doMC)
 
 # Get cluster environmental variables:
 jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
@@ -18,6 +22,7 @@ final_round <- as.integer(Sys.getenv("FINALROUND")); print(final_round)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -27,6 +32,7 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
 # sens <- 'main'
 # fit_canada <- FALSE
+# run_parallel <- FALSE
 
 # Determine which synthetic dataset and start values to use:
 jobid_orig <- ceiling(jobid / no_jobs)
@@ -317,6 +323,15 @@ obj_fun_list <- lapply(po_list, function(ix) {
 
 # Set maximal execution time for each estimation:
 nmins_exec <- time_max * 60 / (sobol_size / no_jobs)
+
+if (run_parallel) {
+  
+  if (fit_canada) {
+    nmins_exec <- 12.0 * 60 # time_max * 60 / 2
+  }
+  
+}
+
 print(sprintf("Max estimation time=%.1f min", nmins_exec))
 
 # Get unique identifiers:
@@ -324,69 +339,149 @@ print(sprintf("Max estimation time=%.1f min", nmins_exec))
 sub_start <- (1 + (jobid - 1) * sobol_size / no_jobs) : (jobid * sobol_size / no_jobs)
 
 # Fit:
-for (i in seq_along(sub_start)) {
+if (run_parallel) {
   
-  print(paste0('Estimation: ', sub_start[i]))
+  # Set up parallelization:
+  print(detectCores())
   
-  # Get start values:
-  x0 <- as.numeric(start_values[sub_start[i], ])
-  x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
-  x0_trans_names <- names(x0_trans)
+  n_cores <- length(sub_start)
+  # use_cluster <- makeCluster(n_cores, outfile = '')
+  # print(use_cluster)
   
-  # Check that parameter transformations correct:
-  x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
-  expect_equal(x0, unname(x0_orig))
-  rm(x0_orig)
+  registerDoMC(n_cores)
+  # registerDoSNOW(cl = use_cluster)
+  print(getDoParRegistered())
+  print(getDoParWorkers())
   
-  # Calculate initial log-likelihood:
-  print(-1 * calculate_global_loglik(x0_trans))
-  
-  # Fit models:
-  tic <- Sys.time()
-  m <- try(
-    nloptr(x0 = x0_trans, 
-           eval_f = calculate_global_loglik,
-           opts = list(algorithm = "NLOPT_LN_SBPLX",
-                       maxtime = 60 * nmins_exec,
-                       maxeval = -1, # Negative value: criterion is disabled
-                       xtol_rel = -1, # Default value: 1e-4
-                       print_level = 0))
+  # Transform start values:
+  start_values_tran <- t(
+    apply(start_values, 1, function(ix) {
+      transform_params(ix, po_list[[1]], seasons, estpars, shared_estpars)
+    }, simplify = TRUE)
   )
+  x0_trans_names <- colnames(start_values_tran)
+  print(x0_trans_names)
+  
+  tic <- Sys.time()
+  m <- foreach(i = sub_start, .packages = c('tidyverse', 'testthat', 'pomp', 'nloptr')) %dopar% {
+    
+    x0_trans <- start_values_tran[i, ]
+    
+    return(
+      try(
+        nloptr(x0 = x0_trans,
+               eval_f = calculate_global_loglik,
+               opts = list(algorithm = "NLOPT_LN_SBPLX",
+                           maxtime = 60 * nmins_exec,
+                           maxeval = -1, # Negative value: criterion is disabled
+                           xtol_rel = -1, # Default value: 1e-4
+                           print_level = 0))
+      )
+    )
+    
+  }
   toc <- Sys.time()
   etime <- toc - tic
   units(etime) <- 'hours'
   print(etime)
   
-  # If estimation is successful, save results:
-  if (!inherits(m, 'try-error')) {
-    x0_fit <- m$solution
-    names(x0_fit) <- x0_trans_names
-    x0_fit_untrans <- back_transform_params(x0_fit, po_list[[1]], seasons, estpars, shared_estpars)
+  # Process results:
+  m <- lapply(m, function(ix) {
     
-    out <- list(estpars = x0_fit_untrans,
-                ll = -m$objective,
-                conv = m$status,
-                message = m$message,
-                niter = m$iterations,
-                etime = as.numeric(etime))
+    if (!inherits(ix, 'try_error')) {
+      
+      x0_fit <- ix$solution
+      names(x0_fit) <- x0_trans_names
+      x0_fit_untrans <- back_transform_params(x0_fit, po_list[[1]], seasons, estpars, shared_estpars)
+      
+      out <- list(estpars = x0_fit_untrans,
+                  ll = -ix$objective,
+                  conv = ix$status,
+                  message = ix$message,
+                  niter = ix$iterations)
+      
+    } else {
+      out <- 'error'
+    }
     
-    # Write to file:
-    saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d.rds',
-                                vir1,
-                                int_eff,
-                                jobid_orig,
-                                sub_start[i])
+    return(out)
+    
+  })
+  
+  # Write to file:
+  saveRDS(m, file = sprintf('results/res_%s_%s_%d_PARALLEL.rds',
+                            vir1,
+                            int_eff,
+                            jobid_orig)
+  )
+  
+} else {
+  
+  for (i in seq_along(sub_start)) {
+    
+    print(paste0('Estimation: ', sub_start[i]))
+    
+    # Get start values:
+    x0 <- as.numeric(start_values[sub_start[i], ])
+    x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
+    x0_trans_names <- names(x0_trans)
+    
+    # Check that parameter transformations correct:
+    x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
+    expect_equal(x0, unname(x0_orig))
+    rm(x0_orig)
+    
+    # Calculate initial log-likelihood:
+    print(-1 * calculate_global_loglik(x0_trans))
+    
+    # Fit models:
+    tic <- Sys.time()
+    m <- try(
+      nloptr(x0 = x0_trans, 
+             eval_f = calculate_global_loglik,
+             opts = list(algorithm = "NLOPT_LN_SBPLX",
+                         maxtime = 60 * nmins_exec,
+                         maxeval = -1, # Negative value: criterion is disabled
+                         xtol_rel = -1, # Default value: 1e-4
+                         print_level = 0))
     )
+    toc <- Sys.time()
+    etime <- toc - tic
+    units(etime) <- 'hours'
+    print(etime)
     
-    # Print results:
-    print(out$ll)
-    print(out$estpars, digits = 2)
-    print(out$conv)
-    print(out$message)
+    # If estimation is successful, save results:
+    if (!inherits(m, 'try-error')) {
+      x0_fit <- m$solution
+      names(x0_fit) <- x0_trans_names
+      x0_fit_untrans <- back_transform_params(x0_fit, po_list[[1]], seasons, estpars, shared_estpars)
+      
+      out <- list(estpars = x0_fit_untrans,
+                  ll = -m$objective,
+                  conv = m$status,
+                  message = m$message,
+                  niter = m$iterations,
+                  etime = as.numeric(etime))
+      
+      # Write to file:
+      saveRDS(out, file = sprintf('results/res_%s_%s_%d_%d.rds',
+                                  vir1,
+                                  int_eff,
+                                  jobid_orig,
+                                  sub_start[i])
+      )
+      
+      # Print results:
+      print(out$ll)
+      print(out$estpars, digits = 2)
+      print(out$conv)
+      print(out$message)
+    }
+    
   }
+  rm(i)
   
 }
-rm(i)
 
 # Clean up:
 rm(list = ls())
