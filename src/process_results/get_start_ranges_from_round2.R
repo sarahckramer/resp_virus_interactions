@@ -40,7 +40,7 @@ if (str_detect(res_dir, 'canada')) {
   fit_canada <- FALSE
   fit_us <- TRUE
   sens <- 'sinusoidal_forcing'
-  region <- 'Region 7'
+  region <- paste('Region', str_split(unlist(str_split(res_dir, '/'))[str_detect(unlist(str_split(res_dir, '/')), 'region')], '_')[[1]][2])
 }else {
   fit_canada <- FALSE
   fit_us <- FALSE
