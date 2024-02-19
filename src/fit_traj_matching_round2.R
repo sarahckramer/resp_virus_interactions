@@ -46,7 +46,8 @@ if (fit_us) {
 # prof_lik <- FALSE
 # sens <- 'sinusoidal_forcing' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
 # fit_canada <- FALSE
-# fit_us <- TRUE
+# fit_us <- FALSE
+# run_parallel <- FALSE
 # 
 # if (fit_us) {
 #   region_num <- 7
@@ -273,8 +274,24 @@ expect_true(all(!lapply(po_list, length) == 0))
 # Choose parameters to estimate:
 if (int_eff == 'susc') {
   if (prof_lik) {
-    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+    
+    if (sens == 'sinusoidal_forcing') {
+      
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                          'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+      
+      if (fit_us) {
+        shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                            'b1', 'b2', 'phi1', 'phi2')
+      }
+      
+    } else {
+      
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+      
+    }
+    
     shared_estpars <- shared_estpars[shared_estpars != prof_param]
   } else {
     
@@ -616,12 +633,26 @@ if (run_parallel) {
   })
   
   # Write to file:
-  saveRDS(m, file = sprintf('results/res_%s_%s_%d_%d_PARALLEL.rds',
-                            vir1,
-                            int_eff,
-                            jobid_orig,
-                            sub_start[1])
-  )
+  if (prof_lik) {
+    
+    saveRDS(m, file = sprintf('results/res_%s_%s_%d_%d_%.3f_PARALLEL.rds',
+                              vir1,
+                              int_eff,
+                              jobid_orig,
+                              sub_start[1],
+                              prof_val)
+    )
+    
+  } else {
+    
+    saveRDS(m, file = sprintf('results/res_%s_%s_%d_%d_PARALLEL.rds',
+                              vir1,
+                              int_eff,
+                              jobid_orig,
+                              sub_start[1])
+    )
+    
+  }
   
 } else {
   
