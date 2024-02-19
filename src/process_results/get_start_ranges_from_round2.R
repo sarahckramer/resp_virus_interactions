@@ -129,27 +129,26 @@ load_and_format_mega_results <- function(filepath) {
   # Get parameter estimates and log-likelihoods:
   if (str_detect(res_files[1], 'PARALLEL')) {
     
-    pars_df <- lapply(res_full, function(ix) {
-      lapply(ix, getElement, 'estpars') %>%
-        bind_rows() %>%
-        bind_cols('loglik' = lapply(ix, getElement, 'll') %>%
-                    unlist()) %>%
-        bind_cols('message' = lapply(ix, getElement, 'message') %>%
-                    unlist())
-    }) %>%
-      bind_rows()
-    expect_true(nrow(pars_df) == length(res_files) * 25)
+    res_full <- do.call('c', res_full)
+    num_errors <- length(which(res_full == 'error'))
     
+    if (num_errors > 0) {
+      res_full <- res_full[-which(res_full == 'error')]
+    }
+    
+  }
+  
+  pars_df <- lapply(res_full, getElement, 'estpars') %>%
+    bind_rows() %>%
+    bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                unlist()) %>%
+    bind_cols('message' = lapply(res_full, getElement, 'message') %>%
+                unlist())
+  
+  if (str_detect(res_files[1], 'PARALLEL')) {
+    expect_true(nrow(pars_df) == (length(res_files) * 25) - num_errors)
   } else {
-    
-    pars_df <- lapply(res_full, getElement, 'estpars') %>%
-      bind_rows() %>%
-      bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
-                  unlist()) %>%
-      bind_cols('message' = lapply(res_full, getElement, 'message') %>%
-                  unlist())
     expect_true(nrow(pars_df) == length(res_files))
-    
   }
   expect_true(all(is.finite(pars_df$loglik)))
   
