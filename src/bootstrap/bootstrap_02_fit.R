@@ -22,7 +22,14 @@ final_round <- as.integer(Sys.getenv("FINALROUND")); print(final_round)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+fit_us <- as.logical(Sys.getenv("FITUS")); print(fit_us)
 run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
+
+# If US, get region number:
+if (fit_us) {
+  region_num <- as.integer(Sys.getenv("REGION")); print(region_num)
+  region <- paste0('Region ', region_num); print(region)
+}
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -32,7 +39,13 @@ run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
 # sens <- 'main'
 # fit_canada <- FALSE
+# fit_us <- FALSE
 # run_parallel <- FALSE
+
+# if (fit_us) {
+#   region_num <- 7
+#   region <- paste0('Region ', region_num); print(region)
+# }
 
 # Determine which synthetic dataset and start values to use:
 jobid_orig <- ceiling(jobid / no_jobs)
@@ -44,7 +57,7 @@ print(jobid)
 debug_bool <- FALSE
 vir2 <- 'rsv'
 
-if (fit_canada) {
+if (fit_canada | fit_us) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -56,6 +69,9 @@ if (sens == 'less_circ_h3') {
 }
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
+}
+if (fit_us) {
+  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 }
 
 time_max <- 23.75 # Maximal execution time (in hours)
@@ -257,6 +273,12 @@ if (int_eff == 'susc') {
   if (sens == 'sinusoidal_forcing') {
     shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                         'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+    
+    if (fit_us) {
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                          'b1', 'b2', 'phi1', 'phi2')
+    }
+    
   } else if (sens == 'h3_covar') {
     shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                         'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
@@ -299,8 +321,11 @@ start_range <- read_rds(paste0('results/round2_CIs/from_2_', final_round, '/roun
 start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
                              upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
                              nseq = sobol_size)
-start_values <- start_values %>%
-  mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+
+if (!fit_us) {
+  start_values <- start_values %>%
+    mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+}
 
 if ('phi1' %in% names(start_values)) {
   start_values <- start_values %>%
@@ -326,7 +351,7 @@ nmins_exec <- time_max * 60 / (sobol_size / no_jobs)
 
 if (run_parallel) {
   
-  if (fit_canada) {
+  if (fit_canada | fit_us) {
     nmins_exec <- 12.0 * 60 # time_max * 60 / 2
   }
   
