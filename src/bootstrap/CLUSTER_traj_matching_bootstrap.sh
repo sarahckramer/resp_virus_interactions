@@ -11,17 +11,15 @@
 #SBATCH --mail-user=kramer@mpiib-berlin.mpg.de
 
 # --- resource specification (which resources for how long) ---
-#SBATCH --partition=general 
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=300 # memory in MB required by the job
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=5000 # memory in MB required by the job
 #SBATCH --time=24:00:00 # run time in h:m:s, up to 24h possible
-
-export VIRUS1=$VIRUS1
 
 # --- start from a clean state and load necessary environment modules ---
 module purge
 module load R/4.2
 
 # --- run your executable via srun ---
-R --no-save --no-restore <src/bootstrap_02_fit.R >results/Rout/R-tm-$VIRUS1-${SLURM_ARRAY_TASK_ID}.Rout
+R --no-save --no-restore <src/bootstrap_02_fit.R >results/Rout/R-tm-${SLURM_ARRAY_TASK_ID}.Rout
