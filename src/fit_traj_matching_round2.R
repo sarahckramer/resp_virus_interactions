@@ -13,6 +13,7 @@ library(nloptr)
 library(parallel)
 library(doParallel)
 library(doSNOW)
+library(doMC)
 
 # Get cluster environmental variables:
 jobid <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID")); print(jobid)
@@ -536,10 +537,17 @@ if (run_parallel) {
   print(detectCores())
   
   n_cores <- length(sub_start)
-  use_cluster <- makeCluster(n_cores, outfile = '')
-  print(use_cluster)
+  # use_cluster <- makeCluster(n_cores, outfile = '')
+  # use_cluster <- makeSOCKcluster(n_cores, outfile = '')
+  # use_cluster <- makeMPIcluster(n_cores, outfile = '')
+  # use_cluster <- makePSOCKcluster(n_cores, outfile = '')
+  # use_cluster <- makeForkCluster(n_cores, outfile = '')
+  # print(use_cluster)
   
-  registerDoSNOW(cl = use_cluster)
+  registerDoMC(n_cores)
+  # registerDoSNOW(cl = use_cluster)
+  # registerDoParallel(cl = use_cluster)
+  
   print(getDoParRegistered())
   print(getDoParWorkers())
   
