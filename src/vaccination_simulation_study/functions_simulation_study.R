@@ -2,7 +2,7 @@
 # Functions to run flu/RSV model with instantaneous vaccination
 # ---------------------------------------------------------------------------------------------------------------------
 
-run_simulation_with_vaccination <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) {
+run_simulation_with_vaccination <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool, sens = 'main', test_diff = FALSE) {
   # Function to run deterministic simulations of the SITRxSITR model with instantaneous vaccination at any time point
   # param dat: Virological, ILI, and covariate data (tibble)
   # param t_vacc: The week at which to vaccinate some proportion of the susceptible population (numeric)
@@ -11,6 +11,8 @@ run_simulation_with_vaccination <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_
   # param Ri2_max: Upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
   # param d2_max: Upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
   # param debug_bool: Should debugging info be printed? (boolean)
+  # param sens: main analysis or the name of a specific sensitivity analysis
+  # param test_diff: are there a different number of tests performed for the two viruses being modeled?
   # returns: Data frame containing values of all states at all timepoints
   
   if (t_vacc == 0) {
@@ -21,7 +23,9 @@ run_simulation_with_vaccination <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_
                                           Ri2_max = Ri_max2,
                                           d2_max = d2_max,
                                           t0_eff = 0,
-                                          debug_bool = debug_bool)
+                                          debug_bool = debug_bool,
+                                          sens = sens,
+                                          test_diff = test_diff)
     
     # Run model with input parameter values:
     if (is.null(ncol(mod_parms))) {
@@ -48,7 +52,9 @@ run_simulation_with_vaccination <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_
                                           Ri2_max = Ri_max2,
                                           d2_max = d2_max,
                                           t0_eff = 0,
-                                          debug_bool = debug_bool)
+                                          debug_bool = debug_bool,
+                                          sens = sens,
+                                          test_diff = test_diff)
     
     # Run model with input parameter values:
     if (is.null(ncol(mod_parms))) {
@@ -79,7 +85,9 @@ run_simulation_with_vaccination <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_
                                                Ri2_max = Ri_max2,
                                                d2_max = d2_max,
                                                t0_eff = t_vacc,
-                                               debug_bool = debug_bool)
+                                               debug_bool = debug_bool,
+                                               sens = sens,
+                                               test_diff = test_diff)
     
     # Set epidemiologic and vaccination parameters:
     if (is.null(ncol(mod_parms))) {

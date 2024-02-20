@@ -9,7 +9,7 @@ library(rethinking)
 library(gt)
 
 # Get names of all results files:
-file_list <- list.files(path = 'results/bootstrapping/flu_H1_plus_B/', full.names = TRUE)
+file_list <- list.files(path = 'results/bootstrapping/sens/canada/', full.names = TRUE)
 
 # Are results from a sensitivity analysis?:
 if (str_detect(file_list[[1]], 'sinusoidal')) {
@@ -36,7 +36,21 @@ if (str_detect(file_list[[1]], 'canada')) {
 }
 
 # Ensure no results missing:
-expect_true(length(file_list) == 500 * 10)
+if (str_detect(file_list[[1]], 'PARALLEL')) {
+  
+  expect_true(length(file_list) == 500)
+  
+  run_list <- str_split(file_list, '_') %>%
+    purrr::map(~ .x[4]) %>%
+    unlist() %>%
+    as.numeric()
+  print(which(!(1:500 %in% run_list)))
+  
+} else {
+  
+  expect_true(length(file_list) == 500 * 10)
+  
+}
 
 # Read in all results:
 res_full = list()
@@ -46,14 +60,42 @@ for (i in seq_along(file_list)) {
 rm(i)
 
 # Get parameter estimates and log-likelihoods:
-res_df <- lapply(res_full, getElement, 'estpars') %>%
-  bind_rows() %>%
-  bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
-              unlist()) %>%
-  mutate(dataset = str_split(file_list, '_') %>% purrr::map(~ .x[which(!is.na(as.numeric(str_split(file_list, '_')[[1]])))]) %>% unlist()) %>%
-  bind_cols('conv' = lapply(res_full, getElement, 'message') %>%
-              unlist())
-expect_true(nrow(res_df) == length(file_list))
+if (str_detect(file_list[[1]], 'PARALLEL')) {
+  
+  res_df <- lapply(res_full, function(ix) {
+    lapply(ix, getElement, 'estpars') %>%
+      bind_rows() %>%
+      bind_cols('loglik' = lapply(ix, getElement, 'll') %>%
+                  unlist()) %>%
+      # mutate(dataset = str_split(file_list, '_') %>% purrr::map(~ .x[which(!is.na(as.numeric(str_split(file_list, '_')[[1]])))]) %>% unlist()) %>%
+      bind_cols('conv' = lapply(ix, getElement, 'message') %>%
+                  unlist())
+  })
+  
+  res_df <- lapply(1:length(res_df), function(ix) {
+    res_df[[ix]]$dataset <- as.numeric(str_split(file_list[ix], '_')[[1]])[which(!is.na(as.numeric(str_split(file_list[ix], '_')[[1]])))]
+    res_df[[ix]]
+  })
+  
+  res_df <- res_df %>%
+    bind_rows()
+  
+  expect_true(nrow(res_df) == length(file_list) * 10)
+  
+} else {
+  
+  res_df <- lapply(res_full, getElement, 'estpars') %>%
+    bind_rows() %>%
+    bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
+                unlist()) %>%
+    mutate(dataset = str_split(file_list, '_') %>% purrr::map(~ .x[which(!is.na(as.numeric(str_split(file_list, '_')[[1]])))]) %>% unlist()) %>%
+    bind_cols('conv' = lapply(res_full, getElement, 'message') %>%
+                unlist())
+  
+  expect_true(nrow(res_df) == length(file_list))
+  
+}
+
 expect_true(all(is.finite(res_df$loglik)))
 
 # Remove estimates that did not converge:

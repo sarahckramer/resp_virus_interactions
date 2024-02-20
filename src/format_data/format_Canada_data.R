@@ -61,7 +61,7 @@ rm(file_list, dat_list)
 
 # Clean up:
 can_vir <- can_vir %>%
-  select(`Influenza Season and Epidemiological Week`, `Total Flu tests`:`RSV positive`) %>%
+  select(`Influenza Season and Epidemiological Week`, `Total Flu tests`:`RSV positive`, `Total Rhinovirus`:`Positive Rhinovirus`) %>%
   rename('season_week' = 1,
          'n_test_flu' = 2,
          'h1_09' = 3,
@@ -71,10 +71,12 @@ can_vir <- can_vir %>%
          'tot_a' = 7,
          'tot_b' = 8,
          'n_test_rsv' = 9,
-         'rsv' = 10) %>%
+         'rsv' = 10,
+         'n_test_rhino' = 11,
+         'rhino' = 12) %>%
   mutate(flu = tot_a + tot_b,
          h1 = h1_09 + h1) %>%
-  select(season_week:n_test_flu, flu, n_test_rsv, rsv) %>%
+  select(season_week:n_test_flu, flu, n_test_rsv:rhino) %>%
   drop_na()
 
 # Get dates:
@@ -82,7 +84,7 @@ can_vir <- can_vir %>%
   mutate(year = str_sub(season_week, 1, 4),
          week = str_sub(season_week, 5, 6),
          date = ISOweek2date(paste0(year, '-W', week, '-1'))) %>%
-  select(year:date, n_test_flu:rsv) %>%
+  select(year:date, n_test_flu:rhino) %>%
   mutate(year = as.numeric(year),
          week = as.numeric(week))
 
@@ -93,7 +95,7 @@ can_vir <- can_vir %>%
 # Combine syndromic and virologic data:
 can_dat <- can_ili %>%
   inner_join(can_vir, by = c('year', 'week', 'date'))
-expect_true(nrow(can_dat) == nrow(can_ili))
+expect_true(nrow(can_dat) == nrow(can_vir))
 rm(can_ili, can_vir)
 
 # Remove 2009 pandemic:
@@ -140,7 +142,7 @@ can_dat <- can_dat %>%
 
 # Rename columns for use in model:
 can_dat <- can_dat %>%
-  select(time, date, year:week, season, pop, n_test_flu, n_test_rsv, flu, rsv, ili_rate) %>%
+  select(time, date, year:week, season, pop, n_test_flu, n_test_rsv, n_test_rhino, flu, rsv, rhino, ili_rate) %>%
   rename('n_T1' = n_test_flu,
          'n_T2' = n_test_rsv,
          'n_P1' = flu,
@@ -162,15 +164,18 @@ p1 <- ggplot(can_dat, aes(x = date, y = i_ILI)) +
 
 can_dat_long <- can_dat %>%
   mutate(perc_flu = n_P1 / n_T1 * 100,
-         perc_rsv = n_P2 / n_T2 * 100) %>%
-  select(time:date, season, perc_flu:perc_rsv) %>%
-  pivot_longer(perc_flu:perc_rsv,
+         perc_rsv = n_P2 / n_T2 * 100,
+         perc_rhino = rhino / n_test_rhino * 100) %>%
+  select(time:date, season, perc_flu:perc_rhino) %>%
+  pivot_longer(perc_flu:perc_rhino,
                names_to = 'virus',
                values_to = 'perc_pos') %>%
-  mutate(virus = if_else(virus == 'perc_flu', 'Flu', virus),
-         virus = if_else(virus == 'perc_rsv', 'RSV', virus))
+  mutate(virus = if_else(virus == 'perc_flu', 'Influenza', virus),
+         virus = if_else(virus == 'perc_rsv', 'RSV', virus),
+         virus = if_else(virus == 'perc_rhino', 'Rhinovirus', virus))
 
-p2 <- ggplot(can_dat_long, aes(x = date, y = perc_pos, group = virus, col = virus)) +
+p2 <- ggplot(can_dat_long %>% filter(virus %in% c('Influenza', 'RSV')),
+             aes(x = date, y = perc_pos, group = virus, col = virus)) +
   geom_line() +
   theme_classic() +
   labs(x = 'Date', y = 'Percent Positive', col = 'Virus', title = 'Canada Virologic') +
@@ -183,10 +188,18 @@ p3 <- ggplot(can_dat_long, aes(x = time, y = perc_pos, group = virus, col = viru
   facet_wrap(~ season) +
   labs(x = 'Time (Weeks)', y = 'Proportion Positive', col = 'Virus', title = 'Canada Virologic (By Season)')
 
+p4 <- ggplot(can_dat_long,
+             aes(x = date, y = perc_pos, group = virus, col = virus)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = 'Date', y = 'Percent Positive', col = 'Virus', title = 'Canada Virologic') +
+  scale_color_brewer(palette = 'Set1')
+
 # Save plots to file:
 pdf('results/plots/data_Canada.pdf', width = 10, height = 7)
 grid.arrange(p1, p2, ncol = 1)
 print(p3)
+print(p4)
 dev.off()
 
 # Clean up:
