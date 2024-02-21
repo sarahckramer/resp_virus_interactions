@@ -2,7 +2,7 @@
 # Functions to help evaluate model results
 # ---------------------------------------------------------------------------------------------------------------------
 
-run_sim <- function(pomp_object, seas, mle, shared_estpars, unit_estpars, model_type, return_obs = FALSE, n_sim = 10, analysis = 'basic') {
+run_sim <- function(pomp_object, seas, mle, shared_estpars, unit_estpars, model_type, return_obs = FALSE, return_data = FALSE, n_sim = 10, analysis = 'basic') {
   # Function to generate deterministic or stochastic simulations from the model at the MLE
   # params pomp_object: The pomp model object used to run the model
   # params seas: The season to be simulated
@@ -126,17 +126,29 @@ run_sim <- function(pomp_object, seas, mle, shared_estpars, unit_estpars, model_
           
           out_temp <- out_temp %>%
             mutate(obs1 = rho1_w * n_T1,
-                   obs2 = rho2_w * n_T2) %>%
-            select(time:H2, obs1:obs2)
+                   obs2 = rho2_w * n_T2)
           
         } else {
           
           out_temp <- out_temp %>%
             mutate(obs1 = rho1_w * n_T,
-                   obs2 = rho2_w * n_T) %>%
+                   obs2 = rho2_w * n_T)
+          
+        }
+        
+        if (analysis != 'iqr') {
+          
+          out_temp <- out_temp %>%
             select(time:H2, obs1:obs2)
           
         }
+        
+      }
+      
+      if (return_data) {
+        
+        out_temp <- out_temp %>%
+          cbind(t(pomp_object@data))
         
       }
       
@@ -146,6 +158,19 @@ run_sim <- function(pomp_object, seas, mle, shared_estpars, unit_estpars, model_
         mutate(season = seas) %>%
         select(season, time:.id, n_P1:n_P2) %>%
         as_tibble()
+      
+      if (return_data) {
+        
+        out_temp <- out_temp %>%
+          arrange(.id, time) %>%
+          cbind(t(pomp_object@data))
+        names(out_temp)[6:7] <- c('obs1', 'obs2')
+        
+        out_temp <- out_temp %>%
+          as_tibble() %>%
+          arrange(time, .id)
+        
+      }
       
     } else {
       
