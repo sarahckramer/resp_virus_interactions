@@ -64,13 +64,13 @@ p1b <- ggplot(data = dat_can_tests, aes(x = time, y = n_samp, col = virus)) + ge
 p1b <- reposition_legend(p1b, position = 'top left', plot = FALSE)
 
 fig1s <- arrangeGrob(p1a, p1b, ncol = 1)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS1_NEW.svg', width = 9, height = 7, fig1s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS1.svg', width = 9, height = 7, fig1s)
 
 rm(dat_can_tests, p1a, p1b, fig1s, dat_can, x_lab_breaks_can)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 1: Circulation of influenza (sub)types over time in Hong Kong
+# Supplementary Figure 2: Circulation of influenza (sub)types over time in Hong Kong
 
 dat_pos <- dat_hk %>%
   select(-n_samp, -n_rsv) %>%
@@ -82,7 +82,7 @@ dat_pos <- dat_hk %>%
 
 season_breaks <- dat_hk %>% filter(Week == 46) %>% pull(Time)
 
-fig1s <- ggplot(data = dat_pos, aes(x = Time, y = perc_pos, col = virus)) +
+fig2s <- ggplot(data = dat_pos, aes(x = Time, y = perc_pos, col = virus)) +
   geom_line() + theme_classic() +
   theme(legend.position = 'bottom',
         axis.title = element_text(size = 14),
@@ -95,14 +95,14 @@ fig1s <- ggplot(data = dat_pos, aes(x = Time, y = perc_pos, col = virus)) +
   labs(x = 'Year', y = '\n% Positive', col = '(Sub)type') +
   geom_vline(xintercept = season_breaks, linetype = 'dashed')
 
-fig1s <- reposition_legend(fig1s, position = 'top left', plot = FALSE)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS1.svg', width = 9.5, height = 4, fig1s)
+fig2s <- reposition_legend(fig2s, position = 'top left', plot = FALSE)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS2.svg', width = 9.5, height = 4, fig2s)
 
-rm(dat_pos, fig1s, season_breaks)
+rm(dat_pos, fig2s, season_breaks)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 2: Plot of climate data and correlations
+# Supplementary Figure 3: Plot of climate data and correlations
 
 dat_clim <- read_csv('data/formatted/clim_dat_hk.csv')
 
@@ -112,7 +112,7 @@ dat_clim <- dat_clim %>%
                     'week' = 'Week')) %>%
   select(Time, temp, ah, rh)
 
-p2a <- ggplot(data = dat_clim, aes(x = Time, y = temp)) +
+p3a <- ggplot(data = dat_clim, aes(x = Time, y = temp)) +
   geom_line() + theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
@@ -121,7 +121,7 @@ p2a <- ggplot(data = dat_clim, aes(x = Time, y = temp)) +
   scale_x_continuous(breaks = x_lab_breaks_hk, labels = 2014:2019) +
   scale_y_continuous(limits = c(9, 33)) +
   labs(x = 'Year', y = 'Mean Temperature (°C)', tag = 'A')
-p2b <- ggplot(data = dat_clim, aes(x = Time, y = ah)) +
+p3b <- ggplot(data = dat_clim, aes(x = Time, y = ah)) +
   geom_line() + theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
@@ -129,7 +129,7 @@ p2b <- ggplot(data = dat_clim, aes(x = Time, y = ah)) +
         plot.tag.position = c(0.04, 0.96)) +
   scale_x_continuous(breaks = x_lab_breaks_hk, labels = 2014:2019) +
   labs(x = 'Year', y = expression(paste('Mean Absolute Humidity ', (g/m^{3}))), tag = 'B')
-p2c <- ggplot(data = dat_clim, aes(x = temp, y = ah)) +
+p3c <- ggplot(data = dat_clim, aes(x = temp, y = ah)) +
   geom_point() + theme_classic() +
   annotate (
     geom = 'text', x = 13, y = 15, label = 'r = 0.944', hjust = 0, vjust = 1, size = 6
@@ -140,14 +140,14 @@ p2c <- ggplot(data = dat_clim, aes(x = temp, y = ah)) +
         plot.tag.position = c(0.04, 0.96)) +
   labs(x = 'Mean Temperature (°C)', y = expression(paste('Mean Absolute Humidity ', (g/m^{3}))), tag = 'C')
 
-fig2s <- arrangeGrob(p2a, p2b, p2c, ncol = 1)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS2.svg', width = 10.5, height = 9, fig2s)
+fig3s <- arrangeGrob(p3a, p3b, p3c, ncol = 1)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS3.svg', width = 10.5, height = 9, fig3s)
 
-rm(dat_hk, dat_clim, p2a, p2b, p2c, fig2s, x_lab_breaks_hk)
+rm(dat_hk, dat_clim, p3a, p3b, p3c, fig3s, x_lab_breaks_hk)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 3: Season-specific parameters and CIs
+# Supplementary Figure 4: Season-specific parameters and CIs
 
 shared_estpars_hk <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
@@ -184,7 +184,7 @@ res <- bind_rows(res_hk, res_can) %>%
 
 res$parameter <- factor(res$parameter, levels = c('Ri[1]', 'Ri[2]', 'I[10]', 'I[20]', 'R[10]', 'R[20]', 'R[120]', 'R[10] + R[120]', 'R[20] + R[120]'))
 
-p3a <- ggplot(data = res %>% filter(loc == 'hk') %>% filter(!is.na(parameter))) +
+p4a <- ggplot(data = res %>% filter(loc == 'hk') %>% filter(!is.na(parameter))) +
   geom_errorbar(aes(x = season, ymin = lower, ymax = upper)) +
   geom_point(aes(x = season, y = mle, col = outside)) +
   facet_wrap(~ parameter, scales = 'free_y', ncol = 1, labeller = 'label_parsed') +
@@ -197,7 +197,7 @@ p3a <- ggplot(data = res %>% filter(loc == 'hk') %>% filter(!is.na(parameter))) 
         plot.tag.position = c(0.07, 0.995)) +
   scale_color_manual(values = c('black', 'darkred'), guide = 'none') +
   labs(x = 'Season', y = 'Maximum Likelihood Estimate (95% CI)', tag = 'A')
-p3b <- ggplot(data = res %>% filter(loc == 'canada') %>% filter(!is.na(parameter))) +
+p4b <- ggplot(data = res %>% filter(loc == 'canada') %>% filter(!is.na(parameter))) +
   geom_errorbar(aes(x = season, ymin = lower, ymax = upper)) +
   geom_point(aes(x = season, y = mle, col = outside)) +
   facet_wrap(~ parameter, scales = 'free_y', ncol = 1, labeller = 'label_parsed') +
@@ -211,14 +211,14 @@ p3b <- ggplot(data = res %>% filter(loc == 'canada') %>% filter(!is.na(parameter
   scale_color_manual(values = c('black', 'darkred'), guide = 'none') +
   labs(x = 'Season', y = 'Maximum Likelihood Estimate (95% CI)', tag = 'B')
 
-fig3s <- arrangeGrob(p3a, p3b, ncol = 2)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS3.svg', width = 8, height = 20.0, fig3s)
+fig4s <- arrangeGrob(p4a, p4b, ncol = 2)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS4.svg', width = 8, height = 20.0, fig4s)
 
-rm(fig3s, p3a, p3b, res, res_hk, res_can, mle_hk, mle_can)
+rm(fig4s, p4a, p4b, res, res_hk, res_can, mle_hk, mle_can)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 4: Relationship between proportion immune and previous season's attack rate
+# Supplementary Figure 5: Relationship between proportion immune and previous season's attack rate
 
 ar_df <- read_rds('results/simulated_ar.rds') %>%
   mutate(loc = if_else(loc == 'hk', 'Hong Kong', 'Canada'))
@@ -278,7 +278,7 @@ prop_imm_df <- prop_imm_df %>%
              by = c('loc', 'season', 'virus')) %>%
   mutate(loc = factor(loc, levels = c('Hong Kong', 'Canada')))
 
-p4a <- ggplot(data = prop_imm_df, aes(x = attack_rate, y = prop_imm, col = loc)) +
+p5a <- ggplot(data = prop_imm_df, aes(x = attack_rate, y = prop_imm, col = loc)) +
   geom_point(size = 2.5) +
   facet_wrap(~ virus) +
   theme_classic() +
@@ -292,7 +292,7 @@ p4a <- ggplot(data = prop_imm_df, aes(x = attack_rate, y = prop_imm, col = loc))
         legend.position = 'bottom') +
   labs(x = 'Estimated Total Attack Rate', y = 'Proportion Immune', col = 'Location', tag = 'A') +
   scale_color_brewer(palette = 'Set1')
-p4b <- ggplot(data = prop_imm_df, aes(x = tot_cases, y = prop_imm, col = loc)) +
+p5b <- ggplot(data = prop_imm_df, aes(x = tot_cases, y = prop_imm, col = loc)) +
   geom_point(size = 2.5) +
   facet_wrap(~ virus) +
   theme_classic() +
@@ -307,14 +307,14 @@ p4b <- ggplot(data = prop_imm_df, aes(x = tot_cases, y = prop_imm, col = loc)) +
   labs(x = 'Total Observed Cases', y = 'Proportion Immune', col = 'Location', tag = 'B') +
   scale_color_brewer(palette = 'Set1')
 
-fig4s <- arrangeGrob(p4a, p4b, ncol = 1)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS4.svg', width = 9, height = 7.75, fig4s)
+fig5s <- arrangeGrob(p5a, p5b, ncol = 1)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS5.svg', width = 9, height = 7.75, fig5s)
 
-rm(fig4s, p4a, p4b, ar_df, prop_imm_df, mle, dat_temp)
+rm(fig5s, p5a, p5b, ar_df, prop_imm_df, mle, dat_temp)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 5: Correlations between estimated parameters (shared parameters)
+# Supplementary Figure 6: Correlations between estimated parameters (shared parameters)
 
 res_dir_hk <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_can <- 'results/round2_fit/sens/canada/round2_3_flu/'
@@ -379,7 +379,7 @@ pars_top_temp <- pars_top_hk
 names(pars_top_temp)[1:12] <- c('rho[1]', 'rho[2]', 'theta[lambda*1]', 'theta[lambda*2]', 'delta[1]', 'd[2]', 'alpha', 'phi', 'eta[temp*1]', 'eta[temp*2]', 'eta[ah*1]', 'eta[ah*2]')
 shared_estpars_temp <- c('rho[1]', 'rho[2]', 'theta[lambda*1]', 'theta[lambda*2]', 'delta[1]', 'd[2]', 'alpha', 'phi', 'eta[temp*1]', 'eta[temp*2]', 'eta[ah*1]', 'eta[ah*2]')
 
-p5a <- ggpairs(pars_top_temp %>% select(all_of(shared_estpars_temp)),
+p6a <- ggpairs(pars_top_temp %>% select(all_of(shared_estpars_temp)),
                upper = list(continuous = wrap(ggally_cor, size = 4.5, method = 'kendall', digits = 2, display_grid = FALSE)),
                lower = list(continuous = wrap('points', size = 1.1)),
                labeller = 'label_parsed') +
@@ -393,7 +393,7 @@ pars_top_temp <- pars_top_can
 names(pars_top_temp)[1:12] <- c('rho[1]', 'rho[2]', 'theta[lambda*1]', 'theta[lambda*2]', 'delta[1]', 'd[2]', 'alpha', 'phi', 'b[1]', 'b[2]', 'phi[1]', 'phi[2]')
 shared_estpars_temp <- c('rho[1]', 'rho[2]', 'theta[lambda*1]', 'theta[lambda*2]', 'delta[1]', 'd[2]', 'alpha', 'phi', 'b[1]', 'b[2]', 'phi[1]', 'phi[2]')
 
-p5b <- ggpairs(pars_top_temp %>% select(all_of(shared_estpars_temp)),
+p6b <- ggpairs(pars_top_temp %>% select(all_of(shared_estpars_temp)),
                upper = list(continuous = wrap(ggally_cor, size = 4.5, method = 'kendall', digits = 2, display_grid = FALSE)),
                lower = list(continuous = wrap('points', size = 1.1)),
                labeller = 'label_parsed') +
@@ -403,14 +403,14 @@ p5b <- ggpairs(pars_top_temp %>% select(all_of(shared_estpars_temp)),
         strip.text = element_text(size = 15),
         panel.border = element_rect(linewidth = 0.5, fill = NA))
 
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS5a.svg', p5a, width = 18, height = 12)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS5b.svg', p5b, width = 18, height = 12)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS6a.svg', p6a, width = 18, height = 12)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS6b.svg', p6b, width = 18, height = 12)
 
-rm(p5a, p5b, pars_top_temp, shared_estpars_temp)
+rm(p6a, p6b, pars_top_temp, shared_estpars_temp)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 6: Correlations between estimated parameters (season-specific R_eff and % immune)
+# Supplementary Figure 7: Correlations between estimated parameters (season-specific R_eff and % immune)
 
 pars_top_unit_hk <- pars_top_hk %>%
   select(contains('Ri') | contains('R1') | contains('R20')) %>%
@@ -501,14 +501,14 @@ for (seas_index in 1:length(seasons)) {
 }
 rm(seasons, seas_index, seas, pars_top_unit_temp, p_temp, label_temp, tags)
 
-fig6s <- arrangeGrob(grobs = plot_list, ncol = 2)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS6.svg', fig6s, width = 18, height = 26)
+fig7s <- arrangeGrob(grobs = plot_list, ncol = 2)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS7.svg', fig7s, width = 18, height = 26)
 
-rm(fig6s, pars_top_unit_hk, pars_top_unit_can, plot_list)
+rm(fig7s, pars_top_unit_hk, pars_top_unit_can, plot_list)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 7: Climate forcing over time
+# Supplementary Figure 8: Climate forcing over time
 
 gamma1 <- 7/5
 gamma2 <- 7/10
@@ -574,7 +574,7 @@ force_t <- bind_rows(force_t)
 min_val <- min(c(min(force_t$force1), min(force_t$force2)))
 max_val <- max(c(max(force_t$force1), max(force_t$force2)))
 
-p7a <- ggplot(data = force_t, aes(x = time, y = force1, col = season)) +
+p8a <- ggplot(data = force_t, aes(x = time, y = force1, col = season)) +
   geom_line() +
   theme_classic() +
   theme(title = element_text(size = 14),
@@ -589,7 +589,7 @@ p7a <- ggplot(data = force_t, aes(x = time, y = force1, col = season)) +
   # scale_y_log10(limits = c(min_val, max_val)) +
   scale_color_manual(values = viridis(6)) +
   labs(x = 'Week Number', y = 'Climate Forcing', title = 'Influenza')
-p7b <- ggplot(data = force_t, aes(x = time, y = force2, col = season)) +
+p8b <- ggplot(data = force_t, aes(x = time, y = force2, col = season)) +
   geom_line() +
   theme_classic() +
   theme(title = element_text(size = 14),
@@ -616,14 +616,14 @@ p_legend <- ggplot(data = force_t, aes(x = time, y = force1, col = season)) +
   labs(color = 'Season')
 p_legend <- ggplotGrob(p_legend)$grobs[[which(sapply(ggplotGrob(p_legend)$grobs, function(x) x$name) == 'guide-box')]]
 
-fig7s <- arrangeGrob(arrangeGrob(p7a, p7b, ncol = 1), p_legend, nrow = 2, heights = c(15, 1))
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS7.svg', fig7s, width = 10, height = 6.25)
+fig8s <- arrangeGrob(arrangeGrob(p8a, p8b, ncol = 1), p_legend, nrow = 2, heights = c(15, 1))
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS8.svg', fig8s, width = 10, height = 6.25)
 
-rm(mle, force_t, p7a, p7b, p_legend, fig7s, min_val, max_val, gamma1, gamma2)
+rm(mle, force_t, p8a, p8b, p_legend, fig8s, min_val, max_val, gamma1, gamma2)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 8: Simulations at the MLE
+# Supplementary Figure 9: Simulations at the MLE
 
 mle_hk <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 mle_can <- read_rds('results/round2_fit/sens/canada/MLEs_flu.rds')
@@ -715,7 +715,7 @@ breaks_fxn <- function(time) {
 }
 # https://coolbutuseless.github.io/2019/03/07/custom-axis-breaks-on-facetted-ggplot/
 
-p8a <- ggplot(data = sims[[1]]) +
+p9a <- ggplot(data = sims[[1]]) +
   geom_line(aes(x = time, y = sim, group = paste(.id, vir), col = vir), lwd = 0.3) +
   geom_point(aes(x = time, y = obs, group = paste(.id, vir), col = vir), size = 0.75) +
   facet_wrap(~ season, scales = 'free', nrow = 2) +
@@ -732,7 +732,7 @@ p8a <- ggplot(data = sims[[1]]) +
                      labels = c(46, 51, seq(4, 45, by = 5))) +
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Week #', y = '# of Cases', col = 'Virus', tag = 'A')
-p8b <- ggplot(data = sims[[2]]) +
+p9b <- ggplot(data = sims[[2]]) +
   geom_line(aes(x = time, y = sim, group = paste(.id, vir), col = vir), lwd = 0.3) +
   geom_point(aes(x = time, y = obs, group = paste(.id, vir), col = vir), size = 0.75) +
   facet_wrap(~ season, scales = 'free', nrow = 2) +
@@ -750,14 +750,14 @@ p8b <- ggplot(data = sims[[2]]) +
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Week #', y = '# of Cases', col = 'Virus', tag = 'B')
 
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS8a.svg', width = 14.5, height = 7.5, p8a)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS8b.svg', width = 14.5, height = 7.5, p8b)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS9a.svg', width = 14.5, height = 7.5, p9a)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS9b.svg', width = 14.5, height = 7.5, p9b)
 
-rm(p8a, p8b, sims)
+rm(p9a, p9b, sims)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 9: Profile likelihoods of theta_lambda1 and theta_lambda2
+# Supplementary Figure 10: Profile likelihoods of theta_lambda1 and theta_lambda2
 
 load_and_format_proflik_results <- function(filepath, prof_par, shared_estpars) {
   
@@ -871,7 +871,7 @@ res_proflik1_ZOOM <- res_proflik1_ZOOM %>%
 res_proflik2_ZOOM <- res_proflik2_ZOOM %>%
   filter(profpar <= 0.011)
 
-p9a <- ggplot(res_proflik1_ZOOM, aes(x = profpar, y = loglik)) +
+p10a <- ggplot(res_proflik1_ZOOM, aes(x = profpar, y = loglik)) +
   geom_point() + theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
@@ -883,7 +883,7 @@ p9a <- ggplot(res_proflik1_ZOOM, aes(x = profpar, y = loglik)) +
   scale_x_continuous(n.breaks = 10) +
   scale_y_continuous(limits = c(-9685, -9644), n.breaks = 6)
 
-p9b <- ggplot(res_proflik2_ZOOM, aes(x = profpar, y = loglik)) +
+p10b <- ggplot(res_proflik2_ZOOM, aes(x = profpar, y = loglik)) +
   geom_point() + theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
@@ -895,7 +895,7 @@ p9b <- ggplot(res_proflik2_ZOOM, aes(x = profpar, y = loglik)) +
   scale_x_continuous(n.breaks = 10) +
   scale_y_continuous(limits = c(-9685, -9644), n.breaks = 6)
 
-# p9c <- ggplot(res_proflik1_can, aes(x = profpar, y = loglik)) +
+# p10c <- ggplot(res_proflik1_can, aes(x = profpar, y = loglik)) +
 #   geom_point() + theme_classic() +
 #   theme(axis.title = element_text(size = 14),
 #         axis.text = element_text(size = 12),
@@ -907,14 +907,14 @@ p9b <- ggplot(res_proflik2_ZOOM, aes(x = profpar, y = loglik)) +
 #   scale_x_continuous(n.breaks = 10)# +
 #   # scale_y_continuous(limits = c(-9685, -9644), n.breaks = 6)
 
-fig9s <- arrangeGrob(p9a, p9b, nrow = 1)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS9.svg', width = 14, height = 5, fig9s)
+fig10s <- arrangeGrob(p10a, p10b, nrow = 1)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS10.svg', width = 14, height = 5, fig10s)
 
-rm(fig9s, p9a, p9b, res_proflik1_ZOOM, res_proflik2_ZOOM, res_proflik1_can)
+rm(fig10s, p10a, p10b, res_proflik1_ZOOM, res_proflik2_ZOOM, res_proflik1_can)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 10: Simulated attack rates for flu and RSV at the MLE
+# Supplementary Figure 11: Simulated attack rates for flu and RSV at the MLE
 
 ar_dfs <- lapply(traj, function(ix) {
   ix %>%
@@ -927,7 +927,7 @@ ar_dfs <- lapply(traj, function(ix) {
            attack_rate = attack_rate * 100)
 })
 
-p10a <- ggplot(data = ar_dfs[[1]], aes(x = virus, y = attack_rate, group = virus)) +
+p11a <- ggplot(data = ar_dfs[[1]], aes(x = virus, y = attack_rate, group = virus)) +
   geom_violin(fill = 'gray90') +
   geom_point(aes(col = season), size = 2) +
   theme_classic() +
@@ -941,7 +941,7 @@ p10a <- ggplot(data = ar_dfs[[1]], aes(x = virus, y = attack_rate, group = virus
   scale_color_viridis(discrete = TRUE) +
   # guides(colour = guide_legend(nrow = 1)) +
   labs(x = 'Virus', y = 'Attack Rate (%)', col = 'Season', tag = 'A')
-p10b <- ggplot(data = ar_dfs[[2]], aes(x = virus, y = attack_rate, group = virus)) +
+p11b <- ggplot(data = ar_dfs[[2]], aes(x = virus, y = attack_rate, group = virus)) +
   geom_violin(fill = 'gray90') +
   geom_point(aes(col = season), size = 2) +
   theme_classic() +
@@ -955,21 +955,21 @@ p10b <- ggplot(data = ar_dfs[[2]], aes(x = virus, y = attack_rate, group = virus
   scale_color_viridis(discrete = TRUE) +
   labs(x = 'Virus', y = 'Attack Rate (%)', col = 'Season', tag = 'B')
 
-fig10s <- arrangeGrob(p10a, p10b, ncol = 2)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS10.svg', width = 12, height = 3.5, fig10s)
+fig11s <- arrangeGrob(p11a, p11b, ncol = 2)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS11.svg', width = 12, height = 3.5, fig11s)
 
-rm(fig10s, p10a, p10b, ar_dfs, traj, unit_estpars, true_estpars)
+rm(fig11s, p11a, p11b, ar_dfs, traj, unit_estpars, true_estpars)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 11: Simulations at the MLE, with and without interaction effect
+# Supplementary Figure 12: Simulations at the MLE, with and without interaction effect
 
 traj_no_int <- lapply(traj_no_int, function(ix) {
   ix %>%
     mutate(season = str_sub(season, 2))
 })
 
-p11a <- ggplot() +
+p12a <- ggplot() +
   geom_line(data = traj_no_int[[1]] %>%
               filter(.id %in% c(1, 3)) %>%
               mutate(.id = if_else(.id == 1, 'Interaction', 'No Interaction')),
@@ -991,7 +991,7 @@ p11a <- ggplot() +
                      labels = c(46, 51, seq(4, 45, by = 5))) +
   scale_color_manual(values = c('#d95f02', '#fdbf6f')) +
   labs(x = 'Week #', y = 'RSV Incidence', color = '', tag = 'A')
-p11b <- ggplot() +
+p12b <- ggplot() +
   geom_line(data = traj_no_int[[1]] %>%
               filter(.id %in% c(1, 5)) %>%
               mutate(.id = if_else(.id == 1, 'Interaction', 'No Interaction')),
@@ -1013,7 +1013,7 @@ p11b <- ggplot() +
                      labels = c(46, 51, seq(4, 45, by = 5))) +
   scale_color_manual(values = c('#1b9e77', '#8dd3c7')) +
   labs(x = 'Week #', y = 'Influenza Incidence', color = '', tag = 'B')
-p11c <- ggplot() +
+p12c <- ggplot() +
   geom_line(data = traj_no_int[[2]] %>%
               filter(.id %in% c(1, 3)) %>%
               mutate(.id = if_else(.id == 1, 'Interaction', 'No Interaction')),
@@ -1035,7 +1035,7 @@ p11c <- ggplot() +
                      labels = c(35, 40, 45, 50, seq(3, 35, by = 5))) +
   scale_color_manual(values = c('#d95f02', '#fdbf6f')) +
   labs(x = 'Week #', y = 'RSV Incidence', color = '', tag = 'C')
-p11d <- ggplot() +
+p12d <- ggplot() +
   geom_line(data = traj_no_int[[2]] %>%
               filter(.id %in% c(1, 5)) %>%
               mutate(.id = if_else(.id == 1, 'Interaction', 'No Interaction')),
@@ -1058,20 +1058,20 @@ p11d <- ggplot() +
   scale_color_manual(values = c('#1b9e77', '#8dd3c7')) +
   labs(x = 'Week #', y = 'Influenza Incidence', color = '', tag = 'D')
 
-fig11s <- arrangeGrob(p11a, p11b, p11c, p11d, ncol = 1)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS11.svg', width = 18, height = 14, fig11s)
+fig12s <- arrangeGrob(p12a, p12b, p12c, p12d, ncol = 1)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS12.svg', width = 18, height = 14, fig12s)
 
-rm(p11a, p11b, p11c, p11d, fig11s, traj_no_int, seasons, vir2,
+rm(p12a, p12b, p12c, p12d, fig12s, traj_no_int, seasons, vir2,
    age_structured, d2_max, debug_bool, prof_lik, Ri_max1, Ri_max2)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 12: Model schematic for vaccine simulation study
+# Supplementary Figure 13: Model schematic for vaccine simulation study
 # Not generated in R
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 13: Impact of LAIV by season for all scenarios
+# Supplementary Figure 14: Impact of LAIV by season for all scenarios
 
 file_list_hk <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'SUBTROPICAL', full.names = TRUE)
 file_list_can <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'TEMPERATE', full.names = TRUE)
@@ -1172,7 +1172,7 @@ annotation_custom2 <- function (grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax
 }
 # Source: https://clarewest.github.io/blog-posts/ggplotInset.html
 
-p13a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hk'),
+p14a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hk'),
                aes(group = season)) +
   geom_tile(aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   facet_wrap(~ season, nrow = 1, scales = 'fixed') +
@@ -1244,9 +1244,9 @@ insetA <- res_simA %>%
     ymin = 2, ymax = 30, xmin = 25, xmax = 52)
   )
 
-p13a <- p13a + insetA
+p14a <- p14a + insetA
 
-p13b <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'canada'),
+p14b <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'canada'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   facet_wrap(~ season, nrow = 1) +
@@ -1266,7 +1266,7 @@ p13b <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'ca
   labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ', ', delta[vacc], ' from Canada)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
-p13c <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'hk'),
+p14c <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'hk'),
                aes(group = season)) +
   geom_tile(aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   facet_wrap(~ season, nrow = 1) +
@@ -1306,9 +1306,9 @@ insetC <- res_simC %>%
     ymin = 2, ymax = 30, xmin = 25, xmax = 52)
   )
 
-p13c <- p13c + insetC
+p14c <- p14c + insetC
 
-p13d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'canada'),
+p14d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'canada'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   facet_wrap(~ season, nrow = 1) +
@@ -1328,17 +1328,16 @@ p13d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ', ', delta[vacc], ' from Canada)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
-# fig13s <- p13a / p13b / p13c / p13d + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-fig13s <- arrangeGrob(p13a, p13b, p13c, p13d,
+fig14s <- arrangeGrob(p14a, p14b, p14c, p14d,
                       arrangeGrob(p_legend1, p_legend2, layout_matrix = rbind(c(NA, 1, 2, NA)), widths = c(1.25, 2, 2, 1.25)),
                       nrow = 5, heights = c(10, 10, 10, 10, 2.5))
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS13.svg', fig13s, width = 13, height = 11)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS14.svg', fig14s, width = 13, height = 11)
 
-rm(fig13s, p13a, p13b, p13c, p13d, insetA, insetC, res, res_metrics, res_simA, res_simC, upper_bound_ar)
+rm(fig14s, p14a, p14b, p14c, p14d, insetA, insetC, res, res_metrics, res_simA, res_simC, upper_bound_ar)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 14: Sensitivity analyses for the vaccine simulation study
+# Supplementary Figure 15: Sensitivity analyses for the vaccine simulation study
 
 file_list_hk_deltaShort <- list.files('results/vaccine_simulation_study/simulations/deltavacc1month/', pattern = 'SUBTROPICAL', full.names = TRUE)
 file_list_can_deltaShort <- list.files('results/vaccine_simulation_study/simulations/deltavacc1month/', pattern = 'TEMPERATE', full.names = TRUE)
@@ -1400,7 +1399,7 @@ res_metrics <- res_metrics %>%
 
 upper_bound_ar <- max(res_metrics$ar2_impact)
 
-p14a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'deltaShort'),
+p15a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'deltaShort'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1422,7 +1421,7 @@ p14a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'de
   labs(title = expression(paste('Temperate (', delta[vacc], ' = 1 month)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
-p14b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaShort'),
+p15b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaShort'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1443,7 +1442,7 @@ p14b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   labs(title = expression(paste('Subtropical (', delta[vacc], ' = 1 month)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
-p14c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'deltaLong'),
+p15c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'deltaLong'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1464,7 +1463,7 @@ p14c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'de
   labs(title = expression(paste('Temperate (', delta[vacc], ' = 6 months)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
 
-p14d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaLong'),
+p15d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaLong'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1485,7 +1484,7 @@ p14d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   labs(title = expression(paste('Subtropical (', delta[vacc], ' = 6 months)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
-p14e <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'effLow'),
+p15e <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'effLow'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1505,7 +1504,7 @@ p14e <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'ef
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
   labs(title = 'Temperate (VE = 60%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'E')
 
-p14f <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'effLow'),
+p15f <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'effLow'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1525,7 +1524,7 @@ p14f <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
   labs(title = 'Subtropical (VE = 60%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'F')
 
-p14g <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'effHigh'),
+p15g <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'effHigh'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1545,7 +1544,7 @@ p14g <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'ef
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
   labs(title = 'Temperate (VE = 95%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'G')
 
-p14h <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'effHigh'),
+p15h <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'effHigh'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1565,14 +1564,14 @@ p14h <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
   labs(title = 'Subtropical (VE = 95%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'H')
 
-fig14s <- (p14a + p14b) / (p14c + p14d) / (p14e + p14f) / (p14g + p14h) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS14.svg', fig14s, width = 10, height = 15)
+fig15s <- (p15a + p15b) / (p15c + p15d) / (p15e + p15f) / (p15g + p15h) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS15.svg', fig15s, width = 10, height = 15)
 
-rm(fig14s, p14a, p14b, p14c, p14d, p14e, p14f, p14g, p14h, res, res_metrics, upper_bound_ar)
+rm(fig15s, p15a, p15b, p15c, p15d, p15e, p15f, p15g, p15h, res, res_metrics, upper_bound_ar)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 15: Comparison between observed data and synthetic data generated by the age-structured model
+# Supplementary Figure 16: Comparison between observed data and synthetic data generated by the age-structured model
 
 res_combined <- read_csv('data/age_structured_SA/synthetic_obs_combined.csv')
 seasons <- unique(res_combined$season)
@@ -1604,7 +1603,7 @@ res_combined_long <- res_combined_long %>%
   inner_join(hk_dat_long,
              by = c('time', 'season', 'virus'))
 
-fig15s <- ggplot(data = res_combined_long,
+fig16s <- ggplot(data = res_combined_long,
                  aes(x = time, color = virus)) +
   geom_point(aes(y = obs)) +
   geom_line(aes(y = synth)) +
@@ -1621,13 +1620,13 @@ fig15s <- ggplot(data = res_combined_long,
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Week #', y = '# of Cases', color = 'Virus')
 
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS15.svg', width = 14.5, height = 7.5, fig15s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS16.svg', width = 14.5, height = 7.5, fig16s)
 
-rm(fig15s, res_combined, hk_dat, hk_dat_temp, yr, hk_dat_long, res_combined_long)
+rm(fig16s, res_combined, hk_dat, hk_dat_temp, yr, hk_dat_long, res_combined_long)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 16: Age-structured synthetic data
+# Supplementary Figure 17: Age-structured synthetic data
 
 res_all_ages <- read_csv('data/age_structured_SA/synthetic_obs_by_age.csv')
 covar_all_ages <- read_csv('data/age_structured_SA/synthetic_covariate_data.csv')
@@ -1666,7 +1665,7 @@ res_all_ages <- res_all_ages %>%
   filter(!(season == 's16-17' & time == 8)) %>%
   mutate(time = if_else(season == 's16-17' & time > 7, time - 1, time))
 
-fig16s <- ggplot(data = res_all_ages, aes(x = time, y = val, col = age)) +
+fig17s <- ggplot(data = res_all_ages, aes(x = time, y = val, col = age)) +
   geom_line() +
   facet_grid(season ~ virus, scales = 'free') +
   theme_classic() +
@@ -1681,13 +1680,13 @@ fig16s <- ggplot(data = res_all_ages, aes(x = time, y = val, col = age)) +
   scale_color_viridis(discrete = TRUE) +
   labs(x = 'Week #', y = '% Positive', color = 'Age')
 
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS16.svg', fig16s, width = 9.5, height = 10.5)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS17.svg', fig17s, width = 9.5, height = 10.5)
 
-rm(fig16s, res_all_ages, covar_all_ages)
+rm(fig17s, res_all_ages, covar_all_ages)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 17: Circulation of rhinovirus over time, vs. influenza and RSV
+# Supplementary Figure 18: Circulation of rhinovirus over time, vs. influenza and RSV
 
 dat_hk <- read_csv('data/formatted/dat_hk.csv')
 
@@ -1733,7 +1732,7 @@ x_lab_breaks_can <- dat_can %>% filter(week == 1) %>% pull(time)
 season_breaks_hk <- dat_hk %>% filter(Week == 46) %>% pull(Time)
 season_breaks_can <- dat_can %>% filter(week == 35) %>% pull(time)
 
-p17a <- ggplot(data = dat_hk_pos %>%
+p18a <- ggplot(data = dat_hk_pos %>%
                  filter(virus %in% c('Influenza (A(H1N1) + B)    ', 'RSV  ', 'Rhinovirus')),
                aes(x = Time, y = perc_pos, col = virus)) +
   geom_line() + theme_classic() +
@@ -1749,9 +1748,9 @@ p17a <- ggplot(data = dat_hk_pos %>%
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'A') +
   geom_vline(xintercept = season_breaks_hk, linetype = 'dashed')
-p17a <- reposition_legend(p17a, position = 'top right', plot = FALSE)
+p18a <- reposition_legend(p18a, position = 'top right', plot = FALSE)
 
-p17b <- ggplot(data = dat_can_pos %>%
+p18b <- ggplot(data = dat_can_pos %>%
                  filter(virus %in% c('Influenza    ', 'RSV  ', 'Rhinovirus')),
                aes(x = time, y = perc_pos, col = virus)) +
   geom_line() + theme_classic() +
@@ -1767,18 +1766,17 @@ p17b <- ggplot(data = dat_can_pos %>%
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'B') +
   geom_vline(xintercept = season_breaks_can[2:length(season_breaks_can)], linetype = 'dashed')
-p17b <- reposition_legend(p17b, position = 'top right', plot = FALSE)
+p18b <- reposition_legend(p18b, position = 'top right', plot = FALSE)
 
-fig17s <- arrangeGrob(p17a, p17b, ncol = 1)
-plot(fig17s)
-ggsave('results/plots/figures_for_manuscript/supp/FigureS17.svg', width = 9.5, height = 7, fig17s)
+fig18s <- arrangeGrob(p18a, p18b, ncol = 1)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS18.svg', width = 9.5, height = 6.75, fig18s)
 
-rm(fig17s, p17a, p17b, dat_hk, dat_can, dat_hk_pos, dat_can_pos,
+rm(fig18s, p18a, p18b, dat_hk, dat_can, dat_hk_pos, dat_can_pos,
    x_lab_breaks_hk, x_lab_breaks_can, season_breaks_hk, season_breaks_can)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 18: MLE for shared parameters for a variety of sensitivity analyses
+# Supplementary Figure 19: MLE for shared parameters for a variety of sensitivity analyses
 # For now only have 95% CIs for some of these - decide whether ranges need to be plotted, or just MLE values
 
 res_dir_main <- 'results/round2_fit/round2_3_fluH1_plus_B/'
@@ -1843,7 +1841,7 @@ res <- res %>%
 xlabels <- levels(res$condition)
 xlabels[7] <- expression(R[20] + R[120] == 0)
 
-fig18s <- ggplot(data = res, aes(x = condition, y = value)) +
+fig19s <- ggplot(data = res, aes(x = condition, y = value)) +
   geom_point() +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
@@ -1853,7 +1851,7 @@ fig18s <- ggplot(data = res, aes(x = condition, y = value)) +
   facet_wrap(~ parameter, scales = 'free_y', ncol = 2, labeller = 'label_parsed') +
   scale_x_discrete(labels = xlabels) +
   labs(x = 'Analysis', y = 'Parameter Value')
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS18.svg', width = 7.5, height = 12, fig18s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS19.svg', width = 7.5, height = 12, fig19s)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
