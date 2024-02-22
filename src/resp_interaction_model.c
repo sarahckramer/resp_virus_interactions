@@ -282,8 +282,18 @@ if(debug) {
 //end_rinit
 
 //start_skel
-double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
-double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
+double x_ii_replace;
+double x_it_replace;
+double x_ti_replace;
+double x_tt_replace;
+
+x_ii_replace = X_II < 0 ? 0.0 : X_II;
+x_it_replace = X_IT < 0 ? 0.0 : X_IT;
+x_ti_replace = X_TI < 0 ? 0.0 : X_TI;
+x_tt_replace = X_TT < 0 ? 0.0 : X_TT;
+
+double p1 = (X_IS + x_ii_replace + x_it_replace + X_IR) / N; // Prevalence of infection with virus 1
+double p2 = (X_SI + x_ii_replace + x_ti_replace + X_RI) / N; // Prevalence of infection with virus 2
 
 double omega = (2 * M_PI) / 52.25;
 
@@ -333,22 +343,22 @@ DX_IS = lambda1 * X_SS - (gamma1 + theta_lambda1 * lambda2) * X_IS;
 DX_TS = gamma1 * X_IS - (delta1 + theta_lambda1 * lambda2) * X_TS;
 DX_RS = delta1 * X_TS - lambda2 * X_RS; 
 DX_SI = lambda2 * X_SS - (theta_lambda2 * lambda1 + gamma2) * X_SI;
-DX_II = theta_lambda1 * lambda2 * X_IS + theta_lambda2 * lambda1 * X_SI - (gamma1 + gamma2) * X_II; 
-DX_TI = theta_lambda1 * lambda2 * X_TS + gamma1 * X_II - (delta1 + gamma2) * X_TI;
-DX_RI = lambda2 * X_RS + delta1 * X_TI - gamma2 * X_RI; 
+DX_II = theta_lambda1 * lambda2 * X_IS + theta_lambda2 * lambda1 * X_SI - (gamma1 + gamma2) * x_ii_replace; 
+DX_TI = theta_lambda1 * lambda2 * X_TS + gamma1 * x_ii_replace - (delta1 + gamma2) * x_ti_replace;
+DX_RI = lambda2 * X_RS + delta1 * x_ti_replace - gamma2 * X_RI; 
 DX_ST = gamma2 * X_SI - (theta_lambda2 * lambda1 + delta2) * X_ST; 
-DX_IT = gamma2 * X_II + theta_lambda2 * lambda1 * X_ST - (gamma1 + delta2) * X_IT; 
-DX_TT = gamma2 * X_TI + gamma1 * X_IT - (delta1 + delta2) * X_TT;
-DX_RT = gamma2 * X_RI + delta1 * X_TT - delta2 * X_RT;
+DX_IT = gamma2 * x_ii_replace + theta_lambda2 * lambda1 * X_ST - (gamma1 + delta2) * x_it_replace; 
+DX_TT = gamma2 * x_ti_replace + gamma1 * x_it_replace - (delta1 + delta2) * x_tt_replace;
+DX_RT = gamma2 * X_RI + delta1 * x_tt_replace - delta2 * X_RT;
 DX_SR = delta2 * X_ST - lambda1 * X_SR; 
-DX_IR = delta2 * X_IT + lambda1 * X_SR - gamma1 * X_IR; 
-DX_TR = delta2 * X_TT + gamma1 * X_IR - delta1 * X_TR; 
+DX_IR = delta2 * x_it_replace + lambda1 * X_SR - gamma1 * X_IR; 
+DX_TR = delta2 * x_tt_replace + gamma1 * X_IR - delta1 * X_TR; 
 DX_RR = delta2 * X_RT + delta1 * X_TR;
 
 DH1_tot = gamma1 * p1; // Incidence rate of virus 1 infections (total)
 DH2_tot = gamma2 * p2; // Incidence rate of virus 2 infections (total)
-DH1 = gamma1 * (X_IS + theta_rho2 * X_II + X_IT + X_IR) / N; // Incidence rate of reported virus 1 infections
-DH2 = gamma2 * (X_SI + theta_rho1 * X_II + X_TI + X_RI) / N; // Incidence rate of reported virus 2 infections 
+DH1 = gamma1 * (X_IS + theta_rho2 * x_ii_replace + x_it_replace + X_IR) / N; // Incidence rate of reported virus 1 infections
+DH2 = gamma2 * (X_SI + theta_rho1 * x_ii_replace + x_ti_replace + X_RI) / N; // Incidence rate of reported virus 2 infections 
 //end_skel
 
 //start_rsim
