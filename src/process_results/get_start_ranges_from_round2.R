@@ -182,6 +182,16 @@ load_and_format_mega_results <- function(filepath) {
   # If none remaining, print warning:
   if(nrow(pars_top) == 0) {
     print('No convergence among best-fit runs!')
+    
+    no_best <- 25
+    pars_top <- pars_df[1:no_best, ]
+    print(summary(pars_top$loglik))
+    
+    is_mle <- FALSE
+    
+    pars_top <- pars_top %>%
+      filter(!str_detect(message, 'maxtime')) %>%
+      select(-message)
   }
   print(no_best)
   print(summary(pars_top$loglik))
