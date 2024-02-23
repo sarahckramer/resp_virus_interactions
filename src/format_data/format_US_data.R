@@ -44,7 +44,6 @@ us_ili <- us_ili %>%
 # Read in all data:
 us_vir_pre2015 <- read_csv('data/raw/us/FluViewPhase2Data/WHO_NREVSS_Combined_prior_to_2015_16.csv', skip = 1)
 us_vir_clin_post2015 <- read_csv('data/raw/us/FluViewPhase2Data/WHO_NREVSS_Clinical_Labs.csv', skip = 1)
-# us_vir_ph_post2015 <- read_csv('data/raw/us/FluViewPhase2Data/WHO_NREVSS_Public_Health_Labs.csv', skip = 1)
 
 # Prepare data for combining (pre 2015):
 us_vir_pre2015 <- us_vir_pre2015 %>%
@@ -66,16 +65,6 @@ expect_true(
 us_vir_pre2015 <- us_vir_pre2015 %>%
   select(region:n_test_flu, flu:tot_b)
 
-# # Prepare data for combining (post 2015, public health labs):
-# us_vir_ph_post2015 <- us_vir_ph_post2015 %>%
-#   select(REGION:H3N2v) %>%
-#   rename_with(tolower) %>%
-#   mutate(tot_a = `a (2009 h1n1)` + `a (h3)` + `a (subtyping not performed)` + h3n2v,
-#          tot_b = b + bvic + byam,
-#          flu = tot_a + tot_b) %>%
-#   rename('n_test_flu' = `total specimens`) %>%
-#   select(region:n_test_flu, flu, tot_a:tot_b)
-
 # Prepare data for combining (post 2015, clinical labs):
 us_vir_clin_post2015 <- us_vir_clin_post2015 %>%
   select(REGION:`PERCENT POSITIVE`) %>%
@@ -94,20 +83,6 @@ expect_true(
 
 us_vir_clin_post2015 <- us_vir_clin_post2015 %>%
   select(region:n_test_flu, flu, tot_a:tot_b)
-
-# # Combine post-2015 data:
-# us_vir_post2015 <- us_vir_clin_post2015 %>%
-#   inner_join(us_vir_ph_post2015,
-#              by = c('region', 'year', 'week'))
-# expect_true(nrow(us_vir_post2015) == nrow(us_vir_clin_post2015))
-# 
-# us_vir_post2015 <- us_vir_post2015 %>%
-#   mutate(n_test_flu = n_test_flu.x + n_test_flu.y,
-#          flu = flu.x + flu.y,
-#          tot_a = tot_a.x + tot_a.y,
-#          tot_b = tot_b.x + tot_b.y) %>%
-#   select(region:week, n_test_flu:tot_b)
-# rm(us_vir_clin_post2015)
 
 # Combine data from before and after 2015:
 us_vir_flu <- bind_rows(us_vir_pre2015,
@@ -145,17 +120,6 @@ us_vir_rsv <- us_vir_rsv %>%
          'n_test_rsv' = 'rsvtest',
          'rsv' = 'rsvpos') %>%
   mutate(region = paste('Region', region))
-
-# # Check flu data:
-# us_vir_check <- us_vir_ph_post2015 %>%
-#   inner_join(us_vir_rsv,
-#              by = c('region', 'year', 'week'))
-# 
-# expect_true(us_vir_check %>% filter(n_test_flu != flutest) %>% nrow == 0)
-# expect_true(us_vir_check %>% filter(flu != flupos) %>% nrow == 0)
-# expect_true(us_vir_check %>% filter(tot_a != fluapos) %>% nrow == 0)
-# expect_true(us_vir_check %>% filter(tot_b != flubpos) %>% nrow == 0)
-# rm(us_vir_check, us_vir_ph_post2015)
 
 # Join with flu virologic data:
 us_vir <- us_vir_flu %>%
@@ -246,15 +210,15 @@ pop_dat <- pop_dat %>%
                values_to = 'pop') %>%
   pivot_wider(names_from = year,
               values_from = pop) %>%
-  mutate(`s10-11` = (`2010` + `2011`) / 2,
-         `s11-12` = (`2011` + `2012`) / 2,
-         `s12-13` = (`2012` + `2013`) / 2,
-         `s13-14` = (`2013` + `2014`) / 2,
-         `s14-15` = (`2014` + `2015`) / 2,
-         `s15-16` = (`2015` + `2016`) / 2,
-         `s16-17` = (`2016` + `2017`) / 2,
-         `s17-18` = (`2017` + `2018`) / 2,
-         `s18-19` = (`2018` + `2019`) / 2) %>%
+  mutate(`s10-11` = round((`2010` + `2011`) / 2),
+         `s11-12` = round((`2011` + `2012`) / 2),
+         `s12-13` = round((`2012` + `2013`) / 2),
+         `s13-14` = round((`2013` + `2014`) / 2),
+         `s14-15` = round((`2014` + `2015`) / 2),
+         `s15-16` = round((`2015` + `2016`) / 2),
+         `s16-17` = round((`2016` + `2017`) / 2),
+         `s17-18` = round((`2017` + `2018`) / 2),
+         `s18-19` = round((`2018` + `2019`) / 2)) %>%
   select(region, `s10-11`:`s18-19`) %>%
   pivot_longer(-region,
                names_to = 'season',
@@ -293,6 +257,11 @@ us_dat_mod <- us_dat_mod %>%
   mutate(region = factor(region, levels = c('Region 1', 'Region 2', 'Region 3', 'Region 4', 'Region 5',
                                             'Region 6', 'Region 7', 'Region 8', 'Region 9', 'Region 10'))) %>%
   split(.$region)
+
+us_dat_mod <- lapply(us_dat_mod, function(ix) {
+  ix %>%
+    arrange(season, time)
+})
 
 # Write data to file:
 write_rds(us_dat_mod, file = 'data/formatted/dat_us_byRegion.rds')

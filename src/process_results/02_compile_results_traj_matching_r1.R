@@ -11,6 +11,7 @@ library(testthat)
 # Get cluster environmental variables:
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+fit_us <- as.logical(Sys.getenv("FITUS")); print(fit_us)
 
 # Set estimated parameter names:
 if (sens == 'no_rsv_immune') {
@@ -20,7 +21,7 @@ if (sens == 'no_rsv_immune') {
 }
 
 # Set parameter values:
-if (fit_canada) {
+if (fit_canada | fit_us) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -47,10 +48,25 @@ if (fit_canada) {
   yrs <- str_split(res_files, pattern = '_') %>%
     map(~ .x[4]) %>%
     unlist()
+} else if (fit_us) {
+  yrs <- str_split(res_files, pattern = '_') %>%
+    map(~ .x[5]) %>%
+    unlist()
 } else {
   yrs <- str_split(res_files, pattern = '_') %>%
     map(~ .x[7]) %>%
     unlist()
+}
+
+# If US, get region of each result:
+if (fit_us) {
+  
+  regions <- str_split(res_files, pattern = '_') %>%
+    map(~ .x[4]) %>%
+    unlist()
+  
+} else {
+  regions <- c()
 }
 
 # Read in all results:
@@ -72,9 +88,22 @@ pars_df <- lapply(res_full, getElement, 'estpars') %>%
          year = yrs) %>%
   select(virus1:year, Ri1:message)
 
+if (fit_us) {
+  
+  pars_df <- pars_df %>%
+    mutate(region = regions) %>%
+    select(virus1:year, region, Ri1:message)
+  
+}
+
 expect_true(nrow(pars_df) == length(res_files))
-expect_true(ncol(pars_df) == (length(estpars) + 4))
 expect_true(all(is.finite(pars_df$loglik)))
+
+if (fit_us) {
+  expect_true(ncol(pars_df) == (length(estpars) + 5))
+} else {
+  expect_true(ncol(pars_df) == (length(estpars) + 4))
+}
 
 # Write results to file:
 write_rds(res_full, 'traj_match_round1_COMPILED.rds')
@@ -87,6 +116,10 @@ write_csv(pars_df, 'res_traj_match_round1.csv')
 # Get total number of virus/season pairs:
 virus_seasons <- unique(paste(vir1, yrs, sep = '_'))
 
+if (fit_us) {
+  virus_seasons <- unique(paste(vir1, yrs, regions, sep = '_'))
+}
+
 # Order unique years correctly:
 yrs_unique <- unique(yrs)[order(str_sub(unique(yrs), 2, 3))]
 print(yrs_unique)
@@ -96,150 +129,163 @@ res_list_full = res_list = mle_list = slice_list = vector('list', length(virus_s
 
 # Loop through flus/seasons:
 counter <- 1
-for (yr in yrs_unique) {
-  print(yr)
+for (seas in virus_seasons) {
+  print(seas)
   
-  # Check that results exist for combination:
-  if (paste(vir1, yr, sep = '_') %in% virus_seasons) {
-    
-    # Get results for just that flu/season:
-    pars_temp <- pars_df %>%
-      filter(virus1 == vir1,
-             year == yr)
-    print(table(pars_temp$virus1))
-    print(table(pars_temp$year))
-    
-    # Remove fits that didn't converge:
-    pars_temp <- pars_temp %>%
-      filter(!str_detect(message, 'maxtime')) %>%
-      select(-message)
-    
-    # Check that no model states go below zero:
-    source('src/resp_interaction_model.R')
-    
-    p_mat <- parmat(coef(resp_mod), nrep = nrow(pars_temp))
-    for (param in estpars) {
-      p_mat[param, ] <- pars_temp %>% pull(param)
-    }
-    
-    rows_to_remove <- trajectory(resp_mod,
-                                 params = p_mat,
-                                 format = 'data.frame') %>%
-      select(!(H1_tot:H2_tot)) %>%
-      pivot_longer(X_SS:H2,
-                   names_to = 'state') %>%
-      filter(value < 0) %>%
-      pull(.id) %>%
-      unique() %>%
-      as.integer()
-    print(length(rows_to_remove))
-    
-    # Remove parameter sets that go negative:
-    nrow_check <- nrow(pars_temp) - length(rows_to_remove)
-    if (length(rows_to_remove) > 0) {
-      pars_temp <- pars_temp[-rows_to_remove, ]
-    }
-    expect_true(nrow(pars_temp) == nrow_check)
-    
-    # Sort results and store:
-    pars_temp <- pars_temp %>%
-      arrange(desc(loglik))
-    res_list_full[[counter]] <- pars_temp
-    
-    # Get only best estimates:
-    no_best <- nrow(subset(pars_temp, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = length(estpars))))
-    # no_best <- max(no_best, 50) # get top 50 if less than 50
-    if (no_best < 50) {
-      print('Fewer than 50 top results!')
-    }
-    print(no_best)
-    
-    pars_temp <- pars_temp[1:no_best, ]
-    
-    # Store results:
-    res_list[[counter]] <- pars_temp
-    
-    # ---------------------------------------------------------------------------------------------------------------
-    
-    # Get MLE
-    
-    # Load pomp object:
-    source('src/resp_interaction_model.R')
-    
-    # Create objective function for call to nloptr:
-    obj_fun <- traj_objfun(data = resp_mod,
-                           est = estpars,
-                           partrans = resp_mod@partrans,
-                           verbose = TRUE)
-    
-    # Get MLE and store:
-    mle <- setNames(object = as.numeric(pars_temp[1, estpars]),
-                    nm = estpars)
-    mle_list[[counter]] <- mle
-    
-    # ---------------------------------------------------------------------------------------------------------------
-    
-    # Calculate slice likelihoods
-    
-    # Take slices:
-    if (sens == 'no_rsv_immune') {
-      slices <- slice_design(center = mle,
-                             Ri1 = seq(from = 0.9 * mle['Ri1'], to = 1.1 * mle['Ri1'], length.out = 20),
-                             Ri2 = seq(from = 0.9 * mle['Ri2'], to = 1.1 * mle['Ri2'], length.out = 20),
-                             I10 = seq(from = 0.9 * mle['I10'], to = 1.1 * mle['I10'], length.out = 20),
-                             I20 = seq(from = 0.9 * mle['I20'], to = 1.1 * mle['I20'], length.out = 20),
-                             R10 = seq(from = 0.9 * mle['R10'], to = 1.1 * mle['R10'], length.out = 20),
-                             rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
-                             rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20)) %>%
-        mutate(ll = NA)
-    } else {
-      slices <- slice_design(center = mle,
-                             Ri1 = seq(from = 0.9 * mle['Ri1'], to = 1.1 * mle['Ri1'], length.out = 20),
-                             Ri2 = seq(from = 0.9 * mle['Ri2'], to = 1.1 * mle['Ri2'], length.out = 20),
-                             I10 = seq(from = 0.9 * mle['I10'], to = 1.1 * mle['I10'], length.out = 20),
-                             I20 = seq(from = 0.9 * mle['I20'], to = 1.1 * mle['I20'], length.out = 20),
-                             R10 = seq(from = 0.9 * mle['R10'], to = 1.1 * mle['R10'], length.out = 20),
-                             R20 = seq(from = 0.9 * mle['R20'], to = 1.1 * mle['R20'], length.out = 20),
-                             R120 = seq(from = 0.9 * mle['R120'], to = 1.1 * mle['R120'], length.out = 20),
-                             rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
-                             rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20)) %>%
-        mutate(ll = NA)
-    }
-    
-    # Calculate log likelihoods:
-    for (i in 1:nrow(slices)) {
-      coef(resp_mod, estpars) <- unname(slices[i, estpars])
-      x0_trans <- coef(resp_mod, estpars, transform = TRUE)
-      slices$ll[i] <- -obj_fun(par = x0_trans)
-    }
-    rm(i, x0_trans)
-    
-    # Check that any NAs are due to initial conditions or other unrealistic parameter values:
-    if (sens == 'no_rsv_immune') {
-      nas_in_ll <- slices %>%
-        filter(is.na(ll)) %>%
-        mutate(init_sum = I10 + I20 + R10)
-    } else {
-      nas_in_ll <- slices %>%
-        filter(is.na(ll)) %>%
-        mutate(init_sum = I10 + I20 + R10 + R20 + R120)
-    }
-    
-    expect_true(all(nas_in_ll$init_sum > 1.0 | nas_in_ll$rho1 > 1.0 | nas_in_ll$rho2 > 1.0))
-    
-    # Remove NAs:
-    slices <- slices %>%
-      filter(!is.na(ll))
-    
-    # Store:
-    slice_list[[counter]] <- slices
-    
-    # ---------------------------------------------------------------------------------------------------------------
-    
-    # Iterate to next list position:
-    counter <- counter + 1
-    
+  # Get year and region (if US):
+  yr <- str_split(seas, '_')[[1]][str_detect(str_split(seas, '_')[[1]], 's1')]
+  
+  if (fit_us) {
+    reg <- str_split(seas, '_')[[1]][3]
+    region <- paste0('Region ', reg)
   }
+  
+  # Get results for just that flu/season:
+  pars_temp <- pars_df %>%
+    filter(virus1 == vir1,
+           year == yr)
+  
+  if (fit_us) {
+    pars_temp <- pars_temp %>%
+      filter(region == reg)
+  }
+  
+  print(table(pars_temp$virus1))
+  print(table(pars_temp$year))
+  
+  if (fit_us) {
+    print(table(pars_temp$region))
+  }
+  
+  # Remove fits that didn't converge:
+  pars_temp <- pars_temp %>%
+    filter(!str_detect(message, 'maxtime')) %>%
+    select(-message)
+  
+  # Check that no model states go below zero:
+  source('src/resp_interaction_model.R')
+  
+  p_mat <- parmat(coef(resp_mod), nrep = nrow(pars_temp))
+  for (param in estpars) {
+    p_mat[param, ] <- pars_temp %>% pull(param)
+  }
+  
+  rows_to_remove <- trajectory(resp_mod,
+                               params = p_mat,
+                               format = 'data.frame') %>%
+    select(!(H1_tot:H2_tot)) %>%
+    pivot_longer(X_SS:H2,
+                 names_to = 'state') %>%
+    filter(value < 0) %>%
+    pull(.id) %>%
+    unique() %>%
+    as.integer()
+  print(length(rows_to_remove))
+  
+  # Remove parameter sets that go negative:
+  nrow_check <- nrow(pars_temp) - length(rows_to_remove)
+  if (length(rows_to_remove) > 0) {
+    pars_temp <- pars_temp[-rows_to_remove, ]
+  }
+  expect_true(nrow(pars_temp) == nrow_check)
+  
+  # Sort results and store:
+  pars_temp <- pars_temp %>%
+    arrange(desc(loglik))
+  res_list_full[[counter]] <- pars_temp
+  
+  # Get only best estimates:
+  no_best <- nrow(subset(pars_temp, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = length(estpars))))
+  # no_best <- max(no_best, 50) # get top 50 if less than 50
+  if (no_best < 50) {
+    print('Fewer than 50 top results!')
+  }
+  print(no_best)
+  
+  pars_temp <- pars_temp[1:no_best, ]
+  
+  # Store results:
+  res_list[[counter]] <- pars_temp
+  
+  # ---------------------------------------------------------------------------------------------------------------
+  
+  # Get MLE
+  
+  # Load pomp object:
+  source('src/resp_interaction_model.R')
+  
+  # Create objective function for call to nloptr:
+  obj_fun <- traj_objfun(data = resp_mod,
+                         est = estpars,
+                         partrans = resp_mod@partrans,
+                         verbose = TRUE)
+  
+  # Get MLE and store:
+  mle <- setNames(object = as.numeric(pars_temp[1, estpars]),
+                  nm = estpars)
+  mle_list[[counter]] <- mle
+  
+  # ---------------------------------------------------------------------------------------------------------------
+  
+  # Calculate slice likelihoods
+  
+  # Take slices:
+  if (sens == 'no_rsv_immune') {
+    slices <- slice_design(center = mle,
+                           Ri1 = seq(from = 0.9 * mle['Ri1'], to = 1.1 * mle['Ri1'], length.out = 20),
+                           Ri2 = seq(from = 0.9 * mle['Ri2'], to = 1.1 * mle['Ri2'], length.out = 20),
+                           I10 = seq(from = 0.9 * mle['I10'], to = 1.1 * mle['I10'], length.out = 20),
+                           I20 = seq(from = 0.9 * mle['I20'], to = 1.1 * mle['I20'], length.out = 20),
+                           R10 = seq(from = 0.9 * mle['R10'], to = 1.1 * mle['R10'], length.out = 20),
+                           rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
+                           rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20)) %>%
+      mutate(ll = NA)
+  } else {
+    slices <- slice_design(center = mle,
+                           Ri1 = seq(from = 0.9 * mle['Ri1'], to = 1.1 * mle['Ri1'], length.out = 20),
+                           Ri2 = seq(from = 0.9 * mle['Ri2'], to = 1.1 * mle['Ri2'], length.out = 20),
+                           I10 = seq(from = 0.9 * mle['I10'], to = 1.1 * mle['I10'], length.out = 20),
+                           I20 = seq(from = 0.9 * mle['I20'], to = 1.1 * mle['I20'], length.out = 20),
+                           R10 = seq(from = 0.9 * mle['R10'], to = 1.1 * mle['R10'], length.out = 20),
+                           R20 = seq(from = 0.9 * mle['R20'], to = 1.1 * mle['R20'], length.out = 20),
+                           R120 = seq(from = 0.9 * mle['R120'], to = 1.1 * mle['R120'], length.out = 20),
+                           rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
+                           rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20)) %>%
+      mutate(ll = NA)
+  }
+  
+  # Calculate log likelihoods:
+  for (i in 1:nrow(slices)) {
+    coef(resp_mod, estpars) <- unname(slices[i, estpars])
+    x0_trans <- coef(resp_mod, estpars, transform = TRUE)
+    slices$ll[i] <- -obj_fun(par = x0_trans)
+  }
+  rm(i, x0_trans)
+  
+  # Check that any NAs are due to initial conditions or other unrealistic parameter values:
+  if (sens == 'no_rsv_immune') {
+    nas_in_ll <- slices %>%
+      filter(is.na(ll)) %>%
+      mutate(init_sum = I10 + I20 + R10)
+  } else {
+    nas_in_ll <- slices %>%
+      filter(is.na(ll)) %>%
+      mutate(init_sum = I10 + I20 + R10 + R20 + R120)
+  }
+  
+  expect_true(all(nas_in_ll$init_sum > 1.0 | nas_in_ll$rho1 > 1.0 | nas_in_ll$rho2 > 1.0))
+  
+  # Remove NAs:
+  slices <- slices %>%
+    filter(!is.na(ll))
+  
+  # Store:
+  slice_list[[counter]] <- slices
+  
+  # ---------------------------------------------------------------------------------------------------------------
+  
+  # Iterate to next list position:
+  counter <- counter + 1
   
 }
 

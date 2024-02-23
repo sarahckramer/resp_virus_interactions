@@ -2,7 +2,7 @@
 # Functions to assist with flu/RSV model
 # ---------------------------------------------------------------------------------------------------------------------
 
-create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.0, debug_bool = F, sens = 'main', test_diff = FALSE) {
+create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.0, debug_bool = F, sens = 'main', loc = 'hk') {
   # Function to create pomp object 
   # param dat: ILI and virological data (data frame, first time point must be 1) 
   # param Ri1_max: upper bound of initial reproduction no of virus 1 (double, passed as global argument in the C script)
@@ -10,13 +10,13 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
   # param d2_max: upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
   # param debug_bool: should debugging info be printed? (boolean)
   # param sens: main analysis or the name of a specific sensitivity analysis
-  # param test_diff: are there a different number of tests performed for the two viruses being modeled?
+  # param loc: where are the data from? ('hk', 'canada', or 'us')
   
-  # Are data from Canada?:
-  if (test_diff) {
-    loc <- 'canada'
+  # Same number of tests for flu and RSV?
+  if (loc == 'hk') {
+    test_diff <- FALSE
   } else {
-    loc <- 'hk'
+    test_diff <- TRUE
   }
   
   # Read model C code:
