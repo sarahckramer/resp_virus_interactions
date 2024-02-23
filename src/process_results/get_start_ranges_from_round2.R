@@ -232,7 +232,6 @@ load_and_format_mega_results <- function(filepath) {
     pars_top <- pars_top %>%
       mutate(phi1 = if_else(phi1 < 1, phi1 + 52.25, phi1),
              phi2 = if_else(phi2 < 1, phi2 + 52.25, phi2))
-    
     hist(pars_top$phi1, breaks = 50)
     hist(pars_top$phi2, breaks = 50)
     

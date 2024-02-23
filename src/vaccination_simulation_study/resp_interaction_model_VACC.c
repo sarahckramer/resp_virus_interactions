@@ -43,7 +43,14 @@ T_theta_lambda1 = logit(theta_lambda1);
 T_theta_lambda2 = logit(theta_lambda2);
 T_theta_rho1 = logit(theta_rho1);
 T_theta_rho2 = logit(theta_rho2);
-T_rho1 = logit(rho1); 
+
+if (strcmp("canada", loc) == 0) {
+  T_rho1 = log(rho1);
+} else {
+  T_rho1 = logit(rho1);
+}
+//T_rho1 = logit(rho1);
+
 T_rho2 = logit(rho2);
 //T_rho1 = log(rho1); 
 //T_rho2 = log(rho2);
@@ -90,7 +97,14 @@ theta_lambda1 = expit(T_theta_lambda1);
 theta_lambda2 = expit(T_theta_lambda2);
 theta_rho1 = expit(T_theta_rho1);
 theta_rho2 = expit(T_theta_rho2);
-rho1 = expit(T_rho1);
+
+if (strcmp("canada", loc) == 0) {
+  rho1 = exp(T_rho1);
+} else {
+  rho1 = expit(T_rho1);
+}
+//rho1 = expit(T_rho1);
+
 rho2 = expit(T_rho2);
 //rho1 = exp(T_rho1);
 //rho2 = exp(T_rho2);
@@ -121,7 +135,7 @@ R120 = exp(T_R120) / (1.0 + sum_init);
 
 //end_fromest
 
-//start_dmeas
+//start_dmeas_orig
 double fP1, fP2, ll;
 double omega = (2 * M_PI) / 52.25;
 
@@ -159,9 +173,40 @@ if(debug) {
 } 
 lik = (give_log) ? ll : exp(ll);
 
-//end_dmeas
+//end_dmeas_orig
 
-//start_rmeas
+//start_dmeas_testdiff
+double fP1, fP2, ll;
+double omega = (2 * M_PI) / 52.25;
+
+double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ILI); // Probability of detecting virus 2
+
+if (rho1_w < 0) {
+  rho1_w = 0.0;
+}
+if (rho2_w < 0) {
+  rho2_w = 0.0;
+}
+
+fP1 = dbinom(n_P1, n_T1, rho1_w, 1); // First likelihood component, natural scale
+fP2 = dbinom(n_P2, n_T2, rho2_w, 1); // Second likelihood component, natural scale
+
+// If rho_w == 1, the resulting observation probability might be 0 (-Inf on log-scale)
+// Replace by a big, but finite penalty if that's the case 
+ll = fmax2(fP1 + fP2, -1e3);
+
+// If data are NA, ll will be NA; in this case, set to zero
+ll = ISNA(ll) ? 0.0 : ll;
+
+if(debug) {
+  Rprintf("t=%.1f, rho1_w=%.1f, rho2_w=%.1f, n_T1=%.1f, n_T2=%.1f, fP1=%.1f, fP2=%.1f, sum=%.1f, ll=%.f\n", t, rho1_w, rho2_w, n_T1, n_T2, fP1, fP2, fP1 + fP2, ll);
+}
+lik = (give_log) ? ll : exp(ll);
+
+//end_dmeas_testdiff
+
+//start_rmeas_orig
 double omega = (2 * M_PI) / 52.25;
 
 double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
@@ -169,18 +214,28 @@ double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / 
 
 n_P1 = rbinom(n_T, rho1_w); // Generate of tests positive to virus 1
 n_P2 = rbinom(n_T, rho2_w); // Generate of tests positive to virus 2
-//end_rmeas
+//end_rmeas_orig
+
+//start_rmeas_testdiff
+double omega = (2 * M_PI) / 52.25;
+
+double rho1_w = fmin2(1.0, rho1 * (1.0 + alpha * cos(omega * (t - phi))) * H1 / i_ILI); // Probability of detecting virus 1
+double rho2_w = fmin2(1.0, rho2 * (1.0 + alpha * cos(omega * (t - phi))) * H2 / i_ILI); // Probability of detecting virus 2
+
+n_P1 = rbinom(n_T1, rho1_w); // Generate of tests positive to virus 1
+n_P2 = rbinom(n_T2, rho2_w); // Generate of tests positive to virus 2
+//end_rmeas_testdiff
 
 //start_rinit
 double X_SS_offset;
 
 if (xss0 < 0) {
   
-  X_SS = nearbyint((1.0 - p_vacc) * (1.0 - I10 - I20 - R10 - R20 - R120) * N);
+  X_SS = nearbyint((1.0 - I10 - I20 - R10 - R20 - R120) * N);
   X_IS = nearbyint(I10 * N);
   X_TS = 0;
-  X_RS = nearbyint((1.0 - p_vacc) * R10 * N);
-  X_SI = nearbyint((1.0 - p_vacc) * I20 * N);
+  X_RS = nearbyint(R10 * N);
+  X_SI = nearbyint(I20 * N);
   X_II = 0;
   X_TI = 0;
   X_RI = 0;
@@ -188,20 +243,25 @@ if (xss0 < 0) {
   X_IT = 0;
   X_TT = 0;
   X_RT = 0;
-  X_SR = nearbyint((1.0 - p_vacc) * R20 * N);
+  X_SR = nearbyint(R20 * N);
   X_IR = 0;
   X_TR = 0;
   X_RR = nearbyint(R120 * N);
   
-  //V_SS1 = nearbyint(p_vacc * (1.0 - R10 - R20 - R120) * N);
-  V_SS1 = nearbyint(p_vacc * (1.0 - I10 - I20 - R10 - R20 - R120) * N);
-  V_SR = nearbyint(p_vacc * R20 * N);
-  V_RS = nearbyint(p_vacc * R10 * N);
-  V_SI = nearbyint(p_vacc * I20 * N);
+  V_SS1 = nearbyint(p_vacc * X_SS);
+  V_SR = nearbyint(p_vacc * X_SR);
+  V_RS = nearbyint(p_vacc * X_RS);
+  V_SI = nearbyint(p_vacc * X_SI);
   V_ST = 0;
+  
+  X_SS = X_SS - V_SS1;
+  X_SR = X_SR - V_SR;
+  X_RS = X_RS - V_RS;
+  X_SI = X_SI - V_SI;
   
   X_SS_offset = X_IS + X_RS + X_SI + X_SR + X_RR + V_SS1 + V_SR + V_RS + V_SI;
   if ((X_SS + X_SS_offset) != N) {
+    //Rprintf("X_SS=%.11f, sum=%.11f, N=%.1f\n", X_SS, X_SS + X_SS_offset, N);
     X_SS = nearbyint(N - X_SS_offset);
   }
   
@@ -253,7 +313,9 @@ if ((X_SS + X_SS_offset) != N) {
 
 if(debug) {
   Rprintf("%f, %f, %f, %f, %f, %f, %f\n", Ri1, Ri2, I10, I20, R10, R20, R120);
+  Rprintf("%f, %f, %f, %f, %f, %f\n", X_SS, X_SR, X_RS, X_SI, X_ST, N);
   Rprintf("%f, %f, %f, %f, %f, %f\n", V_SS1, V_SR, V_RS, V_SI, V_ST, N);
+  Rprintf("%f, %f, %f, %f, %f, %f\n", X_SS + V_SS1, X_SR + V_SR, X_RS + V_RS, X_SI + V_SI, X_ST + V_ST, N);
 }
 
 //end_rinit
@@ -262,12 +324,24 @@ if(debug) {
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI + V_SI) / N; // Prevalence of infection with virus 2
 
-double beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
-double beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
-// double beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Linear (vs. exponential) impact of climate
-// double beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + eta_ah2 * ah + eta_temp2 * temp) * gamma2; // same
-//double beta1 = Ri1 * gamma1; // R0 instead of initial Reff
-//double beta2 = Ri2 * gamma2; // same
+double omega = (2 * M_PI) / 52.25;
+
+double beta1;
+double beta2;
+
+if (strcmp("sinusoidal_forcing", sens) == 0) {
+  
+  // Modelling seasonality with a sinusoidal wave:
+  beta1 = Ri1 / (1.0 - (R10 + R120)) * (1 + b1 * cos(omega * (t - phi1))) * gamma1;
+  beta2 = Ri2 / (1.0 - (R20 + R120)) * (1 + b2 * cos(omega * (t - phi2))) * gamma2;
+  
+} else {
+  
+  beta1 = Ri1 / (1.0 - (R10 + R120)) * exp(eta_ah1 * ah + eta_temp1 * temp) * gamma1; // Initial reproduction no of virus 1 (R10+R120: initial prop immune to v1)
+  beta2 = Ri2 / (1.0 - (R20 + R120)) * exp(eta_ah2 * ah + eta_temp2 * temp) * gamma2; // Initial reproduction no of virus 2 (R20+R120: initial prop immune to v2)
+  
+}
+
 double lambda1 = beta1 * p1; // Force of infection with virus 1
 double lambda2 = beta2 * p2; // Force of infection with virus 2
 

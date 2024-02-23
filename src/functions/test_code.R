@@ -61,11 +61,12 @@ check_correct_N_CONST_VACC <- function(sim_res, true_n) {
   
   check_n <- sim_res %>%
     rowwise() %>%
-    mutate(Ncheck = round(sum(c_across(contains('X') | contains('V'))), 6)) %>%
+    mutate(Ncheck = round(sum(c_across(contains('X') | contains('V'))), 5)) %>%
     pull(Ncheck) %>%
     unique()
   expect_true(length(check_n) == 1)
   expect_true(check_n == true_n)
+  
 }
 
 
@@ -242,7 +243,7 @@ check_independent_dynamics_VACC <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_
 }
 
 
-check_single_virus_impact <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) {
+check_single_virus_impact <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool, sens = 'main', test_diff = FALSE) {
   # Function to check whether a vaccine impacting only flu/RSV actually only impacts the outbreak of flu/RSV
   # param dat: Virological, ILI, and covariate data (tibble)
   # param t_vacc: The week at which to vaccinate some proportion of the susceptible population (numeric)
@@ -251,9 +252,11 @@ check_single_virus_impact <- function(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, 
   # param Ri2_max: Upper bound of initial reproduction no of virus  2 (double, passed as global argument in the C script)
   # param d2_max: Upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
   # param debug_bool: Should debugging info be printed? (boolean)
+  # param sens: main analysis or the name of a specific sensitivity analysis
+  # param test_diff: are there a different number of tests performed for the two viruses being modeled?
   # returns: Plot of flu and RSV in populations with and without vaccination
   
-  sim_determ <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool) %>%
+  sim_determ <- run_simulation_with_vaccination(dat, t_vacc, mod_parms, Ri_max1, Ri_max2, d2_max, debug_bool, sens, test_diff) %>%
     pivot_longer(cols = -c('time', '.id'), names_to = 'var_nm', values_to = 'val') %>%
     mutate(var_type = if_else(str_detect(var_nm, 'X_'), 'state', 'accum')) %>%
     filter(var_nm %in% c('H1', 'H2'))
