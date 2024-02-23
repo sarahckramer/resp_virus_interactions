@@ -14,8 +14,14 @@ library(tidyverse)
 n <- 500 # How many synthetic datasets to create?
 sens <- 'main'
 fit_canada <- FALSE
+fit_us <- FALSE
 
-if (fit_canada) {
+if (fit_us) {
+  region_num <- 8
+  region <- paste0('Region ', region_num)
+}
+
+if (fit_canada | fit_us) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -30,6 +36,8 @@ if (sens != 'main') {
   
   if (fit_canada) {
     mle <- read_rds(paste0('results/round2_fit/sens/canada/MLEs_flu_h1_plus_b.rds'))[1, ]
+  } else if (fit_us) {
+    mle <- read_rds(paste0('results/round2_fit/sens/us/region_', region_num, '/MLEs_flu.rds'))[1, ]
   } else {
     mle <- read_rds(paste0('results/round2_fit/sens/', sens, '/MLEs_flu_h1_plus_b.rds'))[1, ]
   }
@@ -42,6 +50,10 @@ if (sens != 'main') {
 if (sens == 'sinusoidal_forcing') {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                       'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+  if (fit_us) {
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                        'b1', 'b2', 'phi1', 'phi2')
+  }
 } else if (sens == 'h3_covar') {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                       'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
@@ -59,7 +71,6 @@ if (sens == 'sinusoidal_forcing') {
 # Set model parameters:
 debug_bool <- FALSE
 vir2 <- 'rsv'
-lag_val <- 0
 prof_lik <- FALSE
 
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
@@ -68,6 +79,9 @@ if (sens == 'less_circ_h3') {
 }
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
+}
+if (fit_us) {
+  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 }
 
 Ri_max1 <- 2.0
@@ -194,6 +208,10 @@ if (sens != 'main') {
   if (fit_canada) {
     
     write_rds(synth_LIST, 'results/round2_fit/sens/canada/synth_data_for_bootstrapping_flu.rds')
+    
+  } else if (fit_us) {
+    
+    write_rds(synth_LIST, paste0('results/round2_fit/sens/us/region_', region_num, '/synth_data_for_bootstrapping_flu.rds'))
     
   } else {
     
