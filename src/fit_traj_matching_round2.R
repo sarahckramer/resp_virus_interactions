@@ -98,6 +98,8 @@ if (prof_lik) {
   
   # prof_val <- seq(0.0, 0.2, by = 0.01)[jobid_orig]
   prof_val <- seq(0, 0.02, by = 0.001)[jobid_orig]
+  # prof_val <- seq(0, 1.0, by = 0.05)[jobid_orig]
+  # prof_val <- seq(0.6, 0.7, by = 0.005)[jobid_orig]
   print(prof_val)
   
 } else {
