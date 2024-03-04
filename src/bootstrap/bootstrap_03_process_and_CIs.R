@@ -9,7 +9,7 @@ library(rethinking)
 library(gt)
 
 # Get names of all results files:
-file_list <- list.files(path = 'results/bootstrapping/sens/canada/', full.names = TRUE)
+file_list <- list.files(path = 'results/bootstrapping/sens/us/region_8/', full.names = TRUE)
 
 # Are results from a sensitivity analysis?:
 if (str_detect(file_list[[1]], 'sinusoidal')) {
@@ -31,8 +31,15 @@ if (str_detect(file_list[[1]], 'sinusoidal')) {
 # Results from Canada?:
 if (str_detect(file_list[[1]], 'canada')) {
   fit_canada <- TRUE
+  fit_us <- FALSE
+  sens <- 'sinusoidal_forcing'
+} else if (str_detect(file_list[[1]], '/us/')) {
+  fit_canada <- FALSE
+  fit_us <- TRUE
+  sens <- 'sinusoidal_forcing'
 } else {
   fit_canada <- FALSE
+  fit_us <- FALSE
 }
 
 # Ensure no results missing:
@@ -41,7 +48,7 @@ if (str_detect(file_list[[1]], 'PARALLEL')) {
   expect_true(length(file_list) == 500)
   
   run_list <- str_split(file_list, '_') %>%
-    purrr::map(~ .x[4]) %>%
+    purrr::map(~ .x[!is.na(as.numeric(.x))]) %>%
     unlist() %>%
     as.numeric()
   print(which(!(1:500 %in% run_list)))
@@ -125,12 +132,20 @@ true_estpars <- c(shared_estpars, unit_estpars)
 
 # # Check that no states go below zero for any of the top-fit parameter sets:
 # prof_lik <- FALSE
-# lag_val <- 0
 # 
-# if (fit_canada) {
+# if (fit_canada | fit_us) {
 #   vir1 <- 'flu'
 # } else {
 #   vir1 <- 'flu_h1_plus_b'
+# }
+# 
+# if (fit_us) {
+#   region_num <- str_split(
+#     str_split(file_list[1], '/')[[1]][str_split(file_list[1], '/') %>%
+#                                         purrr::map(str_detect, 'region') %>%
+#                                         unlist()],
+#     '_')[[1]][2]
+#   region <- paste0('Region ', region_num)
 # }
 # 
 # source('src/functions/setup_global_likelilhood.R')
@@ -163,43 +178,42 @@ if (fit_canada) {
   
   res_df_unit <- res_df %>%
     select(contains('I') | contains('R') | dataset) %>%
-    select(-c(phi, rho1, rho2, phi1, phi2)) %>%
-    pivot_longer(-c(loglik, dataset)) %>%
-    mutate(season = str_sub(name, 1, 6),
-           name = str_sub(name, 8)) %>%
-    pivot_wider(names_from = name,
-                values_from = value) %>%
-    mutate(`R10 + R120` = R10 + R120,
-           `R20 + R120` = R20 + R120,
-           R01 = Ri1 / (1 - (I10 + R10 + R120)),
-           R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
-    pivot_longer(Ri1:R02,
-                 names_to = 'parameter',
-                 values_to = 'value') %>%
-    mutate(parameter = paste(season, parameter, sep = '_')) %>%
-    select(parameter:value)
+    select(-c(phi, rho1, rho2, phi1, phi2))
+  
+} else if (fit_us) {
+  
+  res_df_unit <- res_df %>%
+    select(contains('I') | contains('R') | dataset) %>%
+    select(-c(rho1, rho2, phi1, phi2))
   
 } else {
   
   res_df_unit <- res_df %>%
     select(contains('I') | contains('R') | dataset) %>%
-    select(-c(phi, rho1, rho2)) %>%
-    pivot_longer(-c(loglik, dataset)) %>%
-    mutate(season = str_sub(name, 1, 6),
-           name = str_sub(name, 8)) %>%
-    pivot_wider(names_from = name,
-                values_from = value) %>%
-    mutate(`R10 + R120` = R10 + R120,
-           `R20 + R120` = R20 + R120,
-           R01 = Ri1 / (1 - (I10 + R10 + R120)),
-           R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
-    pivot_longer(Ri1:R02,
-                 names_to = 'parameter',
-                 values_to = 'value') %>%
-    mutate(parameter = paste(season, parameter, sep = '_')) %>%
-    select(parameter:value)
+    select(-c(phi, rho1, rho2))
+  
+  if (sens == 'rhino_covar') {
+    res_df_unit <- res_df_unit %>%
+      select(-beta_rhino)
+  }
   
 }
+
+res_df_unit <- res_df_unit %>%
+  pivot_longer(-c(loglik, dataset)) %>%
+  mutate(season = str_sub(name, 1, 6),
+         name = str_sub(name, 8)) %>%
+  pivot_wider(names_from = name,
+              values_from = value) %>%
+  mutate(`R10 + R120` = R10 + R120,
+         `R20 + R120` = R20 + R120,
+         R01 = Ri1 / (1 - (I10 + R10 + R120)),
+         R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
+  pivot_longer(Ri1:R02,
+               names_to = 'parameter',
+               values_to = 'value') %>%
+  mutate(parameter = paste(season, parameter, sep = '_')) %>%
+  select(parameter:value)
 
 res_df_shared <- res_df %>%
   select(all_of(shared_estpars), loglik, dataset) %>%
@@ -225,6 +239,8 @@ ci_res <- res_df %>%
 # Write results to file:
 if (fit_canada) {
   write_csv(ci_res, file = 'results/round2_fit/sens/canada/95CI_from_boostrapping_HPDI.csv')
+} else if (fit_us) {
+  write_csv(ci_res, file = paste0('results/round2_fit/sens/us/region_', region_num, '/95CI_from_boostrapping_HPDI.csv'))
 } else {
   
   if (sens != 'main') {
@@ -242,21 +258,15 @@ if (fit_canada) {
   
   mle_unit <- mle %>%
     select(contains('I') | contains('R')) %>%
-    select(-c(phi, rho1, rho2, phi1, phi2)) %>%
-    pivot_longer(everything()) %>%
-    mutate(season = str_sub(name, 1, 6),
-           name = str_sub(name, 8)) %>%
-    pivot_wider(names_from = name,
-                values_from = value) %>%
-    mutate(`R10 + R120` = R10 + R120,
-           `R20 + R120` = R20 + R120,
-           R01 = Ri1 / (1 - (I10 + R10 + R120)),
-           R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
-    pivot_longer(Ri1:R02,
-                 names_to = 'parameter',
-                 values_to = 'mle') %>%
-    mutate(parameter = paste(season, parameter, sep = '_')) %>%
-    select(parameter:mle)
+    select(-c(phi, rho1, rho2, phi1, phi2))
+  
+} else if (fit_us) {
+  
+  mle <- read_rds(paste0('results/round2_fit/sens/us/region_', region_num, '/MLEs_flu.rds'))[1, ]
+  
+  mle_unit <- mle %>%
+    select(contains('I') | contains('R')) %>%
+    select(-c(rho1, rho2, phi1, phi2))
   
 } else {
   
@@ -268,23 +278,30 @@ if (fit_canada) {
   
   mle_unit <- mle %>%
     select(contains('I') | contains('R')) %>%
-    select(-c(phi, rho1, rho2)) %>%
-    pivot_longer(everything()) %>%
-    mutate(season = str_sub(name, 1, 6),
-           name = str_sub(name, 8)) %>%
-    pivot_wider(names_from = name,
-                values_from = value) %>%
-    mutate(`R10 + R120` = R10 + R120,
-           `R20 + R120` = R20 + R120,
-           R01 = Ri1 / (1 - (I10 + R10 + R120)),
-           R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
-    pivot_longer(Ri1:R02,
-                 names_to = 'parameter',
-                 values_to = 'mle') %>%
-    mutate(parameter = paste(season, parameter, sep = '_')) %>%
-    select(parameter:mle)
+    select(-c(phi, rho1, rho2))
+  
+  if (sens == 'rhino_covar') {
+    mle_unit <- mle_unit %>%
+      select(-beta_rhino)
+  }
   
 }
+
+mle_unit <- mle_unit %>%
+  pivot_longer(everything()) %>%
+  mutate(season = str_sub(name, 1, 6),
+         name = str_sub(name, 8)) %>%
+  pivot_wider(names_from = name,
+              values_from = value) %>%
+  mutate(`R10 + R120` = R10 + R120,
+         `R20 + R120` = R20 + R120,
+         R01 = Ri1 / (1 - (I10 + R10 + R120)),
+         R02 = Ri2 / (1 - (I20 + R20 + R120))) %>%
+  pivot_longer(Ri1:R02,
+               names_to = 'parameter',
+               values_to = 'mle') %>%
+  mutate(parameter = paste(season, parameter, sep = '_')) %>%
+  select(parameter:mle)
 
 mle_shared <- mle %>%
   select(all_of(shared_estpars)) %>%
@@ -302,6 +319,8 @@ ci_res <- ci_res %>%
 # Write results to file:
 if (fit_canada) {
   write_csv(ci_res, file = 'results/round2_fit/sens/canada/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+} else if (fit_us) {
+  write_csv(ci_res, file = paste0('results/round2_fit/sens/us/region_', region_num, '/MLE_plus_95CI_from_boostrapping_HPDI.csv'))
 } else {
   
   if (sens != 'main') {
@@ -321,6 +340,8 @@ print(res_table)
 
 if (fit_canada) {
   gtsave(res_table, filename = 'results/round2_fit/sens/canada/table_CIs.html')
+} else if (fit_us) {
+  gtsave(res_table, filename = paste0('results/round2_fit/sens/us/region_', region_num, '/table_CIs.html'))
 } else {
   
   if (sens != 'main') {
@@ -355,6 +376,8 @@ print(p2)
 
 if (fit_canada) {
   pdf('results/plots/plot_params_plus_ci_CANADA.pdf', width = 15, height = 8)
+} else if (fit_us) {
+  pdf(paste0('results/plots/plot_params_plus_ci_US_region', region_num, '.pdf'), width = 15, height = 8)
 } else {
   
   if (sens != 'main') {
