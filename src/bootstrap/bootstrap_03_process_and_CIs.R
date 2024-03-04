@@ -238,7 +238,7 @@ ci_res <- res_df %>%
 
 # Write results to file:
 if (fit_canada) {
-  write_csv(ci_res, file = 'results/round2_fit/sens/canada/95CI_from_boostrapping_HPDI.csv')
+  write_csv(ci_res, file = 'results/round2_fit/sens/canada/95CI_from_bootstrapping_HPDI.csv')
 } else if (fit_us) {
   write_csv(ci_res, file = paste0('results/round2_fit/sens/us/region_', region_num, '/95CI_from_boostrapping_HPDI.csv'))
 } else {
