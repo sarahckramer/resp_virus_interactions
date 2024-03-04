@@ -9,7 +9,7 @@ library(rethinking)
 library(gt)
 
 # Get names of all results files:
-file_list <- list.files(path = 'results/bootstrapping/sens/us/region_8/', full.names = TRUE)
+file_list <- list.files(path = 'results/bootstrapping/flu_H1_plus_B/', full.names = TRUE)
 
 # Are results from a sensitivity analysis?:
 if (str_detect(file_list[[1]], 'sinusoidal')) {
