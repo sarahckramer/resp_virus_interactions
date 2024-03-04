@@ -357,8 +357,8 @@ DX_RR = delta2 * X_RT + delta1 * X_TR;
 
 DH1_tot = gamma1 * p1; // Incidence rate of virus 1 infections (total)
 DH2_tot = gamma2 * p2; // Incidence rate of virus 2 infections (total)
-DH1 = gamma1 * (X_IS + theta_rho2 * x_ii_replace + x_it_replace + X_IR) / N; // Incidence rate of reported virus 1 infections
-DH2 = gamma2 * (X_SI + theta_rho1 * x_ii_replace + x_ti_replace + X_RI) / N; // Incidence rate of reported virus 2 infections 
+DH1 = gamma1 * (X_IS + theta_rho2 * (x_ii_replace + x_it_replace) + X_IR) / N; // Incidence rate of reported virus 1 infections
+DH2 = gamma2 * (X_SI + theta_rho1 * (x_ii_replace + x_ti_replace) + X_RI) / N; // Incidence rate of reported virus 2 infections 
 //end_skel
 
 //start_rsim
@@ -491,8 +491,8 @@ X_RR += fromRT + fromTR;
 
 H1_tot += (fromIS[0] + fromII[0] + fromIT[0] + fromIR) / N;
 H2_tot += (fromSI[1] + fromII[1] + fromTI[1] + fromRI) / N;
-H1 += (fromIS[0] + theta_rho2 * fromII[0] + fromIT[0] + fromIR) / N;
-H2 += (fromSI[1] + theta_rho1 * fromII[1] + fromTI[1] + fromRI) / N;
+H1 += (fromIS[0] + theta_rho2 * (fromII[0] + fromIT[0]) + fromIR) / N;
+H2 += (fromSI[1] + theta_rho1 * (fromII[1] + fromTI[1]) + fromRI) / N;
 //H1 += (fromIS[0] + reportII1 + reportIT + fromIR) / N;
 //H2 += (fromSI[1] + reportII2 + reportTI + fromRI) / N;
 
