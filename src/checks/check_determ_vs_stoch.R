@@ -89,6 +89,7 @@ estpars <- names(res_hk)[1:(length(names(res_hk)) - 1)]
 
 # Load pomp models:
 fit_canada <- FALSE
+fit_us <- FALSE
 vir1 <- 'flu_h1_plus_b'
 true_estpars <- true_estpars_hk
 
