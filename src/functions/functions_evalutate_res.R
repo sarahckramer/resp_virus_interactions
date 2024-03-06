@@ -107,11 +107,21 @@ run_sim <- function(pomp_object, seas, mle, shared_estpars, unit_estpars, model_
         # Calculate mean number of observed cases:
         rho1 <- as.numeric(pars['rho1'])
         rho2 <- as.numeric(pars['rho2'])
-        alpha <- as.numeric(pars['alpha'])
-        phi <- as.numeric(pars['phi'])
         
-        rho1_w <- rho1 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (out_temp$time - phi))) * out_temp$H1 / out_temp$i_ILI
-        rho2_w <- rho2 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (out_temp$time - phi))) * out_temp$H2 / out_temp$i_ILI
+        if ('alpha' %in% names(pars)) {
+          
+          alpha <- as.numeric(pars['alpha'])
+          phi <- as.numeric(pars['phi'])
+          
+          rho1_w <- rho1 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (out_temp$time - phi))) * out_temp$H1 / out_temp$i_ILI
+          rho2_w <- rho2 * (1.0 + alpha * cos(((2 * pi) / 52.25) * (out_temp$time - phi))) * out_temp$H2 / out_temp$i_ILI
+          
+        } else {
+          
+          rho1_w <- rho1 * out_temp$H1 / out_temp$i_ILI
+          rho2_w <- rho2 * out_temp$H2 / out_temp$i_ILI
+          
+        }
         
         rho1_w[rho1_w > 1.0 & !is.na(rho1_w)] <- 1.0
         rho2_w[rho2_w > 1.0 & !is.na(rho2_w)] <- 1.0
