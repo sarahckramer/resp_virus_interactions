@@ -22,8 +22,8 @@ us_ili <- us_ili %>%
   # select(REGION:WEEK, `%UNWEIGHTED ILI`) %>%
   # rename('perc_ili' = `%UNWEIGHTED ILI`) %>%
   rename_with(tolower) %>%
-  filter(year > 2009 & (year > 2010 | (year == 2010 & week >= 40))) %>%
-  filter(year < 2020 & (year < 2019 | (year == 2019 & week < 20)))
+  filter(year > 2010 | (year == 2010 & week >= 40)) %>%
+  filter(year < 2019 | (year == 2019 & week < 40))
 
 # Get dates:
 us_ili <- us_ili %>%
@@ -91,8 +91,8 @@ rm(us_vir_pre2015, us_vir_clin_post2015)
 
 # Keep only seasons of interest:
 us_vir_flu <- us_vir_flu %>%
-  filter(year > 2009 & (year > 2010 | (year == 2010 & week >= 40))) %>%
-  filter(year < 2020 & (year < 2019 | (year == 2019 & week < 20)))
+  filter(year > 2010 | (year == 2010 & week >= 40)) %>%
+  filter(year < 2019 | (year == 2019 & week < 40))
 
 # Get dates:
 us_vir_flu <- us_vir_flu %>%
@@ -111,8 +111,8 @@ us_vir_rsv <- read_csv('data/raw/us/flu_RSV_by_HHS.csv')
 us_vir_rsv <- us_vir_rsv %>%
   select(HHS_REGION, YEAR:WEEK, RSVtest:RSVpos, flutest:fluBpos) %>%
   rename_with(tolower) %>%
-  filter(year > 2009 & (year > 2010 | (year == 2010 & week >= 40))) %>%
-  filter(year < 2020 & (year < 2019 | (year == 2019 & week < 20)))
+  filter(year > 2010 | (year == 2010 & week >= 40)) %>%
+  filter(year < 2019 | (year == 2019 & week < 40))
 
 # Format for joining with virologic data:
 us_vir_rsv <- us_vir_rsv %>%
@@ -246,7 +246,6 @@ us_dat <- us_dat %>%
 
 # Rename columns for use in model:
 us_dat_mod <- us_dat %>%
-  select(time:flu, rsv:i_ILI) %>%
   rename('n_T1' = 'n_test_flu',
          'n_T2' = 'n_test_rsv',
          'n_P1' = 'flu',

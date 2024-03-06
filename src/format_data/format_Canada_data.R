@@ -76,7 +76,7 @@ can_vir <- can_vir %>%
          'rhino' = 12) %>%
   mutate(flu = tot_a + tot_b,
          h1 = h1_09 + h1) %>%
-  select(season_week:n_test_flu, flu, n_test_rsv:rhino) %>%
+  select(season_week:n_test_flu, flu, tot_a:tot_b, n_test_rsv:rhino) %>%
   drop_na()
 
 # Get dates:
@@ -142,7 +142,7 @@ can_dat <- can_dat %>%
 
 # Rename columns for use in model:
 can_dat <- can_dat %>%
-  select(time, date, year:week, season, pop, n_test_flu, n_test_rsv, n_test_rhino, flu, rsv, rhino, ili_rate) %>%
+  select(time, date, year:week, season, pop, n_test_flu, n_test_rsv, n_test_rhino, flu:tot_b, rsv, rhino, ili_rate) %>%
   rename('n_T1' = n_test_flu,
          'n_T2' = n_test_rsv,
          'n_P1' = flu,
