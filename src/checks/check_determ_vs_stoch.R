@@ -14,17 +14,21 @@ source('src/functions/functions_evalutate_res.R')
 # Set directories where final results from round2 fits are stored:
 res_dir_hk <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_can <- 'results/round2_fit/sens/canada/round2_3_flu/'
+res_dir_us <- 'results/round2_fit/sens/us/region_8/round2_3_flu/'
 
 # Get names of fitted parameters:
 shared_estpars_hk <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 shared_estpars_can <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                         'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+shared_estpars_us <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                       'b1', 'b2', 'phi1', 'phi2')
 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
 true_estpars_hk <- c(shared_estpars_hk, unit_estpars)
 true_estpars_can <- c(shared_estpars_can, unit_estpars)
+true_estpars_us <- c(shared_estpars_us, unit_estpars)
 
 # Set parameter values necessary for loading models:
 prof_lik <- FALSE
@@ -42,13 +46,29 @@ load_and_format_mega_results <- function(filepath, true_estpars) {
   }
   
   # Get parameter estimates and log-likelihoods:
+  if (str_detect(res_files[1], 'PARALLEL')) {
+    
+    res_full <- do.call('c', res_full)
+    num_errors <- length(which(res_full == 'error'))
+    
+    if (num_errors > 0) {
+      res_full <- res_full[-which(res_full == 'error')]
+    }
+    
+  }
+  
   pars_df <- lapply(res_full, getElement, 'estpars') %>%
     bind_rows() %>%
     bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
                 unlist()) %>%
     bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist())
-  expect_true(nrow(pars_df) == length(res_files))
+  
+  if (str_detect(res_files[1], 'PARALLEL')) {
+    expect_true(nrow(pars_df) == (length(res_files) * 25) - num_errors)
+  } else {
+    expect_true(nrow(pars_df) == length(res_files))
+  }
   expect_true(all(is.finite(pars_df$loglik)))
   
   # Check whether estimations stopped due to tolerance or time:
@@ -187,6 +207,61 @@ dat_sim_can <- sim_list %>%
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# US
+
+# Read in and format results:
+res_us <- load_and_format_mega_results(filepath = res_dir_us,
+                                       true_estpars = true_estpars_us)
+
+# Set estpars:
+estpars <- names(res_us)[1:(length(names(res_can)) - 1)]
+
+# Load pomp models:
+fit_canada <- FALSE
+fit_us <- TRUE
+true_estpars <- true_estpars_us
+region <- 'Region 8'
+
+source('src/functions/setup_global_likelilhood.R')
+
+# Loop through seasons and get trajectories/simulations:
+traj_list = sim_list = vector('list', length = length(seasons))
+for (i in 1:length(seasons)) {
+  
+  # Get deterministic simulations:
+  traj_temp <- run_sim(po_list[[i]], seasons[i], res_us %>% select(-loglik), shared_estpars_us, unit_estpars, model_type = 'deterministic', return_obs = TRUE) %>%
+    select(time:season, obs1:obs2)
+  
+  # Get stochastic simulations:
+  sim_temp <- run_sim(po_list[[i]], seasons[i], res_us %>% select(-loglik), shared_estpars_us, unit_estpars, model_type = 'stochastic', n_sim = 100) %>%
+    arrange(.id)
+  
+  # Store results in lists:
+  traj_list[[i]] <- traj_temp
+  sim_list[[i]] <- sim_temp
+  
+}
+
+# Combine and format deterministic trajectories:
+dat_traj_us <- traj_list %>%
+  bind_rows() %>%
+  pivot_longer(obs1:obs2,
+               names_to = 'virus',
+               values_to = 'mean') %>%
+  mutate(virus = if_else(virus == 'obs1', 'Influenza', 'RSV'),
+         loc = 'us')
+
+# Combine and format stochastic simulations:
+dat_sim_us <- sim_list %>%
+  bind_rows() %>%
+  pivot_longer(n_P1:n_P2,
+               names_to = 'virus',
+               values_to = 'sim') %>%
+  mutate(virus = if_else(virus == 'n_P1', 'Influenza', 'RSV'),
+         loc = 'us')
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # Plot
 
 p1 <- ggplot() +
@@ -207,9 +282,19 @@ p2 <- ggplot() +
         axis.text = element_text(size = 12),
         strip.text = element_text(size = 12)) +
   labs(x = 'Time (Weeks)', y = 'Estimated # of Cases')
+p3 <- ggplot() +
+  geom_line(data = dat_sim_us, aes(x = time, y = sim, group = .id), col = 'gray80', alpha = 0.5) +
+  geom_line(data = dat_traj_us, aes(x = time, y = mean)) +
+  facet_grid(virus ~ season, scales = 'free_y') +
+  theme_classic() +
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        strip.text = element_text(size = 12)) +
+  labs(x = 'Time (Weeks)', y = 'Estimated # of Cases')
 
 print(p1)
 print(p2)
+print(p3)
 
 # Clean up:
 rm(list = ls())
