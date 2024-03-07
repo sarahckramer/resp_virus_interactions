@@ -10,7 +10,7 @@ library(RColorBrewer)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Figure 1: Visualize Hong Kong data
+# Figure 1: Visualize data
 dat_hk <- read_csv('data/formatted/dat_hk.csv')
 
 dat_hk <- dat_hk %>%
@@ -37,7 +37,24 @@ dat_can <- dat_can %>%
   mutate(time = 1:nrow(dat_can))
 
 dat_pos_can <- dat_can %>%
-  select(-i_ILI) %>%
+  select(-c(i_ILI, tot_a, tot_b)) %>%
+  pivot_longer(n_P1:n_P2,
+               names_to = 'virus',
+               values_to = 'perc_pos') %>%
+  mutate(virus = factor(virus, levels = c('n_P1', 'n_P2'))) %>%
+  mutate(virus = recode(virus, n_P1 = 'Influenza    ', n_P2 = 'RSV'))
+
+dat_us <- read_rds('data/formatted/dat_us_byRegion.rds')$'Region 8'
+
+dat_us <- dat_us %>%
+  mutate(n_P1 = n_P1 / n_T1 * 100,
+         n_P2 = n_P2 / n_T2 * 100,
+         i_ILI = i_ILI * 100000) %>%
+  select(time, year:week, n_P1:n_P2, i_ILI) %>%
+  mutate(time = 1:nrow(dat_us))
+
+dat_pos_us <- dat_us %>%
+  select(-c(i_ILI, tot_a, tot_b)) %>%
   pivot_longer(n_P1:n_P2,
                names_to = 'virus',
                values_to = 'perc_pos') %>%
@@ -46,6 +63,7 @@ dat_pos_can <- dat_can %>%
 
 x_lab_breaks_hk <- dat_hk %>% filter(Week == 1) %>% pull(Time)
 x_lab_breaks_can <- dat_can %>% filter(week == 1) %>% pull(time)
+x_lab_breaks_us <- dat_us %>% filter(week == 1) %>% pull(time)
 
 p1a <- ggplot(data = dat_pos_hk, aes(x = Time, y = perc_pos, col = virus)) +
   geom_line() + theme_classic() +
@@ -57,7 +75,7 @@ p1a <- ggplot(data = dat_pos_hk, aes(x = Time, y = perc_pos, col = virus)) +
         legend.text = element_text(size = 12),
         plot.tag.position = c(0.005, 0.98)) +
   scale_x_continuous(breaks = x_lab_breaks_hk, labels = 2014:2019) +
-  scale_y_continuous(limits = c(0, 35)) +
+  scale_y_continuous(limits = c(0, 30)) +
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'A')
 p1a <- reposition_legend(p1a, position = 'top left', plot = FALSE)
@@ -77,6 +95,21 @@ p1b <- ggplot(data = dat_pos_can, aes(x = time, y = perc_pos, col = virus)) +
   labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'B')
 p1b <- reposition_legend(p1b, position = 'top left', plot = FALSE)
 
+p1e <- ggplot(data = dat_pos_us, aes(x = time, y = perc_pos, col = virus)) +
+  geom_line() + theme_classic() +
+  theme(legend.position = 'bottom',
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        plot.tag = element_text(size = 22),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        plot.tag.position = c(0.005, 0.98)) +
+  scale_x_continuous(breaks = x_lab_breaks_us, labels = 2011:2019) +
+  scale_y_continuous(limits = c(0, 45)) +
+  scale_color_brewer(palette = 'Dark2') +
+  labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'E')
+p1e <- reposition_legend(p1e, position = 'top left', plot = FALSE)
+
 p1c <- ggplot(data = dat_hk, aes(x = Time, y = GOPC)) + geom_line() +
   theme_classic() + theme(axis.title = element_text(size = 14),
                           axis.text = element_text(size = 12),
@@ -91,11 +124,29 @@ p1d <- ggplot(data = dat_can, aes(x = time, y = i_ILI)) + geom_line() +
                           plot.tag.position = c(0.005, 0.98)) +
   scale_x_continuous(breaks = x_lab_breaks_can, labels = 2011:2014) +
   labs(x = 'Year', y = 'ILI Cases per 1000\nConsultations', tag = 'D')
+p1f <- ggplot(data = dat_us, aes(x = time, y = i_ILI)) + geom_line() +
+  theme_classic() + theme(axis.title = element_text(size = 14),
+                          axis.text = element_text(size = 12),
+                          plot.tag = element_text(size = 22),
+                          plot.tag.position = c(0.005, 0.98)) +
+  scale_x_continuous(breaks = x_lab_breaks_us, labels = 2011:2019) +
+  labs(x = 'Year', y = 'ILI Cases per 100,000\nPopulation', tag = 'F')
 
-fig1 <- arrangeGrob(p1a, p1b, p1c, p1d, ncol = 2)
+lo <- rbind(c(1, 1, 1, 1, 1, 1, 2, 2, 2, 2),
+            c(3, 3, 3, 3, 3, 3, 4, 4, 4, 4),
+            c(5, 5, 5, 5, 5, 5, 5, 5, 5, NA),
+            c(6, 6, 6, 6, 6, 6, 6, 6, 6, NA))
+select_grobs <- function(lay) {
+  id <- unique(c(t(lay))) 
+  id[!is.na(id)]
+} # https://cran.r-project.org/web/packages/gridExtra/vignettes/arrangeGrob.html
+fig1 <- arrangeGrob(grobs = list(p1a, p1b, p1c, p1d, p1e, p1f)[select_grobs(lo)], layout_matrix = lo)
+# fig1 <- arrangeGrob(arrangeGrob(p1a, p1b, p1c, p1d, ncol = 2, widths = c(1, 0.75)),
+#                     arrangeGrob(p1e, p1f, ncol = 1))
+# fig1 <- arrangeGrob(p1a, p1b, p1c, p1d, ncol = 2)
 plot(fig1)
 
-ggsave('results/plots/figures_for_manuscript/Figure1.svg', width = 15, height = 7, fig1)
+ggsave('results/plots/figures_for_manuscript/Figure1.svg', width = 15, height = 14, fig1)
 rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -216,20 +267,27 @@ shared_estpars_hk <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1
                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 shared_estpars_can <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                         'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+shared_estpars_us <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                       'b1', 'b2', 'phi1', 'phi2')
+
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
 true_estpars_hk <- c(shared_estpars_hk, unit_estpars)
 true_estpars_can <- c(shared_estpars_can, unit_estpars)
+true_estpars_us <- c(shared_estpars_us, unit_estpars)
 
 mle_hk <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 mle_can <- read_rds('results/round2_fit/sens/canada/MLEs_flu.rds')
+mle_us <- read_rds('results/round2_fit/sens/us/region_8/MLEs_flu.rds')
 
 dat_hk <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv
 dat_can <- read_csv('data/formatted/dat_canada.csv')
+dat_us <- read_rds('data/formatted/dat_us_byRegion.rds')$'Region 8'
 
 # Run simulations for Hong Kong:
 prof_lik <- FALSE
 fit_canada <- FALSE
+fit_us <- FALSE
 vir1 <- 'flu_h1_plus_b'
 true_estpars <- true_estpars_hk
 
@@ -320,8 +378,54 @@ res_can <- bind_rows(sim_list) %>%
   select(time:upper2_stoch, Year:Week, n_P1:n_P2) %>%
   mutate(loc = 'canada')
 
+# Run simulations for Canada:
+fit_canada <- FALSE
+fit_us <- TRUE
+true_estpars <- true_estpars_us
+region <- 'Region 8'
+
+source('src/functions/setup_global_likelilhood.R')
+
+sim_list <- vector('list', length = length(seasons))
+for (i in 1:length(seasons)) {
+  
+  traj_temp <- run_sim(po_list[[i]], seasons[i], mle_us, shared_estpars_us, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'iqr') %>%
+    mutate(mean1 = obs1,
+           mean2 = obs2,
+           lower1 = qbinom(p = 0.025, size = n_T1, prob = rho1_w),
+           lower2 = qbinom(p = 0.025, size = n_T2, prob = rho2_w),
+           upper1 = qbinom(p = 0.975, size = n_T1, prob = rho1_w),
+           upper2 = qbinom(p = 0.975, size = n_T2, prob = rho2_w)) %>%
+    select(time, season, mean1:upper2)
+  
+  sim_temp <- run_sim(po_list[[i]], seasons[i], mle_us, shared_estpars_us, unit_estpars, model_type = 'stochastic', n_sim = 100, analysis = 'basic') %>%
+    group_by(time) %>%
+    summarise(mean1_stoch = mean(n_P1),
+              mean2_stoch = mean(n_P2),
+              lower1_stoch = quantile(n_P1, probs = 0.025, na.rm = TRUE),
+              lower2_stoch = quantile(n_P2, probs = 0.025, na.rm = TRUE),
+              upper1_stoch = quantile(n_P1, probs = 0.975, na.rm = TRUE),
+              upper2_stoch = quantile(n_P2, probs = 0.975, na.rm = TRUE))
+  
+  expect_equal(nrow(traj_temp), nrow(sim_temp))
+  sim_temp <- traj_temp %>%
+    inner_join(sim_temp, by = 'time')
+  expect_equal(nrow(traj_temp), nrow(sim_temp))
+  
+  sim_list[[i]] <- sim_temp
+  
+}
+
+res_us <- bind_rows(sim_list) %>%
+  inner_join(dat_us,
+             by = c('time', 'season')) %>%
+  mutate(Year = year,
+         Week = week) %>%
+  select(time:upper2_stoch, Year:Week, n_P1:n_P2) %>%
+  mutate(loc = 'us')
+
 # Combine:
-res <- bind_rows(res_hk, res_can)
+res <- bind_rows(res_hk, res_can, res_us)
 
 # Format tibble for analyses/plotting:
 res <- res %>%
@@ -342,10 +446,10 @@ res <- res %>%
 
 # For each location, virus, and season, calculate coefficient of efficiency:
 # https://stats.stackexchange.com/questions/185898/difference-between-nash-sutcliffe-efficiency-and-coefficient-of-determination
-r2as = r2bs = r2a_list = r2b_list = vector('list', 2)
-for (i in 1:2) {
+r2as = r2bs = r2a_list = r2b_list = vector('list', 3)
+for (i in 1:3) {
   
-  location <- c('hk', 'canada')[i]
+  location <- c('hk', 'canada', 'us')[i]
   
   r2a_list_temp = r2b_list_temp = c()
   r2a_num = r2b_num = 0
@@ -517,10 +621,25 @@ p_legend2 <- ggplot(data = res %>% filter(loc == 'canada'),
   labs(color = 'Season')
 p_legend2 <- ggplotGrob(p_legend2)$grobs[[which(sapply(ggplotGrob(p_legend2)$grobs, function(x) x$name) == 'guide-box')]]
 
+p_legend3 <- ggplot(data = res %>% filter(loc == 'us'),
+                    aes(x = mean, y = obs, color = season)) +
+  geom_point() +
+  facet_wrap(~ virus) +
+  theme_classic() +
+  theme(legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'bottom') +
+  guides(color = guide_legend(nrow = 1)) +
+  scale_color_viridis(discrete = TRUE) +
+  labs(color = 'Season')
+p_legend3 <- ggplotGrob(p_legend3)$grobs[[which(sapply(ggplotGrob(p_legend3)$grobs, function(x) x$name) == 'guide-box')]]
+
 label_a <- paste0(' = ', format(round(r2as[[1]], 2), nsmall = 2), ' (', round(min(r2a_list[[1]], na.rm = TRUE), 2), '-', round(max(r2a_list[[1]], na.rm = TRUE), 2), ')')
 label_b <- paste0(' = ', round(r2bs[[1]], 2), ' (', round(min(r2b_list[[1]], na.rm = TRUE), 2), '-', round(max(r2b_list[[1]], na.rm = TRUE), 2), ')')
 label_c <- paste0(' = ', round(r2as[[2]], 2), ' (', format(round(min(r2a_list[[2]], na.rm = TRUE), 2), nsmall = 2), '-', round(max(r2a_list[[2]], na.rm = TRUE), 2), ')')
 label_d <- paste0(' = ', format(round(r2bs[[2]], 2), nsmall = 2), ' (', round(min(r2b_list[[2]], na.rm = TRUE), 2), '-', round(max(r2b_list[[2]], na.rm = TRUE), 2), ')')
+label_e <- paste0(' = ', round(r2as[[3]], 2), ' (', round(min(r2a_list[[3]]), 2), '-', round(max(r2a_list[[3]]), 2), ')')
+label_f <- paste0(' = ', round(r2bs[[3]], 2), ' (', round(min(r2b_list[[3]]), 2), '-', round(max(r2b_list[[3]]), 2), ')')
 
 p3a <- ggplot(data = res %>% filter(loc == 'hk' & virus == 'Influenza'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
@@ -614,12 +733,57 @@ p3d <- ggplot(data = res %>% filter(loc == 'canada' & virus == 'RSV'),
   labs(title = 'RSV (Canada)', x = 'Simulated Cases', y = 'Observed Cases',
        color = 'Season', tag = 'D')
 
+p3e <- ggplot(data = res %>% filter(loc == 'us' & virus == 'Influenza'),
+              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
+  geom_pointrange(size = 0.2, alpha = 0.6) +
+  # geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
+  #             inherit.aes = FALSE, color = 'black', se = FALSE) +
+  annotate (
+    geom = 'text', x = 450, y = 140, hjust = 0, vjust = 1, size = 5.5,
+    label = as.expression(bquote(paste(R^2, .(label_e))))
+  ) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
+  scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000)) +
+  scale_color_manual(values = viridis(9)) +
+  labs(title = 'Influenza (United States)', x = 'Simulated Cases', y = 'Observed Cases',
+       color = 'Season', tag = 'E')
+
+p3f <- ggplot(data = res %>% filter(loc == 'us' & virus == 'RSV'),
+              aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
+  geom_abline(slope = 1, intercept = 0, col = 'gray80') +
+  geom_pointrange(size = 0.2, alpha = 0.6) +
+  annotate (
+    geom = 'text', x = 120, y = 35, hjust = 0, vjust = 1, size = 5.5,
+    label = as.expression(bquote(paste(R^2, .(label_f))))
+  ) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
+  scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500)) +
+  scale_color_manual(values = viridis(9)) +
+  labs(title = 'RSV (United States)', x = 'Simulated Cases', y = 'Observed Cases',
+       color = 'Season', tag = 'F')
+
 fig3 <- arrangeGrob(arrangeGrob(arrangeGrob(p3a, p3b, ncol = 2), p_legend1, nrow = 2, heights = c(8, 1)),
                     arrangeGrob(arrangeGrob(p3c, p3d, ncol = 2), p_legend2, nrow = 2, heights = c(8, 1)),
-                    nrow = 2)
+                    arrangeGrob(arrangeGrob(p3e, p3f, ncol = 2), p_legend3, nrow = 2, heights = c(8, 1)),
+                    nrow = 3)
 plot(fig3)
 
-ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 10)
+ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 15)
 rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
