@@ -175,9 +175,7 @@ p2c <- ggplot(data = dat_pos_us, aes(x = time, y = perc_pos, col = virus)) +
 p2c <- reposition_legend(p2c, position = 'top left', plot = FALSE)
 
 fig2s <- arrangeGrob(p2a, p2b, p2c, ncol = 1)
-plot(fig2s)
-
-ggsave('results/plots/figures_for_manuscript/supp/FigureS2.svg', width = 9.5, height = 10, fig2s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS2.svg', width = 9.5, height = 10, fig2s)
 
 rm(dat_pos, fig2s, season_breaks)
 
