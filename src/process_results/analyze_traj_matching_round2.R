@@ -11,15 +11,24 @@ library(gridExtra)
 
 # Data from Canada?:
 fit_canada <- FALSE
+fit_us <- TRUE
 
-if (fit_canada) {
+if (fit_canada | fit_us) {
   sens <- 'sinusoidal_forcing'
+}
+
+if (fit_us) {
+  region_num <- 8
+  region <- paste0('Region ', region_num)
 }
 
 # Set directory where final results from round2 fits are stored:
 if (fit_canada) {
   res_dir <- 'results/round2_fit/sens/canada/round2_3_flu/'
   res_dir_round1 <- 'results/round2_fit/sens/canada/round1_fitsharedFALSE/'
+} else if (fit_us) {
+  res_dir <- paste0('results/round2_fit/sens/us/region_', region_num, '/round2_2_flu/')
+  res_dir_round1 <- 'results/round2_fit/sens/us/round1_fitsharedFALSE/'
 } else {
   res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
   res_dir_round1 <- 'results/round1_fitsharedFALSE/'
@@ -54,13 +63,28 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
   }
   
   # Get parameter estimates and log-likelihoods:
+  if (str_detect(res_files[1], 'PARALLEL')) {
+    
+    res_full <- do.call('c', res_full)
+    num_errors <- length(which(res_full == 'error'))
+    
+    if (num_errors > 0) {
+      res_full <- res_full[-which(res_full == 'error')]
+    }
+    
+  }
+  
   pars_df <- lapply(res_full, getElement, 'estpars') %>%
     bind_rows() %>%
     bind_cols('loglik' = lapply(res_full, getElement, 'll') %>%
                 unlist()) %>%
     bind_cols('message' = lapply(res_full, getElement, 'message') %>%
                 unlist())
-  expect_true(nrow(pars_df) == length(res_files))
+  if (str_detect(res_files[1], 'PARALLEL')) {
+    expect_true(nrow(pars_df) == (length(res_files) * 25) - num_errors)
+  } else {
+    expect_true(nrow(pars_df) == length(res_files))
+  }
   expect_true(all(is.finite(pars_df$loglik)))
   
   # Check whether estimations stopped due to tolerance or time:
@@ -118,6 +142,9 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
 if (fit_canada) {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                       'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+} else if (fit_us) {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
+                      'b1', 'b2', 'phi1', 'phi2')
 } else {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                       'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
@@ -139,6 +166,12 @@ res_r1 <- read_rds(paste0(res_dir_round1, 'traj_match_round1_byvirseas_TOP.rds')
 
 # Compile to data frames:
 res_r1 <- bind_rows(res_r1)
+
+if (fit_us) {
+  res_r1 <- res_r1 %>%
+    filter(region == region_num) %>%
+    select(-region)
+}
 
 # Format:
 res_r1 <- res_r1 %>%
@@ -170,6 +203,9 @@ res_r1 <- res_r1 %>%
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_CANADA.pdf'),
       width = 22, height = 12)
+} else if (fit_us) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_US_region', region_num, '.pdf'),
+      width = 22, height = 12)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2.pdf'),
       width = 22, height = 12)
@@ -197,6 +233,9 @@ dev.off()
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr_CANADA.pdf'),
       width = 18, height = 10)
+} else if (fit_us) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr_US_region', region_num, '.pdf'),
+      width = 18, height = 10)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr.pdf'),
       width = 18, height = 10)
@@ -211,7 +250,7 @@ for (param in unit_estpars) {
 }
 
 # And calculate correlation between estimates of eta_temp and eta_ah:
-if (!fit_canada) {
+if (!fit_canada & !fit_us) {
   par(mfrow = c(2, 1), mar = c(4, 4, 1, 0.5))
   pars_temp <- res_r2[[1]] %>% select(eta_temp1:eta_ah2)
   plot(pars_temp$eta_temp1, pars_temp$eta_ah1, pch = 20)
@@ -226,6 +265,9 @@ dev.off()
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices_CANADA.pdf'),
       width = 20, height = 20)
+} else if (fit_us) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices_US_region', region_num, '.pdf'),
+      width = 20, height = 20)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices.pdf'),
       width = 20, height = 20) 
@@ -238,7 +280,7 @@ prof_lik <- FALSE
 estpars <- names(res_r2[[1]])[1:(length(names(res_r2[[1]])) - 1)]
 
 # Set vir1:
-if (fit_canada) {
+if (fit_canada | fit_us) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -265,6 +307,21 @@ for (j in 1:5) {
                            d2 = seq(from = 0.9 * mle['d2'], to = 1.1 * mle['d2'], length.out = 20),
                            alpha = seq(from = 0.9 * mle['alpha'], to = 1.1 * mle['alpha'], length.out = 20),
                            phi = seq(from = 0, to = 52, length.out = 20),#seq(from = 0.9 * mle['phi'], to = 1.1 * mle['phi'], length.out = 20),
+                           b1 = seq(from = 0.9 * mle['b1'], to = 1.1 * mle['b1'], length.out = 20),
+                           b2 = seq(from = 0.9 * mle['b2'], to = 1.1 * mle['b2'], length.out = 20),
+                           phi1 = seq(from = 0.9 * mle['phi1'], to = 1.1 * mle['phi1'], length.out = 20),
+                           phi2 = seq(from = 0.9 * mle['phi2'], to = 1.1 * mle['phi2'], length.out = 20)) %>%
+      mutate(ll = NA)
+    
+  } else if (fit_us) {
+    
+    slices <- slice_design(center = mle,
+                           rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
+                           rho2 = seq(from = 0.9 * mle['rho2'], to = 1.1 * mle['rho2'], length.out = 20),
+                           theta_lambda1 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda1'], to = 1.1 * mle['theta_lambda1'], length.out = 20),
+                           theta_lambda2 = seq(from = 0, to = 1, by = 0.01), #(from = 0.9 * mle['theta_lambda2'], to = 1.1 * mle['theta_lambda2'], length.out = 20),
+                           delta1 = seq(from = 0.9 * mle['delta1'], to = 1.1 * mle['delta1'], length.out = 20),
+                           d2 = seq(from = 0.9 * mle['d2'], to = 1.1 * mle['d2'], length.out = 20),
                            b1 = seq(from = 0.9 * mle['b1'], to = 1.1 * mle['b1'], length.out = 20),
                            b2 = seq(from = 0.9 * mle['b2'], to = 1.1 * mle['b2'], length.out = 20),
                            phi1 = seq(from = 0.9 * mle['phi1'], to = 1.1 * mle['phi1'], length.out = 20),
@@ -316,6 +373,9 @@ dev.off()
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations_CANADA.pdf'),
       width = 18, height = 10)
+} else if (fit_us) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations_US_region', region_num, '.pdf'),
+      width = 18, height = 10)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations.pdf'),
       width = 18, height = 10)
@@ -360,7 +420,7 @@ for (j in 1:length(seasons)) {
       geom_line(aes(x = time, y = n_P2, group = .id), col = 'coral') + 
       geom_point(aes(x = time, y = obs1, group = .id)) + geom_point(aes(x = time, y = obs2, group = .id), col = 'coral') +
       theme_classic() +
-      labs(x = 'Time', y = '# Positive Tests', title = paste('H1_plus_B', k, sep = '_'))
+      labs(x = 'Time', y = '# Positive Tests', title = paste('sim', k, sep = '_'))
     plot_list[[j * 5 - 4 + k - 1]] <- p_temp
     
   }
