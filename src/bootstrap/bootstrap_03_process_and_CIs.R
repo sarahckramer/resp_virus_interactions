@@ -22,6 +22,8 @@ if (str_detect(file_list[[1]], 'sinusoidal')) {
   sens <- 'no_rsv_immune'
 } else if (str_detect(file_list[[1]], 'no_ah')) {
   sens <- 'no_ah'
+} else if (str_detect(file_list[[1]], 'no_int')) {
+  sens <- 'no_int'
 } else if (str_detect(file_list[[1]], 'rhino_covar')) {
   sens <- 'rhino_covar'
 } else {
@@ -40,6 +42,16 @@ if (str_detect(file_list[[1]], 'canada')) {
 } else {
   fit_canada <- FALSE
   fit_us <- FALSE
+}
+
+# If US, get region:
+if (fit_us) {
+  region_num <- str_split(
+    str_split(file_list[1], '/')[[1]][str_split(file_list[1], '/') %>%
+                                        purrr::map(str_detect, 'region') %>%
+                                        unlist()],
+    '_')[[1]][2]
+  region <- paste0('Region ', region_num)
 }
 
 # Ensure no results missing:
@@ -139,15 +151,6 @@ true_estpars <- c(shared_estpars, unit_estpars)
 #   vir1 <- 'flu_h1_plus_b'
 # }
 # 
-# if (fit_us) {
-#   region_num <- str_split(
-#     str_split(file_list[1], '/')[[1]][str_split(file_list[1], '/') %>%
-#                                         purrr::map(str_detect, 'region') %>%
-#                                         unlist()],
-#     '_')[[1]][2]
-#   region <- paste0('Region ', region_num)
-# }
-# 
 # source('src/functions/setup_global_likelilhood.R')
 # 
 # traj_list <- lapply(1:length(seasons), function(ix) {
@@ -192,6 +195,11 @@ if (fit_canada) {
     select(contains('I') | contains('R') | dataset) %>%
     select(-c(phi, rho1, rho2))
   
+  if (sens == 'sinusoidal_forcing') {
+    res_df_unit <- res_df_unit %>%
+      select(-c(phi1, phi2))
+  }
+  
   if (sens == 'rhino_covar') {
     res_df_unit <- res_df_unit %>%
       select(-beta_rhino)
@@ -216,15 +224,32 @@ res_df_unit <- res_df_unit %>%
   select(parameter:value)
 
 res_df_shared <- res_df %>%
-  select(all_of(shared_estpars), loglik, dataset) %>%
-  mutate(delta2 = d2 * delta1) %>%
+  select(all_of(shared_estpars), loglik, dataset)
+
+if (sens != 'no_int') {
+  
+  res_df_shared <- res_df_shared %>%
+    mutate(delta2 = d2 * delta1)
+  
+}
+
+res_df_shared <- res_df_shared %>%
   pivot_longer(-c(loglik, dataset),
                names_to = 'parameter',
                values_to = 'value') %>%
   select(parameter:value)
 
-res_df <- bind_rows(res_df_shared, res_df_unit) %>%
-  mutate(parameter = factor(parameter, levels = c(shared_estpars, 'delta2', unique(res_df_unit$parameter))))
+if (sens != 'no_int') {
+  
+  res_df <- bind_rows(res_df_shared, res_df_unit) %>%
+    mutate(parameter = factor(parameter, levels = c(shared_estpars, 'delta2', unique(res_df_unit$parameter))))
+  
+} else {
+  
+  res_df <- bind_rows(res_df_shared, res_df_unit) %>%
+    mutate(parameter = factor(parameter, levels = c(shared_estpars, unique(res_df_unit$parameter))))
+  
+}
 
 # Calculate 95% confidence intervals for each parameter:
 ci_res <- res_df %>%
@@ -280,6 +305,11 @@ if (fit_canada) {
     select(contains('I') | contains('R')) %>%
     select(-c(phi, rho1, rho2))
   
+  if (sens == 'sinusoidal_forcing') {
+    mle_unit <- mle_unit %>%
+      select(-c(phi1, phi2))
+  }
+  
   if (sens == 'rhino_covar') {
     mle_unit <- mle_unit %>%
       select(-beta_rhino)
@@ -304,8 +334,16 @@ mle_unit <- mle_unit %>%
   select(parameter:mle)
 
 mle_shared <- mle %>%
-  select(all_of(shared_estpars)) %>%
-  mutate(delta2 = d2 * delta1) %>%
+  select(all_of(shared_estpars)) 
+
+if (sens != 'no_int') {
+  
+  mle_shared <- mle_shared %>%
+    mutate(delta2 = d2 * delta1)
+  
+}
+
+mle_shared <- mle_shared %>%
   pivot_longer(everything(),
                names_to = 'parameter',
                values_to = 'mle')
