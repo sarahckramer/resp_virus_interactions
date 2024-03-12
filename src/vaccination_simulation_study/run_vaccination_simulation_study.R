@@ -48,12 +48,24 @@ mle_can <- read_rds('results/MLEs_canada.rds')[1, ]
 
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Get values for impact of NATURAL influenza infection:
+int_param_vals <- mle_hk %>%
+  select(all_of(int_params))
+
+if (sens_sim == 'fit_can') {
+  int_param_vals <- mle_can %>%
+    select(all_of(int_params))
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+
 # Run main simulation study code (Hong Kong / "subtropical" scenario)
 
 # Set parameters for run:
 vir1 <- 'flu_h1_plus_b'
 sens <- 'main'
 fit_canada <- FALSE
+fit_us <- FALSE
 
 # Get year:
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
@@ -74,12 +86,11 @@ model_params <- mle %>%
   dplyr::select(all_of(shared_estpars), contains(yr)) %>%
   rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
   unlist()
-model_params[int_params] <- mle_hk %>% select(all_of(int_params)) %>% unlist()
 
-if (sens_sim == 'fit_can') {
-  model_params[int_params] <- mle_can %>% select(all_of(int_params)) %>% unlist()
-  model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
-  # model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
+if (sens_sim == 'vacc_can') {
+  temp_eff <- mle_can %>% select('theta_lambda1') %>% unlist()
+  model_params <- c(model_params, unname(temp_eff), unname(model_params['delta1']), vacc_eff)
+  rm(temp_eff)
 } else if (sens_sim == 'deltavacc1month') {
   model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 30, vacc_eff)
 } else if (sens_sim == 'deltavacc6months') {
@@ -170,12 +181,12 @@ if (!is.na(yr)) {
     dplyr::select(all_of(shared_estpars), contains(yr)) %>%
     rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
     unlist()
-  model_params[int_params] <- mle_hk %>% select(all_of(int_params)) %>% unlist()
+  model_params[int_params] <- int_param_vals %>% unlist()
   
-  if (sens_sim == 'fit_can') {
-    model_params[int_params] <- mle_can %>% select(all_of(int_params)) %>% unlist()
-    model_params <- c(model_params, unname(model_params['theta_lambda1']), unname(model_params['delta1']), vacc_eff)
-    # model_params <- c(model_params, 0.5, unname(model_params['delta1']), vacc_eff)
+  if (sens_sim == 'vacc_can') {
+    temp_eff <- mle_can %>% select('theta_lambda1') %>% unlist()
+    model_params <- c(model_params, unname(temp_eff), unname(model_params['delta1']), vacc_eff)
+    rm(temp_eff)
   } else if (sens_sim == 'deltavacc1month') {
     model_params <- c(model_params, unname(model_params['theta_lambda1']), 7 / 30, vacc_eff)
   } else if (sens_sim == 'deltavacc6months') {
