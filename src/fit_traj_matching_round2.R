@@ -440,7 +440,8 @@ if (search_type == 'round2_CIs') {
   
   if (int_eff == 'both') {
     start_range <- start_range %>%
-      bind_cols(start_range_thetarho)
+      bind_cols(start_range_thetarho) %>%
+      select(all_of(estpars))
   }
   
   rm(start_range_thetarho)
