@@ -20,11 +20,11 @@ hk_dat <- hk_dat %>%
   mutate(loc = 'hk')
 
 can_dat <- can_dat %>%
-  select(time, season, pop, n_T1:n_T2, n_P1:n_P2) %>%
+  select(time, season, pop, n_T1:n_T2, n_P1, n_P2) %>%
   mutate(loc = 'can')
 
 us_dat <- us_dat %>%
-  select(time, season, pop, n_T1:n_P2) %>%
+  select(time, season, pop, n_T1:n_P1, n_P2) %>%
   mutate(loc = 'us')
 
 dat <- rbind(hk_dat, can_dat, us_dat)
@@ -152,7 +152,7 @@ metrics %>%
   print()
 
 metrics %>%
-  filter(vir == 'rsv', metric == 'pt') %>%
+  filter(vir == 'influenza', metric == 'pt') %>%
   mutate(val = val - 52) %>%
   mutate(val = if_else(season == 's16-17' & loc == 'hk', val - 1, val),
          val = if_else(season == 's14-15' & loc == 'us', val - 1, val)) %>%
