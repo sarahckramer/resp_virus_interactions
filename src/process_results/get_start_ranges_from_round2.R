@@ -27,6 +27,8 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'rhino_covar'
 } else if (str_detect(res_dir, 'no_int')) {
   sens <- 'no_int'
+} else if (str_detect(res_dir, 'susc_plus_sev')) {
+  sens <- 'susc_plus_sev'
 } else {
   sens <- 'main'
 }
@@ -295,6 +297,10 @@ is_mle <- res[[3]]
 res_dir_comp <- str_split(res_dir, '_')[[1]]
 res_dir_comp[which(!is.na(as.numeric(res_dir_comp)))] <- as.character(as.numeric(which_round) - 1)
 res_dir_prev <- paste(res_dir_comp, collapse = '_')
+
+if (sens == 'susc_plus_sev') {
+  res_dir_prev <- paste0('results/round2_fit/round2_', as.numeric(which_round) - 1, '_fluH1_plus_B/')
+}
 
 is_mle_prev <- try(
   load_and_format_mega_results(res_dir_prev)[[3]]
