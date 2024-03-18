@@ -282,14 +282,6 @@ if(debug) {
 //end_rinit
 
 //start_skel
-double x_ii_replace;
-double x_it_replace;
-double x_ti_replace;
-
-x_ii_replace = X_II < 0 ? 0.0 : X_II;
-x_it_replace = X_IT < 0 ? 0.0 : X_IT;
-x_ti_replace = X_TI < 0 ? 0.0 : X_TI;
-
 double p1 = (X_IS + X_II + X_IT + X_IR) / N; // Prevalence of infection with virus 1
 double p2 = (X_SI + X_II + X_TI + X_RI) / N; // Prevalence of infection with virus 2
 
@@ -355,8 +347,8 @@ DX_RR = delta2 * X_RT + delta1 * X_TR;
 
 DH1_tot = gamma1 * p1; // Incidence rate of virus 1 infections (total)
 DH2_tot = gamma2 * p2; // Incidence rate of virus 2 infections (total)
-DH1 = gamma1 * (X_IS + theta_rho2 * (x_ii_replace + x_it_replace) + X_IR) / N; // Incidence rate of reported virus 1 infections
-DH2 = gamma2 * (X_SI + theta_rho1 * (x_ii_replace + x_ti_replace) + X_RI) / N; // Incidence rate of reported virus 2 infections 
+DH1 = gamma1 * (X_IS + theta_rho2 * (X_II + X_IT) + X_IR) / N; // Incidence rate of reported virus 1 infections
+DH2 = gamma2 * (X_SI + theta_rho1 * (X_II + X_TI) + X_RI) / N; // Incidence rate of reported virus 2 infections 
 //end_skel
 
 //start_rsim
