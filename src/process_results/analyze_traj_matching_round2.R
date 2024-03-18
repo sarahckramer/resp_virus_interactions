@@ -11,7 +11,7 @@ library(gridExtra)
 
 # Data from Canada?:
 fit_canada <- FALSE
-fit_us <- TRUE
+fit_us <- FALSE
 
 if (fit_canada | fit_us) {
   sens <- 'sinusoidal_forcing'
@@ -366,6 +366,41 @@ for (j in 1:5) {
   
 }
 rm(j, mle, slices)
+
+par(mfrow = c(1, 1), bty = 'l')
+
+for (j in 1:5) {
+  mle <- setNames(object = as.numeric(res_r2[[1]][j, 1:(length(names(res_r2[[1]])) - 1)]),
+                  nm = estpars)
+  
+  param_vals <- rbind(c(mle[3], mle[5]),
+                      expand.grid(theta_lambda1 = seq(0, 1, by = 0.05), delta1 = 7 / c(15, seq(30, 180, by = 15)))) %>%
+    mutate(ll = NA)
+  
+  for (k in 1:nrow(param_vals)) {
+    x0 <- mle
+    x0[names(x0) == 'theta_lambda1'] <- param_vals[k, 1]
+    x0[names(x0) == 'delta1'] <- param_vals[k, 2]
+    x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
+    param_vals$ll[k] <- -1 * calculate_global_loglik(x0_trans)
+  }
+  
+  p1 <- ggplot(data = as_tibble(param_vals[2:148, ])) + 
+    geom_tile(aes(x = theta_lambda1, y = 7 / delta1, fill = ll)) +
+    theme_classic() +
+    scale_fill_viridis() +
+    labs(x = 'theta_lambda1', y = '7 / delta1', fill = 'LL')
+  p2 <- ggplot(data = as_tibble(param_vals[2:148, ])) +
+    geom_point(aes(x = theta_lambda1, y = ll, col = 7 / delta1)) +
+    geom_line(aes(x = theta_lambda1, y = ll, col = 7 / delta1, group = delta1)) +
+    geom_point(data = param_vals[1, ], aes(x = theta_lambda1, y = ll, col = 7 / delta1), col = 'red', shape = 8, size = 4) +
+    theme_classic() +
+    scale_color_viridis() +
+    labs(x = 'theta_lambda1', y = 'LL', col = '7 / delta1')
+  
+  grid.arrange(p1, p2, ncol = 1)
+}
+rm(j, mle, param_vals)
 
 dev.off()
 
