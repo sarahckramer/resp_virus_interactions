@@ -351,7 +351,7 @@ nmins_exec <- time_max * 60 / (sobol_size / no_jobs)
 
 if (run_parallel) {
   
-  if (fit_canada | fit_us) {
+  if (sens == 'sinusoidal_forcing') {
     nmins_exec <- 12.0 * 60 # time_max * 60 / 2
   }
   
