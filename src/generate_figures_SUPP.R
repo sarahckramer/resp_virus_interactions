@@ -2125,29 +2125,24 @@ rm(fig18s, p18a, p18b, dat_hk, dat_can, dat_hk_pos, dat_can_pos,
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Supplementary Figure 19: MLE for shared parameters for a variety of sensitivity analyses
-# For now only have 95% CIs for some of these - decide whether ranges need to be plotted, or just MLE values
 
-res_dir_main <- 'results/round2_fit/round2_3_fluH1_plus_B/'
-res_dir_noAH <- 'results/round2_fit/sens/no_ah/round2_3_fluH1_plus_B/'
-res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1_plus_B/'
-res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
-res_dir_noRSVimmune <- 'results/round2_fit/sens/no_rsv_immune/round2_5_fluH1_plus_B/'
-res_dir_h3covar <- 'results/round2_fit/sens/h3_covar/round2_3_fluH1_plus_B/'
-res_dir_lesscirch3 <- 'results/round2_fit/sens/less_circ_h3/round2_5_fluH1_plus_B/'
-res_dir_rhino <- 'results/round2_fit/sens/rhino_covar/round2_3_fluH1_plus_B/'
-
-res_main <- load_and_format_mega_results(res_dir_main, run_name = 'Main')
-res_noah <- load_and_format_mega_results(res_dir_noAH, run_name = 'Temperature Only')
-res_sinusoidal <- load_and_format_mega_results(res_dir_sinusoidal, run_name = 'Sinusoidal Forcing')
-res_noint <- load_and_format_mega_results(res_dir_noint, run_name = 'No Interaction')
-res_noRSVimmune <- load_and_format_mega_results(res_dir_noRSVimmune, run_name = 'R[20] + R[120] = 0')
-res_h3covar <- load_and_format_mega_results(res_dir_h3covar, run_name = 'H3 as Covariate')
-res_lesscirch3 <- load_and_format_mega_results(res_dir_lesscirch3, run_name = 'Low H3 Circulation')
-res_rhino <- load_and_format_mega_results(res_dir_rhino, run_name = 'Rhino as Covariate')
-
-# res_main <- read_csv('results/MLE_plus_95CI_from_boostrapping_HPDI.csv')
-# res_h3covar <- read_csv('results/round2_fit/sens/h3_covar/MLE_plus_95CI_from_boostrapping_HPDI.csv')
-# res_lesscirch3 <- read_csv('results/round2_fit/sens/less_circ_h3/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+res_main <- read_csv('results/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
+  mutate(condition = 'Main')
+res_noah <- read_csv('results/round2_fit/sens/no_ah/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
+  mutate(condition = 'Temperature Only')
+res_sinusoidal <- read_csv('results/round2_fit/sens/sinusoidal_forcing/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
+  mutate(condition = 'Sinusoidal Forcing')
+res_noint <- read_csv('results/round2_fit/sens/no_int/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
+  mutate(condition = 'No Interaction')
+res_noRSVimmune <- read_csv('results/round2_fit/sens/no_rsv_immune/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
+  mutate(condition = 'R[20] + R[120] = 0')
+res_h3covar <- read_csv('results/round2_fit/sens/h3_covar/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
+  mutate(condition = 'H3 as Covariate')
+res_lesscirch3 <- read_csv('results/round2_fit/sens/less_circ_h3/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
+  select(-vir1) %>%
+  mutate(condition = 'Low H3 Circulation')
+res_rhino <- read_csv('results/round2_fit/sens/rhino_covar/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
+  mutate(condition = 'Rhino as Covariate')
 
 res <- bind_rows(res_main,
                  res_noah,
@@ -2159,16 +2154,18 @@ res <- bind_rows(res_main,
                  res_rhino)
 
 res <- res %>%
-  group_by(condition) %>%
-  filter(loglik == max(loglik)) %>%
-  ungroup() %>%
-  select(all_of(shared_estpars), condition) %>%
-  mutate(delta2 = d2 * delta1,
-         delta1 = 7 / delta1,
+  filter(parameter %in% c(shared_estpars_hk, 'delta2')) %>%
+  filter(parameter != 'd2') %>%
+  pivot_wider(names_from = 'parameter', values_from = 'mle') %>%
+  mutate(delta1 = 7 / delta1,
          delta2 = 7 / delta2) %>%
-  select(-d2) %>%
-  pivot_longer(-condition,
-               names_to = 'parameter')
+  pivot_longer(-c(lower:condition), names_to = 'parameter', values_to = 'mle') %>%
+  drop_na() %>%
+  mutate(lower_new = if_else(parameter %in% c('delta1', 'delta2'), 7 / upper, lower),
+         upper_new = if_else(parameter %in% c('delta1', 'delta2'), 7 / lower, upper)) %>%
+  mutate(lower = lower_new,
+         upper = upper_new) %>%
+  select(condition:parameter, mle, lower:upper)
 
 res <- res %>%
   mutate(parameter = if_else(parameter == 'theta_lambda1', 'theta[lambda*1]', parameter),
@@ -2189,8 +2186,8 @@ res <- res %>%
 xlabels <- levels(res$condition)
 xlabels[7] <- expression(R[20] + R[120] == 0)
 
-fig19s <- ggplot(data = res, aes(x = condition, y = value)) +
-  geom_point() +
+fig19s <- ggplot(data = res, aes(x = condition, y = mle, ymin = lower, ymax = upper)) +
+  geom_pointrange(size = 0.25) +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
         axis.text = element_text(size = 12),
