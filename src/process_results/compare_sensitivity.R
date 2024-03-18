@@ -21,6 +21,7 @@ res_dir_h3covar_lag2 <- 'results/round2_fit/sens/h3_covar/lag2/round2_3_fluH1_pl
 res_dir_h3covar_lag15 <- 'results/round2_fit/sens/h3_covar/lag15/round2_3_fluH1_plus_B/'
 res_dir_lesscirch3 <- 'results/round2_fit/sens/less_circ_h3/round2_5_fluH1_plus_B/'
 res_dir_rhino <- 'results/round2_fit/sens/rhino_covar/round2_3_fluH1_plus_B/'
+res_dir_suscplussev <- 'results/round2_fit/sens/susc_plus_sev/round2_4_fluH1_plus_B/'
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -101,6 +102,7 @@ res_h3covar_lag2 <- load_and_format_mega_results(res_dir_h3covar_lag2, cond = 'H
 res_h3covar_lag15 <- load_and_format_mega_results(res_dir_h3covar_lag15, cond = 'H3 as Covariate (Lag 15)')
 res_lesscirch3 <- load_and_format_mega_results(res_dir_lesscirch3, cond = 'Low H3 Circulation Seasons')
 res_rhino <- load_and_format_mega_results(res_dir_rhino, cond = 'Rhinovirus as Covariate')
+res_suscplussev <- load_and_format_mega_results(res_dir_suscplussev, cond = 'Incl. Severity')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -129,6 +131,8 @@ summary(res_lesscirch3 %>%
           select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
 summary(res_rhino %>%
           select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
+summary(res_suscplussev %>%
+          select(!contains('I10') & !contains('I20') & !contains('Ri') & !contains('R1') & !contains('R2'), -c(loglik, condition)))
 
 # Compare log likelihoods:
 res <- bind_rows(res_main,
@@ -140,7 +144,8 @@ res <- bind_rows(res_main,
                  res_h3covar_lag1,
                  res_h3covar_lag2,
                  res_h3covar_lag15,
-                 res_rhino)
+                 res_rhino,
+                 res_suscplussev)
 
 p1 <- ggplot(data = res, aes(x = condition, y = loglik, group = condition)) + geom_jitter() + theme_classic()# + geom_boxplot()
 print(p1)
@@ -153,6 +158,7 @@ print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$conditi
 print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No Immunity to RSV'])) > qchisq(p = 0.95, df = 12))
 print(2 * (min(res$loglik[res$condition == 'H3 as Covariate']) - max(res$loglik[res$condition == 'Main'])) > qchisq(p = 0.95, df = 1))
 print(2 * (min(res$loglik[res$condition == 'Rhinovirus as Covariate']) - max(res$loglik[res$condition == 'Main'])) > qchisq(p = 0.95, df = 1))
+print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'Incl. Severity'])) > qchisq(p = 0.95, df = 2))
 
 aic_main <- 2 * length(names(res_main %>% select(-c(loglik, condition)))) - 2 * max(res_main$loglik)
 aic_noah <- 2 * length(names(res_noah %>% select(-c(loglik, condition)))) - 2 * max(res_noah$loglik)
@@ -160,6 +166,7 @@ aic_sinusoidal <- 2 * length(names(res_sinusoidal %>% select(-c(loglik, conditio
 aic_noint <- 2 * length(names(res_noint %>% select(-c(loglik, condition)))) - 2 * max(res_noint$loglik)
 aic_noRSVimmune <- 2 * length(names(res_noRSVimmune %>% select(-c(loglik, condition)))) - 2 * max(res_noRSVimmune$loglik)
 aic_h3covar <- 2 * length(names(res_h3covar %>% select(-c(loglik, condition)))) - 2 * max(res_h3covar$loglik)
+aic_suscplussev <- 2 * length(names(res_suscplussev %>% select(-c(loglik, condition)))) - 2 * max(res_suscplussev$loglik)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
