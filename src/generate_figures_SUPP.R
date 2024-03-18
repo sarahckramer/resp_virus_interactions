@@ -237,8 +237,8 @@ shared_estpars_us <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1
 
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
-mle_hk <- read_csv('results/MLE_plus_95CI_from_boostrapping_HPDI.csv')
-mle_can <- read_csv('results/round2_fit/sens/canada/MLE_plus_95CI_from_boostrapping_HPDI.csv')
+mle_hk <- read_csv('results/MLE_plus_95CI_from_bootstrapping_HPDI.csv')
+mle_can <- read_csv('results/round2_fit/sens/canada/MLE_plus_95CI_from_bootstrapping_HPDI.csv')
 mle_us <- read_csv('results/round2_fit/sens/us/region_8/MLE_plus_95CI_from_bootstrapping_HPDI.csv')
 
 res_hk <- mle_hk %>%
