@@ -279,18 +279,18 @@ if (int_eff == 'susc') {
     
     if (sens == 'sinusoidal_forcing') {
       
-      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                          'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                          'delta1', 'd2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
       
       if (fit_us) {
-        shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                            'b1', 'b2', 'phi1', 'phi2')
+        shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                            'delta1', 'd2', 'b1', 'b2', 'phi1', 'phi2')
       }
       
     } else {
       
-      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                          'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
       
     }
     
@@ -298,31 +298,31 @@ if (int_eff == 'susc') {
   } else {
     
     if (sens == 'sinusoidal_forcing') {
-      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                          'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                          'delta1', 'd2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
       
       if (fit_us) {
-        shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                            'b1', 'b2', 'phi1', 'phi2')
+        shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                            'delta1', 'd2', 'b1', 'b2', 'phi1', 'phi2')
       }
       
     } else if (sens == 'h3_covar') {
-      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                          'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
                           'beta_h3')
     } else if (sens == 'rhino_covar') {
-      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                          'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
                           'beta_rhino')
     } else {
-      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                          'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                          'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
     }
     
   }
 } else if (int_eff == 'both') {
-  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
-                      'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                      'theta_rho1', 'theta_rho2', 'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 } else {
   stop('Unrecognized int_eff value.')
 }
@@ -344,8 +344,10 @@ estpars <- c(shared_estpars, unit_sp_estpars)
 # Set upper/lower values for global params:
 start_range <- data.frame(rho1 = c(0, 1.0),
                           rho2 = c(0, 1.0),
-                          theta_lambda1 = c(0, 1.0),
-                          theta_lambda2 = c(0, 1.0),
+                          theta_lambda_I1 = c(0, 1.0),
+                          theta_lambda_I2 = c(0, 1.0),
+                          theta_lambda_T1 = c(0, 1.0),
+                          theta_lambda_T2 = c(0, 1.0),
                           theta_rho1 = c(0, 5.0),
                           theta_rho2 = c(0, 5.0),
                           delta1 = c(7 / 60, 7),
@@ -498,11 +500,11 @@ if (search_type == 'round2_CIs') {
 # Force no interaction?:
 if (sens == 'no_int') {
   
-  estpars <- estpars[!(estpars %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
-  true_estpars <- true_estpars[!(true_estpars %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
-  shared_estpars <- shared_estpars[!(shared_estpars %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
+  estpars <- estpars[!(estpars %in% c('theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2', 'delta1', 'd2'))]
+  true_estpars <- true_estpars[!(true_estpars %in% c('theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2', 'delta1', 'd2'))]
+  shared_estpars <- shared_estpars[!(shared_estpars %in% c('theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2', 'delta1', 'd2'))]
   
-  start_values <- start_values[!(names(start_values) %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
+  start_values <- start_values[!(names(start_values) %in% c('theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2', 'delta1', 'd2'))]
   
 }
 

@@ -173,7 +173,7 @@ quick_explore_interaction <- function(pomp_object, int_vals, n_sim = 10) {
   # params n_sim: The number of stochastic simulations to run
   # returns: List of plots showing the effect of interactions of different strengths
   
-  int_parms <- c('theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2')
+  int_parms <- c('theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2', 'theta_rho1', 'theta_rho2')
   p_list <- vector('list', length(int_parms))
   
   for (i in 1:length(int_parms)) {

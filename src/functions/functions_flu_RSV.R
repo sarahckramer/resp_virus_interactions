@@ -65,7 +65,8 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
                               'gamma1', 'gamma2', # 1 / average infectious periods
                               # 'delta', # 1 / average refractory period (assume same duration for flu and RSV)
                               'delta1', 'd2', #'delta2', # 1 / average refractory periods; relative length of refractory period for RSV->flu
-                              'theta_lambda1', 'theta_lambda2', # interaction effects on susceptibility to infection
+                              'theta_lambda_I1', 'theta_lambda_I2', # interaction effects on susceptibility to infection, during infection
+                              'theta_lambda_T1', 'theta_lambda_T2', # interaction effects on susceptibility to infection, persisting after infection
                               'rho1', 'rho2', # probs. infection leads to ILI consultation
                               'alpha', 'phi', # amplitude and phase of seasonality of all-cause consultations
                               'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
@@ -82,7 +83,8 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
                           gamma1 = 7 / 5, gamma2 = 7 / 10, # or 4 for flu?
                           # delta = 7 / 5,
                           delta1 = 7 / 5, d2 = 1.0, #delta2 = 7 / 5,
-                          theta_lambda1 = 1.0, theta_lambda2 = 1.0,
+                          theta_lambda_I1 = 1.0, theta_lambda_I2 = 1.0,
+                          theta_lambda_T1 = 1.0, theta_lambda_T2 = 1.0,
                           rho1 = 0.5, rho2 = 0.15,
                           alpha = 0, phi = 0,
                           theta_rho1 = 1.0, theta_rho2 = 1.0,
@@ -120,7 +122,8 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
                               'gamma1', 'gamma2', # 1 / average infectious periods
                               # 'delta', # 1 / average refractory period (assume same duration for flu and RSV)
                               'delta1', 'd2', #'delta2', # 1 / average refractory periods; relative length of refractory period for RSV->flu
-                              'theta_lambda1', 'theta_lambda2', # interaction effects on susceptibility to infection
+                              'theta_lambda_I1', 'theta_lambda_I2', # interaction effects on susceptibility to infection, during infection
+                              'theta_lambda_T1', 'theta_lambda_T2', # interaction effects on susceptibility to infection, persisting after infection
                               'rho1', 'rho2', # probs. infection leads to ILI consultation
                               'alpha', 'phi', # amplitude and phase of seasonality of all-cause consultations
                               'theta_rho1', 'theta_rho2', # interaction effects on severity of infections
@@ -137,7 +140,8 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
                           gamma1 = 7 / 5, gamma2 = 7 / 10, # or 4 for flu?
                           # delta = 7 / 5,
                           delta1 = 7 / 5, d2 = 1.0, #delta2 = 7 / 5,
-                          theta_lambda1 = 1.0, theta_lambda2 = 1.0,
+                          theta_lambda_I1 = 1.0, theta_lambda_I2 = 1.0,
+                          theta_lambda_T1 = 1.0, theta_lambda_T2 = 1.0,
                           rho1 = 0.5, rho2 = 0.15,
                           alpha = 0, phi = 0,
                           theta_rho1 = 1.0, theta_rho2 = 1.0,
