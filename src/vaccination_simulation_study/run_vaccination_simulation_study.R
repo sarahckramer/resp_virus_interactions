@@ -86,6 +86,7 @@ model_params <- mle %>%
   dplyr::select(all_of(shared_estpars), contains(yr)) %>%
   rename_with(~str_remove(.x, paste0(yr, '_')), contains(yr)) %>%
   unlist()
+model_params[int_params] <- int_param_vals %>% unlist()
 
 if (sens_sim == 'vacc_can') {
   temp_eff <- mle_can %>% select('theta_lambda1') %>% unlist()
