@@ -100,6 +100,7 @@ if (sens_sim == 'vacc_can') {
 }
 
 names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
+print(model_params)
 
 resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
                                       Ri1_max = Ri_max1,
@@ -139,7 +140,7 @@ for (t_vacc in vacc_time_vec) {
 }
 
 # Write simulation to file:
-write_rds(res, paste0('results/vaccination_simulation_study/simulations/sim_determ_', yr, '_', p_vacc * 100, 'perc_SUBTROPICAL.rds'))
+write_rds(res, paste0('results/vaccination_simulation_study/simulations/sim_determ_', sens_sim, '_', yr, '_', p_vacc * 100, 'perc_SUBTROPICAL.rds'))
 
 # # Check that, if p_vacc = 0 (no vaccination), all vaccine timepoints yield same results:
 # res_comp1 <- res %>% filter(.id == 1, vacc_time == min(vacc_time))
@@ -196,6 +197,7 @@ if (!is.na(yr)) {
   }
   
   names(model_params)[names(model_params) == ''] <- c('theta_lambda_vacc', 'delta_vacc', 'vacc_eff')
+  print(model_params)
   
   resp_mod <- create_SITRxSITR_mod_VACC(dat = dat_pomp,
                                         Ri1_max = Ri_max1,
@@ -235,7 +237,7 @@ if (!is.na(yr)) {
   }
   
   # Write simulation to file:
-  write_rds(res, paste0('results/vaccination_simulation_study/simulations/sim_determ_', yr, '_', p_vacc * 100, 'perc_TEMPERATE.rds'))
+  write_rds(res, paste0('results/vaccination_simulation_study/simulations/sim_determ_', sens_sim, '_', yr, '_', p_vacc * 100, 'perc_TEMPERATE.rds'))
   
 }
 
