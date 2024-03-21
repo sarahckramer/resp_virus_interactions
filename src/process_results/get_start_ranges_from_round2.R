@@ -37,6 +37,9 @@ if (str_detect(res_dir, 'sinusoidal')) {
 if (str_detect(res_dir, 'canada')) {
   fit_canada <- TRUE
   fit_us <- FALSE
+  if (sens != 'main') {
+    sens2 <- sens
+  }
   sens <- 'sinusoidal_forcing'
 } else if (str_detect(res_dir, '/us/')) {
   fit_canada <- FALSE
@@ -99,9 +102,20 @@ if (sens == 'main') {
     }
     
     new_dir <- paste0('results/round2_CIs/sens/canada/from_2_', which_round, '/')
+    
+    if (exists('sens2')) {
+      new_dir <- paste0('results/round2_CIs/sens/canada/', sens2, '/')
+      if (!dir.exists(new_dir)) {
+        dir.create(new_dir)
+      }
+      
+      new_dir <- paste0('results/round2_CIs/sens/canada/', sens2, '/from_2_', which_round, '/')
+    }
+    
     if (!dir.exists(new_dir)) {
       dir.create(new_dir)
     }
+    
   } else if (fit_us) {
     new_dir <- 'results/round2_CIs/sens/us/'
     if (!dir.exists(new_dir)) {
@@ -319,7 +333,13 @@ if (is_mle & is_mle_prev) {
   if (str_detect(res_dir, 'sens')) {
     
     if (str_detect(res_dir, 'canada')) {
-      write_rds(res_orig, file = 'results/round2_fit/sens/canada/MLEs_flu.rds')
+      
+      if (str_detect(res_dir, 'no_int')) {
+        write_rds(res_orig, file = 'results/round2_fit/sens/canada/no_int/MLEs_flu.rds')
+      } else {
+        write_rds(res_orig, file = 'results/round2_fit/sens/canada/MLEs_flu.rds')
+      }
+      
     } else if (str_detect(res_dir, '/us/')) {
       write_rds(res_orig, file = 'results/round2_fit/sens/us/MLEs_flu.rds')
     } else {

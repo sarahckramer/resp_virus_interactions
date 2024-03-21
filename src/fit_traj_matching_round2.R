@@ -58,6 +58,13 @@ if (fit_us) {
 debug_bool <- FALSE
 vir2 <- 'rsv'
 
+if (fit_canada & sens != 'sinusoidal_forcing') {
+  sens2 <- sens
+  sens <- 'sinusoidal_forcing'
+} else {
+  sens2 <- ''
+}
+
 if (fit_canada | fit_us) {
   vir1 <- 'flu'
 } else {
@@ -496,7 +503,7 @@ if (search_type == 'round2_CIs') {
 }
 
 # Force no interaction?:
-if (sens == 'no_int') {
+if (sens == 'no_int' | sens2 == 'no_int') {
   
   estpars <- estpars[!(estpars %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
   true_estpars <- true_estpars[!(true_estpars %in% c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2'))]
