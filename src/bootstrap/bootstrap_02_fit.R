@@ -271,26 +271,26 @@ rm(synth_LIST)
 if (int_eff == 'susc') {
   
   if (sens == 'sinusoidal_forcing') {
-    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                        'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                        'delta1', 'd2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
     
     if (fit_us) {
-      shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                          'b1', 'b2', 'phi1', 'phi2')
+      shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                          'delta1', 'd2', 'b1', 'b2', 'phi1', 'phi2')
     }
     
   } else if (sens == 'h3_covar') {
-    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                        'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2',
                         'beta_h3')
   } else if (sens == 'no_ah') {
-    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                        'alpha', 'phi', 'eta_temp1', 'eta_temp2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                        'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2')
   } else if (sens == 'no_int') {
     shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   } else {
-    shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+    shared_estpars <- c('rho1', 'rho2', 'theta_lambda_I1', 'theta_lambda_I2', 'theta_lambda_T1', 'theta_lambda_T2',
+                        'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
   }
   
 } else if (int_eff == 'sev') {
