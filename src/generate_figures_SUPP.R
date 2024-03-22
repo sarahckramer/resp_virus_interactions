@@ -1118,12 +1118,12 @@ rm(p12a, p12b, p12c, p12d, fig12s, traj_no_int, seasons, vir2,
 file_list_hk <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'SUBTROPICAL', full.names = TRUE)
 file_list_can <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'TEMPERATE', full.names = TRUE)
 
-file_list_hk_red <- list.files('results/vaccine_simulation_study/simulations/fitcan/', pattern = 'SUBTROPICAL', full.names = TRUE)
-file_list_can_red <- list.files('results/vaccine_simulation_study/simulations/fitcan/', pattern = 'TEMPERATE', full.names = TRUE)
+file_list_hk_red <- list.files('results/vaccine_simulation_study/simulations/vacc_can/', pattern = 'SUBTROPICAL', full.names = TRUE)
+file_list_can_red <- list.files('results/vaccine_simulation_study/simulations/vacc_can/', pattern = 'TEMPERATE', full.names = TRUE)
 
 res_list <- vector('list', length(file_list_hk))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_hk[i]) %>% mutate(season = str_split(file_list_hk[i], '_')[[1]][5])
+  res_list[[i]] <- read_rds(file_list_hk[i]) %>% mutate(season = str_split(file_list_hk[i], '_')[[1]][str_detect(str_split(file_list_hk[i], '_')[[1]], 's1')])
 }
 res_hk <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -1132,7 +1132,7 @@ res_hk <- bind_rows(res_list) %>%
 
 res_list <- vector('list', length(file_list_can))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_can[i]) %>% mutate(season = str_split(file_list_can[i], '_')[[1]][5])
+  res_list[[i]] <- read_rds(file_list_can[i]) %>% mutate(season = str_split(file_list_can[i], '_')[[1]][str_detect(str_split(file_list_can[i], '_')[[1]], 's1')])
 }
 res_can <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -1141,7 +1141,7 @@ res_can <- bind_rows(res_list) %>%
 
 res_list <- vector('list', length(file_list_hk_red))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_hk_red[i]) %>% mutate(season = str_split(file_list_hk_red[i], '_')[[1]][5])
+  res_list[[i]] <- read_rds(file_list_hk_red[i]) %>% mutate(season = str_split(file_list_hk_red[i], '_')[[1]][str_detect(str_split(file_list_hk_red[i], '_')[[1]], 's1')])
 }
 res_hk_red <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -1150,7 +1150,7 @@ res_hk_red <- bind_rows(res_list) %>%
 
 res_list <- vector('list', length(file_list_can_red))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_can_red[i]) %>% mutate(season = str_split(file_list_can_red[i], '_')[[1]][5])
+  res_list[[i]] <- read_rds(file_list_can_red[i]) %>% mutate(season = str_split(file_list_can_red[i], '_')[[1]][str_detect(str_split(file_list_can_red[i], '_')[[1]], 's1')])
 }
 res_can_red <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -1179,8 +1179,8 @@ res_metrics <- res_metrics %>%
   mutate(vacc_cov = vacc_cov * 100)
 
 res_metrics <- res_metrics %>%
-  filter(!(climate == 'subtrop' & season == 's15-16') &
-           !(climate == 'temp' & season == 's12-13'))
+  filter(!(climate == 'subtrop' & season == 's18-19') &
+           !(climate == 'temp' & season == 's10-11'))
 
 upper_bound_ar <- max(res_metrics$ar2_impact)
 
@@ -1229,8 +1229,8 @@ p14a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hk
                        values = c(0, 1 / upper_bound_ar, 1),
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ', ', delta[vacc], ' from Hong Kong)')),
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ' from Hong Kong)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
 p_legend1 <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hk'),
@@ -1257,7 +1257,7 @@ p_legend1 <- ggplotGrob(p_legend1)$grobs[[which(sapply(ggplotGrob(p_legend1)$gro
 res_simA <- res %>%
   filter(climate == 'temp',
          scenario == 'hk',
-         season != 's12-13',
+         season != 's10-11',
          .id == 1,
          vacc_time == '0',
          vacc_cov == '0.5') %>%
@@ -1304,8 +1304,8 @@ p14b <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'ca
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ', ', delta[vacc], ' from Canada)')),
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ' from Canada)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
 p14c <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'hk'),
@@ -1324,14 +1324,14 @@ p14c <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ', ', delta[vacc], ' from Hong Kong)')),
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ' from Hong Kong)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
 
 res_simC <- res %>%
   filter(climate == 'subtrop',
          scenario == 'hk',
-         season != 's15-16',
+         season != 's18-19',
          .id == 1,
          vacc_time == '0',
          vacc_cov == '0.5') %>%
@@ -1366,20 +1366,248 @@ p14d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ', ', delta[vacc], ' from Canada)')),
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ' from Canada)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
 fig14s <- arrangeGrob(p14a, p14b, p14c, p14d,
                       arrangeGrob(p_legend1, p_legend2, layout_matrix = rbind(c(NA, 1, 2, NA)), widths = c(1.25, 2, 2, 1.25)),
                       nrow = 5, heights = c(10, 10, 10, 10, 2.5))
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS14.svg', fig14s, width = 13, height = 11)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS14.svg', fig14s, width = 13, height = 11.5)
 
 rm(fig14s, p14a, p14b, p14c, p14d, insetA, insetC, res, res_metrics, res_simA, res_simC, upper_bound_ar)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 15: Sensitivity analyses for the vaccine simulation study
+# Supplementary Figure 15: Impact of LAIV when interaction parameters from Canada are used
+file_list_hk <- list.files('results/vaccine_simulation_study/simulations/fit_can/', pattern = 'SUBTROPICAL', full.names = TRUE)
+file_list_can <- list.files('results/vaccine_simulation_study/simulations/fit_can/', pattern = 'TEMPERATE', full.names = TRUE)
+
+res_list <- vector('list', length(file_list_hk))
+for (i in 1:length(res_list)) {
+  res_list[[i]] <- read_rds(file_list_hk[i]) %>% mutate(season = str_split(file_list_hk[i], '_')[[1]][str_detect(str_split(file_list_hk[i], '_')[[1]], 's1')])
+}
+res_hk <- bind_rows(res_list) %>%
+  as_tibble() %>%
+  mutate(climate = 'subtrop',
+         scenario = 'fitcan')
+
+res_list <- vector('list', length(file_list_can))
+for (i in 1:length(res_list)) {
+  res_list[[i]] <- read_rds(file_list_can[i]) %>% mutate(season = str_split(file_list_can[i], '_')[[1]][str_detect(str_split(file_list_can[i], '_')[[1]], 's1')])
+}
+res_can <- bind_rows(res_list) %>%
+  as_tibble() %>%
+  mutate(climate = 'temp',
+         scenario = 'fitcan')
+
+rm(i, file_list_hk, file_list_can, res_list)
+
+res <- res_hk %>%
+  bind_rows(res_can)
+rm(res_hk, res_can)
+
+res_metrics <- res %>%
+  group_by(climate, season, vacc_cov, vacc_time, .id) %>%
+  summarise(ar1 = sum(H1), ar2 = sum(H2)) %>%
+  ungroup() %>%
+  group_by(climate, season, vacc_cov, vacc_time) %>%
+  summarise(ar1_impact = ar1[.id == 2] / ar1[.id == 1],
+            ar2_impact = ar2[.id == 2] / ar2[.id == 1]) %>%
+  ungroup()
+
+res_metrics <- res_metrics %>%
+  filter(vacc_cov <= 0.70) %>%
+  mutate(vacc_cov = vacc_cov * 100)
+
+res <- res %>%
+  filter((climate == 'subtrop' & season == 's18-19') |
+           (climate == 'temp' & season == 's10-11'))
+res_metrics <- res_metrics %>%
+  filter((climate == 'subtrop' & season == 's18-19') |
+           (climate == 'temp' & season == 's10-11'))
+
+file_list_hk <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'SUBTROPICAL', full.names = TRUE)
+
+res_list <- vector('list', length(file_list_hk))
+for (i in 1:length(res_list)) {
+  res_list[[i]] <- read_rds(file_list_hk[i]) %>% mutate(season = str_split(file_list_hk[i], '_')[[1]][str_detect(str_split(file_list_hk[i], '_')[[1]], 's1')])
+}
+res_hk_main <- bind_rows(res_list) %>%
+  as_tibble() %>%
+  mutate(climate = 'subtrop',
+         scenario = 'hk')
+
+rm(i, file_list_hk, res_list)
+
+upper_bound_ar <- res_hk_main %>%
+  filter(season == 's18-19') %>%
+  group_by(vacc_cov, vacc_time, .id) %>%
+  summarise(ar1 = sum(H1), ar2 = sum(H2)) %>%
+  ungroup() %>%
+  group_by(vacc_cov, vacc_time) %>%
+  summarise(ar1_impact = ar1[.id == 2] / ar1[.id == 1],
+            ar2_impact = ar2[.id == 2] / ar2[.id == 1]) %>%
+  pull(ar2_impact) %>%
+  max()
+rm(res_hk_main)
+
+p_legend1 <- ggplot(data = res_metrics %>% filter(climate == 'temp'),
+                    aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+  geom_tile() +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.key.width = unit(1.5, 'cm'),
+        legend.key.height = unit(0.7, 'cm'),
+        legend.position = 'bottom',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_fill_distiller(palette = 'RdBu',
+                       values = c(0, 1 / upper_bound_ar, 1),
+                       limits = c(0, upper_bound_ar),
+                       breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
+  labs(x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
+p_legend1 <- ggplotGrob(p_legend1)$grobs[[which(sapply(ggplotGrob(p_legend1)$grobs, function(x) x$name) == 'guide-box')]]
+
+# res_metrics %>%
+#   filter(climate == 'temp') %>%
+#   filter(ar2_impact == min(ar2_impact) |
+#            ar2_impact == max(ar2_impact))
+
+res_simA <- res %>%
+  filter(climate == 'temp') %>%
+  filter((vacc_cov == '0.7' & vacc_time == '0') | (vacc_cov == '0.7' & vacc_time == '19')) %>%
+  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
+  mutate(val = val * 100) %>%
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
+  mutate(vacc_time = factor(vacc_time, levels = c('19', '0')))
+
+p_legend2 <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
+  geom_line() +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'bottom') +
+  scale_color_brewer(palette = 'Dark2') +
+  scale_linetype(guide = 'none') +
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
+p_legend2 <- ggplotGrob(p_legend2)$grobs[[which(sapply(ggplotGrob(p_legend2)$grobs, function(x) x$name) == 'guide-box')]]
+
+p15a <- ggplot(data = res_metrics %>% filter(climate == 'temp'),
+               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+  geom_tile() +
+  geom_point(x = 19, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 70, shape = 17, size = 3, color = 'black', fill = 'black') +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.key.width = unit(1.2, 'cm'),
+        legend.key.height = unit(0.7, 'cm'),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_fill_distiller(palette = 'RdBu',
+                       values = c(0, 1 / upper_bound_ar, 1),
+                       limits = c(0, upper_bound_ar),
+                       breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 100, by = 10)) +
+  labs(title = 'Temperate (Interaction Params from Canada)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)',
+       fill = 'RR', tag = 'A')
+
+p15a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
+  geom_point(x = 52, y = 6.1, aes(shape = vacc_time), size = 3, col = 'black') +
+  facet_wrap(~ vacc_time, ncol = 1) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'none',
+        strip.text = element_blank()) +
+  scale_color_brewer(palette = 'Dark2') +
+  scale_linetype(guide = 'none') +
+  scale_shape_discrete(guide = 'none') +
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
+
+# res_metrics %>%
+#   filter(climate == 'subtrop') %>%
+#   filter(ar2_impact == min(ar2_impact) |
+#            ar2_impact == max(ar2_impact))
+
+p15b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop'),
+               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+  geom_tile() +
+  geom_point(x = 15, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 70, shape = 17, size = 3, color = 'black', fill = 'black') +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_fill_distiller(palette = 'RdBu',
+                       values = c(0, 1 / upper_bound_ar, 1),
+                       limits = c(0, upper_bound_ar),
+                       breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
+                       guide = 'none') +
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 100, by = 10)) +
+  labs(title = 'Subtropical (Interaction Params from Canada)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)',
+       fill = 'RR', tag = 'B')
+
+res_simB <- res %>%
+  filter(climate == 'subtrop') %>%
+  filter((vacc_cov == '0.7' & vacc_time == '0') | (vacc_cov == '0.7' & vacc_time == '15')) %>%
+  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
+  mutate(val = val * 100) %>%
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
+  mutate(vacc_time = factor(vacc_time, levels = c('15', '0')))
+
+p15b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
+  geom_point(x = 52, y = 1.85, aes(shape = vacc_time), size = 3, col = 'black', fill = 'black') +
+  facet_wrap(~ vacc_time, ncol = 1) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'none',
+        strip.text = element_blank()) +
+  scale_color_brewer(palette = 'Dark2') +
+  scale_linetype(guide = 'none') +
+  scale_shape_discrete(guide = 'none') +
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
+
+fig15s <- arrangeGrob(arrangeGrob(arrangeGrob(p15a, p15a_sim, nrow = 1, widths = c(5.5, 4.5)),
+                                  arrangeGrob(p15b, p15b_sim, nrow = 1, widths = c(5.5, 4.5)), nrow = 1),
+                      arrangeGrob(p_legend1, p_legend2, layout_matrix = rbind(c(NA, 1, 2, NA)), widths = c(3, 2, 2, 3)),
+                      nrow = 2, heights = c(12, 2.25))
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS15.svg', fig15s, width = 20, height = 5.432)
+
+rm(fig15s, p15a, p15a_sim, p15b, p15b_sim, p_legend1, p_legend2,
+   res, res_metrics, res_simA, res_simB, upper_bound_ar)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Supplementary Figure 16: Sensitivity analyses for the vaccine simulation study
 
 file_list_hk_deltaShort <- list.files('results/vaccine_simulation_study/simulations/deltavacc1month/', pattern = 'SUBTROPICAL', full.names = TRUE)
 file_list_can_deltaShort <- list.files('results/vaccine_simulation_study/simulations/deltavacc1month/', pattern = 'TEMPERATE', full.names = TRUE)
@@ -1405,7 +1633,8 @@ for (i in 1:length(res_df_LIST)) {
   res_list_can <- vector('list', length = length(all_files_LIST[[i]]))
   
   for (j in 1:length(res_list_can)) {
-    res_list_can[[j]] <- read_rds(all_files_LIST[[i]][j]) %>% mutate(season = str_split(all_files_LIST[[i]][j], '_')[[1]][5])
+    res_list_can[[j]] <- read_rds(all_files_LIST[[i]][j]) %>%
+      mutate(season = str_split(all_files_LIST[[i]][j], '_')[[1]][str_detect(str_split(all_files_LIST[[i]][j], '_')[[1]], 's1')])
   }
   
   res_temp <- bind_rows(res_list_can) %>%
@@ -1436,12 +1665,12 @@ res_metrics <- res_metrics %>%
   mutate(vacc_cov = vacc_cov * 100)
 
 res_metrics <- res_metrics %>%
-  filter((climate == 'subtrop' & season == 's15-16') |
-           (climate == 'temp' & season == 's12-13'))
+  filter((climate == 'subtrop' & season == 's18-19') |
+           (climate == 'temp' & season == 's10-11'))
 
 upper_bound_ar <- max(res_metrics$ar2_impact)
 
-p15a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'deltaShort'),
+p16a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'deltaShort'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1459,11 +1688,11 @@ p15a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'de
                        values = c(0, 1 / upper_bound_ar, 1),
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
   labs(title = expression(paste('Temperate (', delta[vacc], ' = 1 month)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
-p15b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaShort'),
+p16b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaShort'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1480,11 +1709,11 @@ p15b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
   labs(title = expression(paste('Subtropical (', delta[vacc], ' = 1 month)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
-p15c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'deltaLong'),
+p16c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'deltaLong'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1501,11 +1730,11 @@ p15c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'de
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
   labs(title = expression(paste('Temperate (', delta[vacc], ' = 6 months)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
 
-p15d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaLong'),
+p16d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'deltaLong'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1522,11 +1751,11 @@ p15d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
   labs(title = expression(paste('Subtropical (', delta[vacc], ' = 6 months)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
 
-p15e <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'effLow'),
+p16e <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'effLow'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1543,10 +1772,10 @@ p15e <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'ef
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
   labs(title = 'Temperate (VE = 60%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'E')
 
-p15f <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'effLow'),
+p16f <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'effLow'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1563,10 +1792,10 @@ p15f <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
   labs(title = 'Subtropical (VE = 60%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'F')
 
-p15g <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'effHigh'),
+p16g <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'effHigh'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1583,10 +1812,10 @@ p15g <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'ef
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
   labs(title = 'Temperate (VE = 95%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'G')
 
-p15h <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'effHigh'),
+p16h <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'effHigh'),
                aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
@@ -1603,17 +1832,17 @@ p15h <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 60, by = 10)) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), breaks = seq(10, 70, by = 10)) +
   labs(title = 'Subtropical (VE = 95%)', x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'H')
 
-fig15s <- (p15a + p15b) / (p15c + p15d) / (p15e + p15f) / (p15g + p15h) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS15.svg', fig15s, width = 10, height = 15)
+fig16s <- (p16a + p16b) / (p16c + p16d) / (p16e + p16f) / (p16g + p16h) + plot_layout(guides = 'collect') & theme(legend.position = 'bottom')
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS16.svg', fig16s, width = 10, height = 15)
 
-rm(fig15s, p15a, p15b, p15c, p15d, p15e, p15f, p15g, p15h, res, res_metrics, upper_bound_ar)
+rm(fig16s, p16a, p16b, p16c, p16d, p16e, p16f, p16g, p16h, res, res_metrics, upper_bound_ar)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 16: Comparison between observed data and synthetic data generated by the age-structured model
+# Supplementary Figure 17: Comparison between observed data and synthetic data generated by the age-structured model
 
 res_combined <- read_csv('data/age_structured_SA/synthetic_obs_combined.csv')
 seasons <- unique(res_combined$season)
@@ -1645,7 +1874,7 @@ res_combined_long <- res_combined_long %>%
   inner_join(hk_dat_long,
              by = c('time', 'season', 'virus'))
 
-fig16s <- ggplot(data = res_combined_long,
+fig17s <- ggplot(data = res_combined_long,
                  aes(x = time, color = virus)) +
   geom_point(aes(y = obs)) +
   geom_line(aes(y = synth)) +
@@ -1662,13 +1891,13 @@ fig16s <- ggplot(data = res_combined_long,
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Week #', y = '# of Cases', color = 'Virus')
 
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS16.svg', width = 14.5, height = 7.5, fig16s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS17.svg', width = 14.5, height = 7.5, fig17s)
 
-rm(fig16s, res_combined, hk_dat, hk_dat_temp, yr, hk_dat_long, res_combined_long)
+rm(fig17s, res_combined, hk_dat, hk_dat_temp, yr, hk_dat_long, res_combined_long)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 17: Age-structured synthetic data
+# Supplementary Figure 18: Age-structured synthetic data
 
 res_all_ages <- read_csv('data/age_structured_SA/synthetic_obs_by_age.csv')
 covar_all_ages <- read_csv('data/age_structured_SA/synthetic_covariate_data.csv')
@@ -1707,7 +1936,7 @@ res_all_ages <- res_all_ages %>%
   filter(!(season == 's16-17' & time == 8)) %>%
   mutate(time = if_else(season == 's16-17' & time > 7, time - 1, time))
 
-fig17s <- ggplot(data = res_all_ages, aes(x = time, y = val, col = age)) +
+fig18s <- ggplot(data = res_all_ages, aes(x = time, y = val, col = age)) +
   geom_line() +
   facet_grid(season ~ virus, scales = 'free') +
   theme_classic() +
@@ -1722,13 +1951,13 @@ fig17s <- ggplot(data = res_all_ages, aes(x = time, y = val, col = age)) +
   scale_color_viridis(discrete = TRUE) +
   labs(x = 'Week #', y = '% Positive', color = 'Age')
 
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS17.svg', fig17s, width = 9.5, height = 10.5)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS18.svg', fig18s, width = 9.5, height = 10.5)
 
-rm(fig17s, res_all_ages, covar_all_ages)
+rm(fig18s, res_all_ages, covar_all_ages)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 18: Circulation of rhinovirus over time, vs. influenza and RSV
+# Supplementary Figure 19: Circulation of rhinovirus over time, vs. influenza and RSV
 
 dat_hk <- read_csv('data/formatted/dat_hk.csv')
 
@@ -1774,7 +2003,7 @@ x_lab_breaks_can <- dat_can %>% filter(week == 1) %>% pull(time)
 season_breaks_hk <- dat_hk %>% filter(Week == 46) %>% pull(Time)
 season_breaks_can <- dat_can %>% filter(week == 35) %>% pull(time)
 
-p18a <- ggplot(data = dat_hk_pos %>%
+p19a <- ggplot(data = dat_hk_pos %>%
                  filter(virus %in% c('Influenza (A(H1N1) + B)    ', 'RSV  ', 'Rhinovirus')),
                aes(x = Time, y = perc_pos, col = virus)) +
   geom_line() + theme_classic() +
@@ -1790,9 +2019,9 @@ p18a <- ggplot(data = dat_hk_pos %>%
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'A') +
   geom_vline(xintercept = season_breaks_hk, linetype = 'dashed')
-p18a <- reposition_legend(p18a, position = 'top right', plot = FALSE)
+p19a <- reposition_legend(p19a, position = 'top right', plot = FALSE)
 
-p18b <- ggplot(data = dat_can_pos %>%
+p19b <- ggplot(data = dat_can_pos %>%
                  filter(virus %in% c('Influenza    ', 'RSV  ', 'Rhinovirus')),
                aes(x = time, y = perc_pos, col = virus)) +
   geom_line() + theme_classic() +
@@ -1808,17 +2037,17 @@ p18b <- ggplot(data = dat_can_pos %>%
   scale_color_brewer(palette = 'Dark2') +
   labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'B') +
   geom_vline(xintercept = season_breaks_can[2:length(season_breaks_can)], linetype = 'dashed')
-p18b <- reposition_legend(p18b, position = 'top right', plot = FALSE)
+p19b <- reposition_legend(p19b, position = 'top right', plot = FALSE)
 
-fig18s <- arrangeGrob(p18a, p18b, ncol = 1)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS18.svg', width = 9.5, height = 6.75, fig18s)
+fig19s <- arrangeGrob(p19a, p19b, ncol = 1)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS19.svg', width = 9.5, height = 6.75, fig19s)
 
-rm(fig18s, p18a, p18b, dat_hk, dat_can, dat_hk_pos, dat_can_pos,
+rm(fig19s, p19a, p19b, dat_hk, dat_can, dat_hk_pos, dat_can_pos,
    x_lab_breaks_hk, x_lab_breaks_can, season_breaks_hk, season_breaks_can)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Supplementary Figure 19: MLE for shared parameters for a variety of sensitivity analyses
+# Supplementary Figure 20: MLE for shared parameters for a variety of sensitivity analyses
 
 res_main <- read_csv('results/MLE_plus_95CI_from_bootstrapping_HPDI.csv') %>%
   mutate(condition = 'Main')
@@ -1880,7 +2109,7 @@ res <- res %>%
 xlabels <- levels(res$condition)
 xlabels[6] <- expression(R[20] + R[120] == 0)
 
-fig19s <- ggplot(data = res, aes(x = condition, y = mle, ymin = lower, ymax = upper)) +
+fig20s <- ggplot(data = res, aes(x = condition, y = mle, ymin = lower, ymax = upper)) +
   geom_pointrange(size = 0.25) +
   theme_classic() +
   theme(axis.title = element_text(size = 14),
@@ -1890,7 +2119,7 @@ fig19s <- ggplot(data = res, aes(x = condition, y = mle, ymin = lower, ymax = up
   facet_wrap(~ parameter, scales = 'free_y', ncol = 2, labeller = 'label_parsed') +
   scale_x_discrete(labels = xlabels) +
   labs(x = 'Analysis', y = 'Parameter Value')
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS19.svg', width = 7, height = 12, fig19s)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS20.svg', width = 7, height = 12, fig20s)
 
 # ---------------------------------------------------------------------------------------------------------------------
 

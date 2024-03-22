@@ -630,12 +630,12 @@ rm(list = ls())
 file_list_hk <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'SUBTROPICAL', full.names = TRUE)
 file_list_can <- list.files('results/vaccine_simulation_study/simulations/main/', pattern = 'TEMPERATE', full.names = TRUE)
 
-file_list_hk_red <- list.files('results/vaccine_simulation_study/simulations/fitcan/', pattern = 'SUBTROPICAL', full.names = TRUE)
-file_list_can_red <- list.files('results/vaccine_simulation_study/simulations/fitcan/', pattern = 'TEMPERATE', full.names = TRUE)
+file_list_hk_red <- list.files('results/vaccine_simulation_study/simulations/vacc_can/', pattern = 'SUBTROPICAL', full.names = TRUE)
+file_list_can_red <- list.files('results/vaccine_simulation_study/simulations/vacc_can/', pattern = 'TEMPERATE', full.names = TRUE)
 
 res_list <- vector('list', length(file_list_hk))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_hk[i]) %>% mutate(season = str_split(file_list_hk[i], '_')[[1]][5])
+  res_list[[i]] <- read_rds(file_list_hk[i]) %>% mutate(season = str_split(file_list_hk[i], '_')[[1]][str_detect(str_split(file_list_hk[i], '_')[[1]], 's1')])
 }
 res_hk <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -644,7 +644,7 @@ res_hk <- bind_rows(res_list) %>%
 
 res_list <- vector('list', length(file_list_can))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_can[i]) %>% mutate(season = str_split(file_list_can[i], '_')[[1]][5])
+  res_list[[i]] <- read_rds(file_list_can[i]) %>% mutate(season = str_split(file_list_can[i], '_')[[1]][str_detect(str_split(file_list_can[i], '_')[[1]], 's1')])
 }
 res_can <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -653,7 +653,7 @@ res_can <- bind_rows(res_list) %>%
 
 res_list <- vector('list', length(file_list_hk_red))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_hk_red[i]) %>% mutate(season = str_split(file_list_hk_red[i], '_')[[1]][5])
+  res_list[[i]] <- read_rds(file_list_hk_red[i]) %>% mutate(season = str_split(file_list_hk_red[i], '_')[[1]][str_detect(str_split(file_list_hk_red[i], '_')[[1]], 's1')])
 }
 res_hk_red <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -662,7 +662,7 @@ res_hk_red <- bind_rows(res_list) %>%
 
 res_list <- vector('list', length(file_list_can_red))
 for (i in 1:length(res_list)) {
-  res_list[[i]] <- read_rds(file_list_can_red[i]) %>% mutate(season = str_split(file_list_can_red[i], '_')[[1]][5])
+  res_list[[i]] <- read_rds(file_list_can_red[i]) %>% mutate(season = str_split(file_list_can_red[i], '_')[[1]][str_detect(str_split(file_list_can_red[i], '_')[[1]], 's1')])
 }
 res_can_red <- bind_rows(res_list) %>%
   as_tibble() %>%
@@ -691,11 +691,11 @@ res_metrics <- res_metrics %>%
   mutate(vacc_cov = vacc_cov * 100)
 
 res <- res %>%
-  filter((climate == 'subtrop' & season == 's15-16') |
-           (climate == 'temp' & season == 's12-13'))
+  filter((climate == 'subtrop' & season == 's18-19') |
+           (climate == 'temp' & season == 's10-11'))
 res_metrics <- res_metrics %>%
-  filter((climate == 'subtrop' & season == 's15-16') |
-           (climate == 'temp' & season == 's12-13'))
+  filter((climate == 'subtrop' & season == 's18-19') |
+           (climate == 'temp' & season == 's10-11'))
 
 upper_bound_ar <- max(res_metrics$ar2_impact)
 
@@ -728,7 +728,7 @@ p_legend1 <- ggplotGrob(p_legend1)$grobs[[which(sapply(ggplotGrob(p_legend1)$gro
 res_simA <- res %>%
   filter(climate == 'temp',
          scenario == 'hk') %>%
-  filter((vacc_cov == '0.3' & vacc_time == '0') | (vacc_cov == '0.7' & vacc_time == '19')) %>%
+  filter((vacc_cov == '0.25' & vacc_time == '0') | (vacc_cov == '0.7' & vacc_time == '19')) %>%
   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
   mutate(val = val * 100) %>%
   mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
@@ -752,7 +752,7 @@ p4a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hk'
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   geom_point(x = 19, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 30, shape = 17, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 25, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
   theme(title = element_text(size = 12),
         axis.title = element_text(size = 14),
@@ -769,13 +769,13 @@ p4a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hk'
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25))) +
   scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 70, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ', ', delta[vacc], ' from Hong Kong)')),
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ' from Hong Kong)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'A')
 
 p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
   geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 8.0, aes(shape = vacc_time), size = 3, col = 'black') +
+  geom_point(x = 52, y = 6.0, aes(shape = vacc_time), size = 3, col = 'black') +
   facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
   theme(title = element_text(size = 12),
@@ -789,66 +789,16 @@ p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id
   scale_linetype(guide = 'none') +
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
-
-p4b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'hk'),
-              aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
-  geom_tile() +
-  geom_point(x = 15, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 40, shape = 17, size = 3, color = 'black', fill = 'black') +
-  theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'none',
-        plot.tag = element_text(size = 22),
-        plot.tag.position = c(0.01, 0.98)) +
-  scale_fill_distiller(palette = 'RdBu',
-                       values = c(0, 1 / upper_bound_ar, 1),
-                       limits = c(0, upper_bound_ar),
-                       breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
-                       guide = 'none') +
-  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ', ', delta[vacc], ' from Hong Kong)')),
-       x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
 # res_metrics %>%
 #   filter(climate == 'subtrop' & scenario == 'hk') %>%
 #   filter(ar2_impact == min(ar2_impact) |
 #            ar2_impact == max(ar2_impact))
 
-res_simB <- res %>%
-  filter(climate == 'subtrop',
-         scenario == 'hk') %>%
-  filter((vacc_cov == '0.4' & vacc_time == '0') | (vacc_cov == '0.7' & vacc_time == '15')) %>%
-  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
-  mutate(val = val * 100) %>%
-  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
-  mutate(vacc_time = factor(vacc_time, levels = c('15', '0')))
-
-p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id)) +
-  geom_line() +
-  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 4.25, aes(shape = vacc_time), size = 3, col = 'black', fill = 'black') +
-  facet_wrap(~ vacc_time, ncol = 1) +
-  theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'none',
-        strip.text = element_blank()) +
-  scale_color_brewer(palette = 'Dark2') +
-  scale_linetype(guide = 'none') +
-  scale_shape_discrete(guide = 'none') +
-  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
-
-p4c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'canada'),
+p4b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'hk'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 19, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 14, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
   geom_point(x = 0, y = 70, shape = 17, size = 3, color = 'black', fill = 'black') +
   theme_classic() +
   theme(title = element_text(size = 12),
@@ -864,29 +814,23 @@ p4c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'can
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ', ', delta[vacc], ' from Canada)')),
-       x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 70, by = 10)) +
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], 'from Hong Kong)')),
+       x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'B')
 
-# res_metrics %>%
-#   filter(climate == 'temp' & scenario == 'canada') %>%
-#   filter(ar2_impact == min(ar2_impact) |
-#            ar2_impact == max(ar2_impact))
-
-res_simC <- res %>%
-  filter(climate == 'temp',
-         scenario == 'canada',
-         vacc_cov == 0.7,
-         vacc_time %in% c('19', '0')) %>%
+res_simB <- res %>%
+  filter(climate == 'subtrop',
+         scenario == 'hk') %>%
+  filter((vacc_cov == '0.7' & vacc_time == '0') | (vacc_cov == '0.7' & vacc_time == '14')) %>%
   pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
   mutate(val = val * 100) %>%
   mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
-  mutate(vacc_time = factor(vacc_time, levels = c('19', '0')))
+  mutate(vacc_time = factor(vacc_time, levels = c('14', '0')))
 
-p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id)) +
+p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
   geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 8.75, aes(shape = vacc_time), size = 3, col = 'black') +
+  geom_point(x = 52, y = 2.8, aes(shape = vacc_time), size = 3, col = 'black', fill = 'black') +
   facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
   theme(title = element_text(size = 12),
@@ -901,6 +845,66 @@ p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id
   scale_shape_discrete(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
 
+# res_metrics %>%
+#   filter(climate == 'temp' & scenario == 'canada') %>%
+#   filter(ar2_impact == min(ar2_impact) |
+#            ar2_impact == max(ar2_impact))
+
+p4c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'canada'),
+              aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
+  geom_tile() +
+  geom_point(x = 20, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 30, shape = 17, size = 3, color = 'black', fill = 'black') +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'none',
+        plot.tag = element_text(size = 22),
+        plot.tag.position = c(0.01, 0.98)) +
+  scale_fill_distiller(palette = 'RdBu',
+                       values = c(0, 1 / upper_bound_ar, 1),
+                       limits = c(0, upper_bound_ar),
+                       breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
+                       guide = 'none') +
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 70, by = 10)) +
+  labs(title = expression(paste('Temperate (', theta[lambda[vacc]], ' from Canada)')),
+       x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'C')
+
+res_simC <- res %>%
+  filter(climate == 'temp',
+         scenario == 'canada') %>%
+  filter((vacc_cov == '0.3' & vacc_time == '0') | (vacc_cov == '0.7' & vacc_time == '20')) %>%
+  pivot_longer(H1:H2, names_to = 'Virus', values_to = 'val') %>%
+  mutate(val = val * 100) %>%
+  mutate(Virus = if_else(Virus == 'H1', 'Influenza', 'RSV')) %>%
+  mutate(vacc_time = factor(vacc_time, levels = c('20', '0')))
+
+p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
+  geom_point(x = 52, y = 6.0, aes(shape = vacc_time), size = 3, col = 'black') +
+  facet_wrap(~ vacc_time, ncol = 1) +
+  theme_classic() +
+  theme(title = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = 'none',
+        strip.text = element_blank()) +
+  scale_color_brewer(palette = 'Dark2') +
+  scale_linetype(guide = 'none') +
+  scale_shape_discrete(guide = 'none') +
+  labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
+
+# res_metrics %>%
+#   filter(climate == 'subtrop' & scenario == 'canada') %>%
+#   filter(ar2_impact == min(ar2_impact) |
+#            ar2_impact == max(ar2_impact))
+  
 p4d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'canada'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
@@ -920,14 +924,9 @@ p4d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == '
                        limits = c(0, upper_bound_ar),
                        breaks = c(0, 0.25, 0.5, 0.75, seq(1.0, upper_bound_ar, by = 0.25)),
                        guide = 'none') +
-  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 60, by = 10)) +
-  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ', ', delta[vacc], ' from Canada)')),
+  scale_x_continuous(expand = c(0.01, 0)) + scale_y_continuous(expand = c(0.01, 0), breaks = seq(10, 70, by = 10)) +
+  labs(title = expression(paste('Subtropical (', theta[lambda[vacc]], ' from Canada)')),
        x = 'Week of Vaccination', y = 'Vaccine Coverage (%)', fill = 'RR', tag = 'D')
-
-# res_metrics %>%
-#   filter(climate == 'subtrop' & scenario == 'canada') %>%
-#   filter(ar2_impact == min(ar2_impact) |
-#            ar2_impact == max(ar2_impact))
 
 res_simD <- res %>%
   filter(climate == 'subtrop',
@@ -942,7 +941,7 @@ res_simD <- res %>%
 p4d_sim <- ggplot(data = res_simD, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
   geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 3.8, aes(shape = vacc_time), size = 3, col = 'black') +
+  geom_point(x = 52, y = 1.8, aes(shape = vacc_time), size = 3, col = 'black') +
   facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
   theme(title = element_text(size = 12),
