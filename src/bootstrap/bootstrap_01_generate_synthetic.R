@@ -12,7 +12,7 @@ library(tidyverse)
 
 # Set key parameters:
 n <- 500 # How many synthetic datasets to create?
-sens <- 'main'
+sens <- 'susc_plus_sev'
 fit_canada <- FALSE
 fit_us <- FALSE
 
@@ -63,6 +63,9 @@ if (sens == 'sinusoidal_forcing') {
                       'alpha', 'phi', 'eta_temp1', 'eta_temp2')
 } else if (sens == 'no_int') {
   shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+} else if (sens == 'susc_plus_sev') {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
+                      'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 } else {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                       'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')

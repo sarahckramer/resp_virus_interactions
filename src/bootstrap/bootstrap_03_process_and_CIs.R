@@ -26,6 +26,8 @@ if (str_detect(file_list[[1]], 'sinusoidal')) {
   sens <- 'no_int'
 } else if (str_detect(file_list[[1]], 'rhino_covar')) {
   sens <- 'rhino_covar'
+} else if (str_detect(file_list[[1]], 'susc_plus_sev')) {
+  sens <- 'susc_plus_sev'
 } else {
   sens <- 'main'
 }
@@ -205,6 +207,11 @@ if (fit_canada) {
       select(-beta_rhino)
   }
   
+  if (sens == 'susc_plus_sev') {
+    res_df_unit <- res_df_unit %>%
+      select(-c(theta_rho1, theta_rho2))
+  }
+  
 }
 
 res_df_unit <- res_df_unit %>%
@@ -313,6 +320,11 @@ if (fit_canada) {
   if (sens == 'rhino_covar') {
     mle_unit <- mle_unit %>%
       select(-beta_rhino)
+  }
+  
+  if (sens == 'susc_plus_sev') {
+    mle_unit <- mle_unit %>%
+      select(-c(theta_rho1, theta_rho2))
   }
   
 }

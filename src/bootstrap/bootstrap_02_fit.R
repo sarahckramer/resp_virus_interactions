@@ -296,6 +296,9 @@ if (int_eff == 'susc') {
 } else if (int_eff == 'sev') {
   shared_estpars <- c('rho1', 'rho2', 'theta_rho1', 'theta_rho2', 'delta1', 'd2',
                       'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+} else if (int_eff == 'both') {
+  shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'theta_rho1', 'theta_rho2',
+                      'delta1', 'd2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 } else {
   stop('Unrecognized int_eff value.')
 }
