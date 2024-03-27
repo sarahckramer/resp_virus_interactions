@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Set directory where results from round2 fits are stored:
-res_dir <- 'results/round2_fit/sens/hk_plus_canada/round2_1_cont2/'
+res_dir <- 'results/round2_fit/sens/hk_plus_canada/round2_1_/'
 
 # Which round of fits?:
 which_round <- str_split(res_dir, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir, '_')[[1]])))]
@@ -160,6 +160,21 @@ load_and_format_mega_results <- function(filepath) {
   pars_top$hk_rho2[pars_top$hk_rho2 == 1.0] <- NA
   pars_top$can_rho2[pars_top$can_rho2 == 1.0] <- NA
   
+  if (str_detect(filepath, 'hk_plus_can')) {
+    
+    i0_col_names <- pars_top %>% select(contains('I10') | contains('I20')) %>% names()
+    r0_col_names <- pars_top %>% select(contains('R10')| contains('R20')| contains('R120')) %>% names()
+    
+    for (nm in i0_col_names) {
+      pars_top[, nm][pars_top[, nm] > 0.1] <- NA
+    }
+    
+    # for (nm in r0_col_names) {
+    #   pars_top[, nm][pars_top[, nm] == 1.0] <- NA
+    # }
+    
+  }
+  
   # Since phi=0 is equivalent to phi=52.25, don't use full range; transform so that we can select from only best-supported range:
   par(mfrow = c(2, 2))
   hist(pars_top$hk_phi, breaks = 50)
@@ -173,20 +188,20 @@ load_and_format_mega_results <- function(filepath) {
   # If using sinusoidal forcing, do the same for phi1 and phi2:
   if ('can_phi1' %in% names(pars_top)) {
     
-    par(mfrow = c(4, 2))
-    hist(pars_top$hk_phi1, breaks = 50)
-    hist(pars_top$hk_phi2, breaks = 50)
+    par(mfrow = c(2, 2))
+    # hist(pars_top$hk_phi1, breaks = 50)
+    # hist(pars_top$hk_phi2, breaks = 50)
     hist(pars_top$can_phi1, breaks = 50)
     hist(pars_top$can_phi2, breaks = 50)
     
     pars_top <- pars_top %>%
-      mutate(hk_phi1 = if_else(hk_phi1 < 5, hk_phi1 + 52.25, hk_phi1),
-             hk_phi2 = if_else(hk_phi2 < 5, hk_phi2 + 52.25, hk_phi2),
-             can_phi1 = if_else(can_phi1 < 5, can_phi1 + 52.25, can_phi1),
+      # mutate(hk_phi1 = if_else(hk_phi1 < 5, hk_phi1 + 52.25, hk_phi1),
+      #        hk_phi2 = if_else(hk_phi2 < 5, hk_phi2 + 52.25, hk_phi2)) %>%
+      mutate(can_phi1 = if_else(can_phi1 < 5, can_phi1 + 52.25, can_phi1),
              can_phi2 = if_else(can_phi2 < 5, can_phi2 + 52.25, can_phi2))
     
-    hist(pars_top$hk_phi1, breaks = 50)
-    hist(pars_top$hk_phi2, breaks = 50)
+    # hist(pars_top$hk_phi1, breaks = 50)
+    # hist(pars_top$hk_phi2, breaks = 50)
     hist(pars_top$can_phi1, breaks = 50)
     hist(pars_top$can_phi2, breaks = 50)
     
@@ -209,10 +224,11 @@ if (sens == 'no_rsv_immune') {
 }
 
 global_estpars <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
-shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2', 'b1', 'b2', 'phi1', 'phi2')
+shared_estpars_hk <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+shared_estpars_can <- c('rho1', 'rho2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
 true_estpars <- c(global_estpars, shared_estpars, unit_estpars)
 
-sens <- 'sinusoidal_forcing'
 source('src/functions/setup_global_likelilhood.R')
 
 traj_list <- lapply(1:length(c(seasons_hk, seasons_can)), function(ix) {
@@ -221,19 +237,19 @@ traj_list <- lapply(1:length(c(seasons_hk, seasons_can)), function(ix) {
     
     pars_temp <- res_orig %>%
       select(all_of(global_estpars),
-             paste0('hk_', shared_estpars),
+             paste0('hk_', shared_estpars_hk),
              paste0(seasons_hk[ix], '_hk_', unit_estpars))
+    names(pars_temp) <- c(global_estpars, shared_estpars_hk, unit_estpars)
     
   } else {
     
     pars_temp <- res_orig %>%
       select(all_of(global_estpars),
-             paste0('can_', shared_estpars),
+             paste0('can_', shared_estpars_can),
              paste0(seasons_can[ix - length(seasons_hk)], '_can_', unit_estpars))
+    names(pars_temp) <- c(global_estpars, shared_estpars_can, unit_estpars)
     
   }
-  
-  names(pars_temp) <- true_estpars
   
   p_mat <- parmat(coef(po_list[[ix]]), nrep = nrow(pars_temp))
   for (param in names(pars_temp)) {

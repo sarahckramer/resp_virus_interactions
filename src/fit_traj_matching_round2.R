@@ -18,7 +18,8 @@ sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 which_round <- as.integer(Sys.getenv("WHICHROUND")); print(which_round)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 continue_search <- as.logical(Sys.getenv("CONTINUESEARCH")); print(continue_search)
-sens <- as.character(Sys.getenv("SENS")); print(sens)
+sens1 <- as.character(Sys.getenv("SENS1")); print(sens1)
+sens2 <- as.character(Sys.getenv("SENS2")); print(sens2)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -26,7 +27,9 @@ sens <- as.character(Sys.getenv("SENS")); print(sens)
 # sobol_size <- 10
 # which_round <- 1
 # search_type <- 'round1_CIs'
-# sens <- 'sinusoidal_forcing' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
+# continue_search <- FALSE
+# sens1 <- 'main'
+# sens2 <- 'sinusoidal_forcing'
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -248,12 +251,12 @@ back_transform_params <- function(trans_vals, po1, po2, seas1, seas2, params_all
     if (i == 'hk') {
       
       coef(po1, names(trans_vals_shared), transform = TRUE) <- trans_vals_shared
-      orig_vals_shared <- coef(po1, params_shared)
+      orig_vals_shared <- coef(po1, names(trans_vals_shared))
       
     } else if (i == 'can') {
       
       coef(po2, names(trans_vals_shared), transform = TRUE) <- trans_vals_shared
-      orig_vals_shared <- coef(po2, params_shared)
+      orig_vals_shared <- coef(po2, names(trans_vals_shared))
       
     }
     
@@ -312,17 +315,20 @@ for (yr_index in 1:length(po_list)) {
     yr <- seasons_hk[yr_index]
     fit_canada <- FALSE
     vir1 <- 'flu_h1_plus_b'
+    sens <- sens1
     
   } else {
     
     yr <- seasons_can[yr_index - length(seasons_hk)]
     fit_canada <- TRUE
     vir1 <- 'flu'
+    sens <- sens2
     
   }
   
   print(fit_canada)
   print(yr)
+  print(sens)
   
   # Load data and create pomp object:
   source('src/resp_interaction_model.R')
@@ -347,13 +353,12 @@ expect_true(all(!lapply(po_list, length) == 0))
 
 # Choose parameters to estimate:
 global_estpars <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
-shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2', 'b1', 'b2', 'phi1', 'phi2')
+shared_estpars_hk <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+shared_estpars_can <- c('rho1', 'rho2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
-shared_sp_estpars <- c()
-for (i in c('hk', 'can')) {
-  shared_sp_estpars <- c(shared_sp_estpars, paste(i, shared_estpars, sep = '_'))
-}
+shared_sp_estpars <- c(paste('hk', shared_estpars_hk, sep = '_'), paste('can', shared_estpars_can, sep = '_'))
 
 unit_sp_estpars <- c()
 for (i in 1:length(seasons_hk)) {
@@ -398,89 +403,30 @@ start_range <- start_range %>%
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Get 95% CI from round 1 for unit params:
-tj_res_list_hk <- read_rds('results/round1_fitsharedFALSE/hk/traj_match_round1_byvirseas_TOP.rds')
-tj_res_list_can <- read_rds('results/round1_fitsharedFALSE/canada/traj_match_round1_byvirseas_TOP.rds')
-
-ci_list <- vector('list', length(c(seasons_hk, seasons_can)))
-
-for (i in 1:length(ci_list)) {
-  
-  if (i <= length(seasons_hk)) {
-    
-    yr <- seasons_hk[i]
-    tj_res_temp <- tj_res_list_hk[[which(str_detect(names(tj_res_list_hk), yr))]] %>%
-      select(all_of(unit_estpars)) %>% na.omit()
-    
-  } else {
-    
-    yr <- seasons_can[i - length(seasons_hk)]
-    tj_res_temp <- tj_res_list_can[[which(str_detect(names(tj_res_list_can), yr))]] %>%
-      select(all_of(unit_estpars)) %>% na.omit()
-    
-  }
-  
-  ci_temp <- as.data.frame(rbind(summarise(tj_res_temp, across(.cols = everything(), min)),
-                                 summarise(tj_res_temp, across(.cols = everything(), max))))
-  
-  # Check that initial conditions can't sum to >1:
-  sums <- ci_temp %>% select(I10:R120) %>% rowSums()
-  
-  if (sums[1] > 1.0) {
-    print('Lower bounds sum to more than 1!')
-    stop()
-  }
-  
-  if (sums[2] > 1.0) {
-    
-    # Reduce the upper bounds of R10/R20/R120 proportionally:
-    orig_upper_bounds <- ci_temp[2, ] %>% select(R10:R120)
-    red_needed <- sums[2] - 0.9999999
-    new_upper_bounds <- orig_upper_bounds - (red_needed * (orig_upper_bounds / sum(orig_upper_bounds)))
-    
-    # Ensure upper bounds still greater than lower:
-    orig_lower_bounds <- ci_temp[1, ] %>% select(R10:R120)
-    expect_true(all(new_upper_bounds > orig_lower_bounds))
-    
-    # Ensure upper bounds now sum to 1 or less:
-    ci_temp[2, c('R10', 'R20', 'R120')] <- new_upper_bounds
-    expect_lt(ci_temp[2, ] %>% select(I10:R120) %>% sum(), 1.0)
-    
-  }
-  
-  # Store in list:
-  ci_list[[i]] <- ci_temp
-}
-rm(i)
-
-# ---------------------------------------------------------------------------------------------------------------------
-
 # Get data frame of all ranges:
 if (search_type == 'round2_CIs') {
   
-  start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals_H1_plus_B.rds'))
+  start_range_hk <- read_rds('results/round2_CIs/round2CI_startvals_hk.rds')
+  start_range_can <- read_rds('results/round2_CIs/round2CI_startvals_can.rds')
   
-} else {
+  names(start_range_hk)[!names(start_range_hk) %in% shared_estpars] <- str_replace(names(start_range_hk)[!names(start_range_hk) %in% shared_estpars], '_', '_hk_')
+  names(start_range_hk)[names(start_range_hk) %in% shared_estpars] <- paste('hk', names(start_range_hk)[names(start_range_hk) %in% shared_estpars], sep = '_')
   
-  for (i in 1:length(ci_list)) {
-    
-    start_range_temp <- ci_list[[i]]
-    
-    if (i <= length(seasons_hk)) {
-      names(start_range_temp) <- paste(seasons_hk[i], 'hk', unit_estpars, sep = '_')
-    } else {
-      names(start_range_temp) <- paste(seasons_can[i - length(seasons_hk)], 'can', unit_estpars, sep = '_')
-    }
-    
-    start_range <- start_range %>%
-      bind_cols(start_range_temp)
-    
-    rm(start_range_temp)
-    
-  }
-  rm(i)
+  names(start_range_can)[!names(start_range_can) %in% shared_estpars] <- str_replace(names(start_range_can)[!names(start_range_can) %in% shared_estpars], '_', '_can_')
+  names(start_range_can)[names(start_range_can) %in% shared_estpars] <- paste('can', names(start_range_can)[names(start_range_can) %in% shared_estpars], sep = '_')
+  
+  start_range_temp <- cbind(start_range_hk, start_range_can)
+  rm(start_range_hk, start_range_can)
+  
+  start_range <- start_range %>%
+    select(theta_lambda1:d2) %>%
+    bind_cols(start_range_temp)
   
   start_range <- start_range[, estpars]
+  
+} else if (search_type == 'round3_CIs') {
+  
+  start_range <- read_rds(paste0('results/round2_CIs/from_2_', which_round - 1, '/round2CI_startvals.rds'))
   
 }
 
@@ -514,15 +460,13 @@ if (continue_search) {
                                upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
                                nseq = sobol_size)
   
-  if (search_type == 'round2_CIs') {
+  if (search_type %in% c('round2_CIs', 'round3_CIs')) {
     start_values <- start_values %>%
-      mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
+      mutate(hk_phi = if_else(hk_phi > 52.25, hk_phi - 52.25, hk_phi),
+             can_phi = if_else(can_phi > 52.25, can_phi - 52.25, can_phi),
+             can_phi1 = if_else(can_phi1 > 52.25, can_phi1 - 52.25, can_phi1),
+             can_phi2 = if_else(can_phi2 > 52.25, can_phi2 - 52.25, can_phi2))
     
-    if ('phi1' %in% names(start_values)) {
-      start_values <- start_values %>%
-        mutate(phi1 = if_else(phi1 > 52.25, phi1 - 52.25, phi1),
-               phi2 = if_else(phi2 > 52.25, phi2 - 52.25, phi2))
-    }
   }
   
   # Check that starting values and estpars are correct:

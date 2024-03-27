@@ -18,11 +18,12 @@ Ri_max1 <- 2.0
 Ri_max2 <- 3.0
 d2_max <- 10.0
 
-if (!exists('sens')) {
-  sens <- 'main'
+if (!exists('sens1')) {
+  sens1 <- 'main'
+  sens2 <- 'sinusoidal_forcing'
 }
 
-if (sens == 'less_circ_h3') {
+if (sens1 == 'less_circ_h3') {
   seasons_hk <- c('s17-18', 's18-19')
 }
 
@@ -233,12 +234,12 @@ back_transform_params <- function(trans_vals, po1, po2, seas1, seas2, params_all
     if (i == 'hk') {
       
       coef(po1, names(trans_vals_shared), transform = TRUE) <- trans_vals_shared
-      orig_vals_shared <- coef(po1, params_shared)
+      orig_vals_shared <- coef(po1, names(trans_vals_shared))
       
     } else if (i == 'can') {
       
       coef(po2, names(trans_vals_shared), transform = TRUE) <- trans_vals_shared
-      orig_vals_shared <- coef(po2, params_shared)
+      orig_vals_shared <- coef(po2, names(trans_vals_shared))
       
     }
     
@@ -297,17 +298,20 @@ for (yr_index in 1:length(po_list)) {
     yr <- seasons_hk[yr_index]
     fit_canada <- FALSE
     vir1 <- 'flu_h1_plus_b'
+    sens <- sens1
     
   } else {
     
     yr <- seasons_can[yr_index - length(seasons_hk)]
     fit_canada <- TRUE
     vir1 <- 'flu'
+    sens <- sens2
     
   }
   
   print(fit_canada)
   print(yr)
+  print(sens)
   
   # Load data and create pomp object:
   source('src/resp_interaction_model.R')
