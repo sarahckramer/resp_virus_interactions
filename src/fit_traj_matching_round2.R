@@ -44,7 +44,7 @@ if (fit_us) {
 # search_type <- 'round1_CIs'
 # int_eff <- 'susc' # 'susc', 'sev', or 'both' - fit impact of interaction on susceptibility or severity, or both?
 # prof_lik <- FALSE
-# sens <- 'sinusoidal_forcing' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
+# sens <- 'main' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
 # fit_canada <- FALSE
 # fit_us <- FALSE
 # run_parallel <- FALSE
