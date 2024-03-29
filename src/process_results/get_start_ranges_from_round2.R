@@ -29,6 +29,8 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'no_int'
 } else if (str_detect(res_dir, 'susc_plus_sev')) {
   sens <- 'susc_plus_sev'
+} else if (str_detect(res_dir, 'during_v_after')) {
+  sens <- 'during_v_after'
 } else {
   sens <- 'main'
 }
