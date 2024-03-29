@@ -75,11 +75,12 @@ if (fit_us) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 }
 
-if (sens == 'sinusoidal_forcing') {
-  time_max <- 23.75 # Maximal execution time (in hours)
-} else {
-  time_max <- 14.75 # Maximal execution time (in hours)
-}
+time_max <- 23.75
+# if (sens == 'sinusoidal_forcing') {
+#   time_max <- 23.75 # Maximal execution time (in hours)
+# } else {
+#   time_max <- 14.75 # Maximal execution time (in hours)
+# }
 
 Ri_max1 <- 2.0
 Ri_max2 <- 3.0
@@ -532,11 +533,13 @@ obj_fun_list <- lapply(po_list, function(ix) {
 # Set maximal execution time for each estimation:
 if (run_parallel) {
   
-  if (sens == 'sinusoidal_forcing') {
-    nmins_exec <- time_max * 60 / 2
-  } else {
-    nmins_exec <- time_max * 60 / 4
-  }
+  nmins_exec <- time_max * 60 / 2
+  
+  # if (sens == 'sinusoidal_forcing') {
+  #   nmins_exec <- time_max * 60 / 2
+  # } else {
+  #   nmins_exec <- time_max * 60 / 4
+  # }
   
   if (fit_us) {
     nmins_exec <- time_max * 60
