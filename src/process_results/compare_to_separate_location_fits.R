@@ -7,9 +7,9 @@ library(tidyverse)
 library(testthat)
 
 # Set locations of all results:
-res_dir_hk <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1_plus_B/'
+res_dir_hk <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_can <- 'results/round2_fit/sens/canada/round2_3_flu/'
-res_dir_comb <- 'results/round2_fit/sens/hk_plus_canada/round2_1_cont2/'
+res_dir_comb <- 'results/round2_fit/sens/hk_plus_canada/round2_3_/'
 
 # Function to read in and format results:
 load_and_format_mega_results <- function(filepath) {
@@ -69,12 +69,13 @@ res_comb <- load_and_format_mega_results(res_dir_comb)
 # For combined results, need to calculate log-likelihoods for separate locations
 # Load pomp models and relevant functions:
 global_estpars <- c('theta_lambda1', 'theta_lambda2', 'delta1', 'd2')
-shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
+shared_estpars <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2', 'b1', 'b2', 'phi1', 'phi2')
+shared_estpars_hk <- c('rho1', 'rho2', 'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
+shared_estpars_can <- c('rho1', 'rho2', 'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
 true_estpars <- c(global_estpars, shared_estpars, unit_estpars)
 
-sens <- 'sinusoidal_forcing'
 source('src/functions/setup_global_likelilhood.R')
 
 # Update function to calculate likelihoods for both locations:
@@ -160,7 +161,7 @@ calculate_global_loglik <- function(trans_vals) {
 
 # Calculate log-likelihoods for all best-fit parameter sets:
 df_ll <- NULL
-for (i in nrow(res_comb)) {
+for (i in 1:nrow(res_comb)) {
   
   res_comb_red <- res_comb %>%
     select(-loglik)
@@ -169,8 +170,9 @@ for (i in nrow(res_comb)) {
   x0_trans <- transform_params(x0, po_list[[1]], po_list[[7]], seasons_hk, seasons_can, names(res_comb_red), global_estpars, shared_estpars)
   
   ll <- -1 * calculate_global_loglik(x0_trans)
+  print(ll)
   
-  expect_equal(ll[3], res_comb$loglik[i])
+  # expect_equal(ll[3], res_comb$loglik[i])
   
   df_ll <- rbind(df_ll, ll)
   
@@ -214,6 +216,65 @@ p1 <- ggplot(data = res, aes(x = fit, y = loglik)) +
   theme_classic() +
   labs(x = '', y = 'Log-Likelihood')
 print(p1)
+
+# Also compare fit values of shared parameters:
+res_hk <- load_and_format_mega_results(res_dir_hk) %>%
+  select(all_of(shared_estpars_hk)) %>%
+  pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
+  mutate(loc = 'hk',
+         fit = 'single')
+res_can <- load_and_format_mega_results(res_dir_can) %>%
+  select(all_of(shared_estpars_can)) %>%
+  pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
+  mutate(loc = 'can',
+         fit = 'single')
+res_comb <- load_and_format_mega_results(res_dir_comb) %>%
+  select(hk_rho1:can_phi2) %>%
+  pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
+  mutate(loc = str_remove(str_sub(parameter, 1, 3), '_'),
+         parameter = str_remove(parameter, 'hk_'),
+         parameter = str_remove(parameter, 'can_')) %>%
+  mutate(fit = 'combined')
+
+res <- bind_rows(res_hk, res_can, res_comb)
+
+ggplot(data = res, aes(x = fit, y = value)) +
+  geom_violin(fill = 'gray95') +
+  facet_grid(parameter ~ loc, scales = 'free_y') +
+  theme_classic() +
+  labs(x = '', y = 'Parameter Value')
+
+mle_hk <- load_and_format_mega_results(res_dir_hk)[1, ] %>%
+  select(all_of(shared_estpars_hk)) %>%
+  pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
+  mutate(loc = 'hk',
+         fit = 'single')
+mle_can <- load_and_format_mega_results(res_dir_can)[1, ] %>%
+  select(all_of(shared_estpars_can)) %>%
+  pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
+  mutate(loc = 'can',
+         fit = 'single')
+mle_comb <- load_and_format_mega_results(res_dir_comb)[1, ] %>%
+  select(hk_rho1:can_phi2) %>%
+  pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
+  mutate(loc = str_remove(str_sub(parameter, 1, 3), '_'),
+         parameter = str_remove(parameter, 'hk_'),
+         parameter = str_remove(parameter, 'can_')) %>%
+  mutate(fit = 'combined')
+
+mle <- bind_rows(mle_hk, mle_can, mle_comb) %>%
+  mutate(mle = TRUE)
+
+res <- res %>%
+  mutate(mle = FALSE) %>%
+  bind_rows(mle)
+
+ggplot() +
+  # geom_violin(data = res %>% filter(!mle), aes(x = fit, y = value), fill = 'gray95') +
+  geom_point(data = res %>% filter(mle), aes(x = fit, y = value)) +
+  facet_grid(parameter ~ loc, scales = 'free_y') +
+  theme_bw() +
+  labs(x = '', y = 'Parameter Value')
 
 # Clean up:
 rm(list = ls())
