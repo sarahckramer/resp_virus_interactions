@@ -9,7 +9,7 @@ library(rethinking)
 library(gt)
 
 # Get names of all results files:
-file_list <- list.files(path = 'results/bootstrapping/flu_H1_plus_B/', full.names = TRUE)
+file_list <- list.files(path = 'results/bootstrapping/sens/during_v_after/', full.names = TRUE)
 
 # Are results from a sensitivity analysis?:
 if (str_detect(file_list[[1]], 'sinusoidal')) {
@@ -26,6 +26,8 @@ if (str_detect(file_list[[1]], 'sinusoidal')) {
   sens <- 'no_int'
 } else if (str_detect(file_list[[1]], 'rhino_covar')) {
   sens <- 'rhino_covar'
+} else if (str_detect(file_list[[1]], 'during_v_after')) {
+  sens <- 'during_v_after'
 } else {
   sens <- 'main'
 }
@@ -205,6 +207,11 @@ if (fit_canada) {
       select(-beta_rhino)
   }
   
+  if (sens == 'during_v_after') {
+    res_df_unit <- res_df_unit %>%
+      select(-c(theta_lambda_I1, theta_lambda_I2))
+  }
+  
 }
 
 res_df_unit <- res_df_unit %>%
@@ -313,6 +320,11 @@ if (fit_canada) {
   if (sens == 'rhino_covar') {
     mle_unit <- mle_unit %>%
       select(-beta_rhino)
+  }
+  
+  if (sens == 'during_v_after') {
+    mle_unit <- mle_unit %>%
+      select(-c(theta_lambda_I1, theta_lambda_I2))
   }
   
 }
