@@ -17,7 +17,6 @@ no_jobs <- as.integer(Sys.getenv("NOJOBS")); print(no_jobs)
 sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 which_round <- as.integer(Sys.getenv("WHICHROUND")); print(which_round)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
-continue_search <- as.logical(Sys.getenv("CONTINUESEARCH")); print(continue_search)
 sens1 <- as.character(Sys.getenv("SENS1")); print(sens1)
 sens2 <- as.character(Sys.getenv("SENS2")); print(sens2)
 
@@ -27,7 +26,6 @@ sens2 <- as.character(Sys.getenv("SENS2")); print(sens2)
 # sobol_size <- 10
 # which_round <- 1
 # search_type <- 'round1_CIs'
-# continue_search <- FALSE
 # sens1 <- 'main'
 # sens2 <- 'sinusoidal_forcing'
 
@@ -433,48 +431,23 @@ if (search_type == 'round2_CIs') {
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Get starting values for each parameter:
-if (continue_search) {
-  
-  initial_res <- try(
-    read_rds(paste0('results/round2_fit/round2_', which_round, '_/res_', jobid, '_', jobid, '.rds'))
-  )
-  
-  if (inherits(initial_res, 'try-error')) {
-    stop(paste0('No results file found for jobid ', jobid, '.'))
-  }
-  
-  start_values <- initial_res$estpars
-  
-  if (!str_detect(initial_res$message, 'maxtime')) {
-    saveRDS(initial_res, paste0('results/res_', jobid, '_', jobid, '.rds'))
-    stop('Search converged in first 24 hours.')
-  }
-  
-  # Check that starting values and estpars are correct:
-  print(start_values)
-  print(estpars)
-  
-} else {
-  
-  start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
-                               upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
-                               nseq = sobol_size)
-  
-  if (search_type %in% c('round2_CIs', 'round3_CIs')) {
-    start_values <- start_values %>%
-      mutate(hk_phi = if_else(hk_phi > 52.25, hk_phi - 52.25, hk_phi),
-             can_phi = if_else(can_phi > 52.25, can_phi - 52.25, can_phi),
-             can_phi1 = if_else(can_phi1 > 52.25, can_phi1 - 52.25, can_phi1),
-             can_phi2 = if_else(can_phi2 > 52.25, can_phi2 - 52.25, can_phi2))
-    
-  }
-  
-  # Check that starting values and estpars are correct:
-  print(start_range)
-  print(summary(start_values))
-  print(estpars)
+start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
+                             upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
+                             nseq = sobol_size)
+
+if (search_type %in% c('round2_CIs', 'round3_CIs')) {
+  start_values <- start_values %>%
+    mutate(hk_phi = if_else(hk_phi > 52.25, hk_phi - 52.25, hk_phi),
+           can_phi = if_else(can_phi > 52.25, can_phi - 52.25, can_phi),
+           can_phi1 = if_else(can_phi1 > 52.25, can_phi1 - 52.25, can_phi1),
+           can_phi2 = if_else(can_phi2 > 52.25, can_phi2 - 52.25, can_phi2))
   
 }
+
+# Check that starting values and estpars are correct:
+print(start_range)
+print(summary(start_values))
+print(estpars)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -496,11 +469,7 @@ for (i in seq_along(sub_start)) {
   print(paste0('Estimation: ', sub_start[i]))
   
   # Get start values:
-  if (continue_search) {
-    x0 <- as.numeric(start_values)
-  } else {
-    x0 <- as.numeric(start_values[sub_start[i], ])
-  }
+  x0 <- as.numeric(start_values[sub_start[i], ])
   
   x0_trans <- transform_params(x0, po_list[[1]], po_list[[7]], seasons_hk, seasons_can, estpars, global_estpars, shared_estpars)
   x0_trans_names <- names(x0_trans)
