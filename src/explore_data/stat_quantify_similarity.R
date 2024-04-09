@@ -4,6 +4,7 @@
 
 # Load libraries:
 library(tidyverse)
+library(NSM3)
 
 # Read in and format data:
 dat_hk <- read_csv('data/formatted/dat_hk.csv')
@@ -38,10 +39,14 @@ dat_us <- dat_us %>%
 
 # Calculate correlations between pathogens:
 cor.test(dat_hk$prop_h1_plus_b, dat_hk$prop_rsv, method = 'kendall')
+kendall.ci(dat_hk$prop_h1_plus_b, dat_hk$prop_rsv)
+
 cor.test(dat_hk$prop_h1_plus_b, dat_hk$prop_rhino, method = 'kendall')
 cor.test(dat_hk$prop_rsv, dat_hk$prop_rhino, method = 'kendall')
 
 cor.test(dat_can$prop_P1, dat_can$prop_P2, method = 'kendall')
+kendall.ci(dat_can$prop_P1, dat_can$prop_P2)
+
 cor.test(dat_can$prop_P1, dat_can$prop_rhino, method = 'kendall')
 cor.test(dat_can$prop_P2, dat_can$prop_rhino, method = 'kendall')
 
