@@ -29,6 +29,10 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'no_int'
 } else if (str_detect(res_dir, 'susc_plus_sev')) {
   sens <- 'susc_plus_sev'
+} else if (str_detect(res_dir, 'increase_sobol_size')) {
+  sens <- 'increase_sobol_size'
+} else if (str_detect(res_dir, 'check_algorithms')) {
+  sens <- 'alg_praxis'
 } else {
   sens <- 'main'
 }
@@ -121,6 +125,10 @@ load_and_format_mega_results <- function(filepath) {
   
   # Get list of results files:
   res_files <- list.files(path = filepath, full.names = TRUE)
+  
+  if (sens == 'alg_praxis') {
+    res_files <- list.files(path = filepath, pattern = 'praxis', full.names = TRUE)
+  }
   
   # Read in results:
   res_full = list()

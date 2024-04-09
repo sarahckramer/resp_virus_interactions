@@ -682,6 +682,7 @@ if (run_parallel) {
       nloptr(x0 = x0_trans, 
              eval_f = calculate_global_loglik,
              opts = list(algorithm = "NLOPT_LN_SBPLX",
+                         # algorithm = "NLOPT_LN_PRAXIS",
                          maxtime = 60 * nmins_exec,
                          maxeval = -1, # Negative value: criterion is disabled
                          xtol_rel = -1, # Default value: 1e-4
