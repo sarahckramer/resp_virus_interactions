@@ -408,90 +408,57 @@ print(r2as)
 print(r2bs)
 
 # # Do the same, but instead of comparing to observed mean, fit sine wave to data:
-# r2as = r2bs = r2a_list = r2b_list = vector('list', 2)
 # for (i in 1:2) {
 #   
 #   location <- c('hk', 'canada')[i]
-#   
-#   r2a_list_temp = r2b_list_temp = c()
-#   r2a_num = r2b_num = 0
-#   r2a_denom = r2b_denom = 0
 #   
 #   res_loc <- res %>%
 #     filter(loc == location)
 #   
 #   omega <- 2 * pi / 52.25
 #   
-#   for (yr in unique(res_loc$season)) {
-#     
-#     res_temp <- res_loc %>%
-#       filter(season == yr)
-#     
-#     res_temp1 <- res_temp %>%
-#       filter(virus == 'Influenza')
-#     res_temp2 <- res_temp %>%
-#       filter(virus == 'RSV')
-#     
-#     m1 <- lm(log(obs) ~ sin(omega * time) + cos(omega * time), data = res_temp1)
-#     m2 <- lm(log(obs) ~ sin(omega * time) + cos(omega * time), data = res_temp2)
-#     
-#     par(mfrow = c(1, 2))
-#     plot(res_temp1$obs, pch = 20, xlab = 'Time', ylab = 'Influenza Cases')
-#     lines(exp(m1$coefficients[1] + m1$coefficients[2] * sin(omega * res_temp1$time) + m1$coefficients[3] * cos(omega * res_temp1$time)))
-#     lines(res_temp1$mean, col = 'blue')
-#     plot(res_temp2$obs, pch = 20, xlab = 'Time', ylab = 'RSV Cases')
-#     lines(exp(m2$coefficients[1] + m2$coefficients[2] * sin(omega * res_temp1$time) + m2$coefficients[3] * cos(omega * res_temp1$time)))
-#     lines(res_temp2$mean, col = 'blue')
-#     
-#     res_fit1 <- bind_cols(time = names(exp(m1$fitted.values)), sin_fit = exp(m1$fitted.values)) %>%
-#       mutate(time = as.numeric(time))
-#     res_fit2 <- bind_cols(time = names(exp(m2$fitted.values)), sin_fit = exp(m2$fitted.values)) %>%
-#       mutate(time = as.numeric(time))
-#     
-#     r2_a <- res_temp1 %>%
-#       left_join(res_fit1, by = 'time') %>%
-#       mutate(resid_sq = (obs - mean) ** 2,
-#              total_sq = (obs - sin_fit) ** 2) %>%
-#       summarise(ss_error = sum(resid_sq, na.rm = TRUE),
-#                 ss_total = sum(total_sq, na.rm = TRUE)) %>%
-#       mutate(r2 = 1 - ss_error / ss_total)
-#     r2a_num <- r2a_num + r2_a$ss_error
-#     r2a_denom <- r2a_denom + r2_a$ss_total
-#     r2_a <- r2_a %>%
-#       pull(r2)
-#     
-#     r2_b <- res_temp2 %>%
-#       left_join(res_fit2, by = 'time') %>%
-#       mutate(resid_sq = (obs - mean) ** 2,
-#              total_sq = (obs - sin_fit) ** 2) %>%
-#       summarise(ss_error = sum(resid_sq, na.rm = TRUE),
-#                 ss_total = sum(total_sq, na.rm = TRUE)) %>%
-#       mutate(r2 = 1 - ss_error / ss_total)
-#     r2b_num <- r2b_num + r2_b$ss_error
-#     r2b_denom <- r2b_denom + r2_b$ss_total
-#     r2_b <- r2_b %>%
-#       pull(r2)
-#     
-#     r2a_list_temp <- c(r2a_list_temp, r2_a)
-#     r2b_list_temp <- c(r2b_list_temp, r2_b)
-#     
-#   }
+#   res1 <- res_loc %>%
+#     filter(virus == 'Influenza')
+#   res2 <- res_loc %>%
+#     filter(virus == 'RSV')
 #   
-#   print(summary(r2a_list_temp))
-#   print(summary(r2b_list_temp))
+#   m1 <- lm(log(obs) ~ sin(omega * time) + cos(omega * time), data = res1)
+#   m2 <- lm(log(obs) ~ sin(omega * time) + cos(omega * time), data = res2)
 #   
-#   r2a <- 1 - (r2a_num / r2a_denom)
-#   r2b <- 1 - (r2b_num / r2b_denom)
+#   par(mfrow = c(2, 1))
+#   plot(res1$obs, pch = 20, xlab = 'Time', ylab = 'Influenza Cases')
+#   lines(exp(m1$coefficients[1] + m1$coefficients[2] * sin(omega * res1$time) + m1$coefficients[3] * cos(omega * res1$time)))
+#   lines(res1$mean, col = 'blue')
+#   plot(res2$obs, pch = 20, xlab = 'Time', ylab = 'RSV Cases')
+#   lines(exp(m2$coefficients[1] + m2$coefficients[2] * sin(omega * res1$time) + m2$coefficients[3] * cos(omega * res1$time)))
+#   lines(res2$mean, col = 'blue')
 #   
-#   r2a_list[[i]] <- r2a_list_temp
-#   r2b_list[[i]] <- r2b_list_temp
-#   r2as[[i]] <- r2a
-#   r2bs[[i]] <- r2b
+#   res_fit1 <- bind_cols(time = names(exp(m1$fitted.values)), sin_fit = exp(m1$fitted.values)) %>%
+#     mutate(time = as.numeric(time))
+#   res_fit2 <- bind_cols(time = names(exp(m2$fitted.values)), sin_fit = exp(m2$fitted.values)) %>%
+#     mutate(time = as.numeric(time))
+#   
+#   r2_a <- res1 %>%
+#     left_join(res_fit1, by = 'time') %>%
+#     mutate(resid_sq = (obs - mean) ** 2,
+#            total_sq = (obs - sin_fit) ** 2) %>%
+#     summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+#               ss_total = sum(total_sq, na.rm = TRUE)) %>%
+#     mutate(r2 = 1 - ss_error / ss_total) %>%
+#     pull(r2)
+#   r2_b <- res2 %>%
+#     left_join(res_fit2, by = 'time') %>%
+#     mutate(resid_sq = (obs - mean) ** 2,
+#            total_sq = (obs - sin_fit) ** 2) %>%
+#     summarise(ss_error = sum(resid_sq, na.rm = TRUE),
+#               ss_total = sum(total_sq, na.rm = TRUE)) %>%
+#     mutate(r2 = 1 - ss_error / ss_total) %>%
+#     pull(r2)
+#   
+#   print(r2_a)
+#   print(r2_b)
 #   
 # }
-# 
-# print(r2as)
-# print(r2bs)
 
 # Plot means and 95% CIs from binomial distribution:
 p_legend1 <- ggplot(data = res %>% filter(loc == 'hk'),
