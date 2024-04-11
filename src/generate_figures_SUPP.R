@@ -561,10 +561,15 @@ for (seas_index in 1:length(seasons)) {
 }
 rm(seasons, seas_index, seas, pars_top_unit_temp, p_temp, label_temp, tags)
 
-fig7s <- arrangeGrob(grobs = plot_list, ncol = 2)
-# ggsave('results/plots/figures_for_manuscript/supp/FigureS7.svg', fig7s, width = 18, height = 26)
+# fig7s <- arrangeGrob(grobs = plot_list, ncol = 2)
+fig7s_a <- arrangeGrob(grobs = plot_list[1:6], ncol = 2)
+fig7s_b <- arrangeGrob(grobs = plot_list[7:10], ncol = 2)
 
-rm(fig7s, pars_top_unit_hk, pars_top_unit_can, plot_list)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS7.svg', fig7s, width = 18, height = 26)
+ggsave('results/plots/figures_for_manuscript/supp/FigureS7a.svg', fig7s_a, width = 18, height = 15.6)
+ggsave('results/plots/figures_for_manuscript/supp/FigureS7b.svg', fig7s_b, width = 18, height = 10.4)
+
+rm(fig7s_a, fig7s_b, pars_top_unit_hk, pars_top_unit_can, plot_list)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
