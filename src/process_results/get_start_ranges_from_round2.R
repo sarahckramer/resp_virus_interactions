@@ -7,7 +7,7 @@ library(tidyverse)
 library(testthat)
 
 # Set directory where results from round2 fits are stored:
-res_dir <- 'results/round2_fit/sens/hk_plus_canada/round2_1_/'
+res_dir <- 'results/round2_fit/sens/hk_plus_canada/round2_5_/'
 
 # Which round of fits?:
 which_round <- str_split(res_dir, '_')[[1]][which(!is.na(as.numeric(str_split(res_dir, '_')[[1]])))]
@@ -153,9 +153,16 @@ load_and_format_mega_results <- function(filepath) {
   
   # Set unrealistic values to NA:
   if (!str_detect(filepath, 'no_int')) {
-    pars_top$delta1[pars_top$delta1 > 7.0] <- NA
+    
+    if (!str_detect(filepath, 'hk_plus_canada')) {
+      pars_top$delta1[pars_top$delta1 > 7.0] <- NA
+    } else {
+      pars_top$delta1[pars_top$delta1 > 1000.0] <- NA
+    }
+    
     pars_top$d2[pars_top$d2 > 10.0] <- NA
   }
+  
   pars_top$hk_rho1[pars_top$hk_rho1 == 1.0] <- NA
   pars_top$hk_rho2[pars_top$hk_rho2 == 1.0] <- NA
   pars_top$can_rho2[pars_top$can_rho2 == 1.0] <- NA
@@ -255,7 +262,7 @@ traj_list <- lapply(1:length(c(seasons_hk, seasons_can)), function(ix) {
   for (param in names(pars_temp)) {
     p_mat[param, ] <- pars_temp %>% pull(param)
   }
-
+  
   trajectory(object = po_list[[ix]],
              params = p_mat,
              format = 'data.frame') %>%
@@ -338,6 +345,8 @@ if (any(ci_start == Inf)) {
     print('Range is NA for some other parameter.')
   }
 }
+
+# ci_prev <- read_rds('results/round2_CIs/sens/hk_plus_canada/from_2_3/round2CI_startvals.rds')
 
 # Check that sums of initial conditions can't sum to >1:
 init_cond_estpars <- c('I10', 'I20', 'R10', 'R20', 'R120')
