@@ -9,7 +9,7 @@ library(testthat)
 # Set locations of all results:
 res_dir_hk <- 'results/round2_fit/round2_3_fluH1_plus_B/'
 res_dir_can <- 'results/round2_fit/sens/canada/round2_3_flu/'
-res_dir_comb <- 'results/round2_fit/sens/hk_plus_canada/round2_3_/'
+res_dir_comb <- 'results/round2_fit/sens/hk_plus_canada/round2_5_/'
 
 # Function to read in and format results:
 load_and_format_mega_results <- function(filepath) {
@@ -39,11 +39,6 @@ load_and_format_mega_results <- function(filepath) {
   
   df_use <- pars_df %>% select(-c(loglik, message)) %>% names() %>% length()
   no_best <- nrow(subset(pars_df, 2 * (max(loglik) - loglik) <= qchisq(p = 0.95, df = df_use)))
-  
-  # TEMPORARY: If only one top result, take top 25:
-  if (no_best == 1) {
-    no_best <- 25
-  }
   
   print(no_best)
   print(table(pars_df$message))
@@ -244,17 +239,17 @@ ggplot(data = res, aes(x = fit, y = value)) +
   theme_classic() +
   labs(x = '', y = 'Parameter Value')
 
-mle_hk <- load_and_format_mega_results(res_dir_hk)[1, ] %>%
+mle_hk <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ] %>%
   select(all_of(shared_estpars_hk)) %>%
   pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
   mutate(loc = 'hk',
          fit = 'single')
-mle_can <- load_and_format_mega_results(res_dir_can)[1, ] %>%
+mle_can <- read_rds('results/round2_fit/sens/canada/MLEs_flu.rds')[1, ] %>%
   select(all_of(shared_estpars_can)) %>%
   pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
   mutate(loc = 'can',
          fit = 'single')
-mle_comb <- load_and_format_mega_results(res_dir_comb)[1, ] %>%
+mle_comb <- read_rds('results/round2_fit/sens/hk_plus_canada/MLEs.rds')[1, ] %>%
   select(hk_rho1:can_phi2) %>%
   pivot_longer(everything(), names_to = 'parameter', values_to = 'value') %>%
   mutate(loc = str_remove(str_sub(parameter, 1, 3), '_'),
