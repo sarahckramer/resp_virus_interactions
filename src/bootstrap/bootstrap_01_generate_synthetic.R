@@ -12,7 +12,7 @@ library(tidyverse)
 
 # Set key parameters:
 n <- 500 # How many synthetic datasets to create?
-sens <- 'susc_plus_sev'
+sens <- 'main'
 fit_canada <- FALSE
 fit_us <- FALSE
 
