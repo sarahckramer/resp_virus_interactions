@@ -13,14 +13,10 @@ library(gridExtra)
 # Sensitivity analysis?:
 sens <- 'sinusoidal_forcing'
 fit_canada <- FALSE
-fit_us <- TRUE
-region <- 7
 
 # Set directory where results from round1 fits are stored:
 if (fit_canada) {
   res_dir <- 'results/round2_fit/sens/canada/round1_fitsharedFALSE/'
-} else if (fit_us) {
-  res_dir <- 'results/round2_fit/sens/us/round1_fitsharedFALSE/'
 } else {
   res_dir <- 'results/round1_fitsharedFALSE/'
 }
@@ -47,17 +43,9 @@ estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 pars_list <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_TOP.rds'))
 slice_list <- read_rds(paste0(res_dir, 'traj_match_round1_byvirseas_SLICE.rds'))
 
-# If US results, select region:
-if (fit_us) {
-  pars_list <- pars_list[str_detect(names(pars_list), paste0('_', region))]
-  slice_list <- slice_list[str_detect(names(slice_list), paste0('_', region))]
-}
-
 # Get vector of seasons:
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
-} else if (fit_us) {
-  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 } else {
   seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 }
@@ -70,7 +58,7 @@ names(cor_list) = names(pcor_list) = names(pars_list)
 for (yr in seasons) {
   
   # Get list position:
-  if (fit_canada | fit_us) {
+  if (fit_canada) {
     vir_seas <- paste('flu', yr, sep = '_')
   } else {
     vir_seas <- paste('flu_h1_plus_b', yr, sep = '_')
@@ -119,9 +107,6 @@ rm(vir_seas, yr)
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE_CANADA.pdf'),
       width = 15, height = 10)
-} else if (fit_us) {
-  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE_US.pdf'),
-      width = 15, height = 10)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round1_byVirSeas_fitsharedFALSE.pdf'),
       width = 15, height = 10)
@@ -161,15 +146,11 @@ try(detach('package:MASS'))
 
 plot_list <- vector('list', length = length(pars_list))
 
-if (fit_us) {
-  region <- paste0('Region ', region)
-}
-
 for (i in 1:length(pars_list)) {
   yr <- pars_list[[i]] %>% pull(year) %>% unique()
   print(yr)
   
-  if (fit_canada | fit_us) {
+  if (fit_canada) {
     vir1 <- 'flu'
   } else {
     vir1 <- 'flu_h1_plus_b'
@@ -276,9 +257,6 @@ p7 <- ggplot(data = mle_ranges_df, aes(x = year, y = mle, ymin = min, ymax = max
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE_CANADA.pdf'),
       width = 15, height = 8)
-} else if (fit_us) {
-  pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE_US.pdf'),
-      width = 15, height = 8)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round1_fitsharedFALSE.pdf'),
       width = 15, height = 8)
@@ -292,8 +270,6 @@ dev.off()
 
 if (fit_canada) {
   pdf('results/plots/param_est_single_seasons_fitsharedFALSE_CANADA.pdf', width = 9.5, height = 11)
-} else if (fit_us) {
-  pdf('results/plots/param_est_single_seasons_fitsharedFALSE_US.pdf', width = 9.5, height = 11)
 } else {
   pdf('results/plots/param_est_single_seasons_fitsharedFALSE.pdf', width = 9.5, height = 11)
 }

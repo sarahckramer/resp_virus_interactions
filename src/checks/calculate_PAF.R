@@ -15,14 +15,10 @@ shared_estpars_hk <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1
                        'alpha', 'phi', 'eta_temp1', 'eta_temp2', 'eta_ah1', 'eta_ah2')
 shared_estpars_can <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                         'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
-shared_estpars_us <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                       'b1', 'b2', 'phi1', 'phi2')
-
 unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 
 true_estpars_hk <- c(shared_estpars_hk, unit_estpars)
 true_estpars_can <- c(shared_estpars_can, unit_estpars)
-true_estpars_us <- c(shared_estpars_us, unit_estpars)
 
 # Set parameter values necessary for loading models:
 prof_lik <- FALSE
@@ -34,32 +30,26 @@ prof_lik <- FALSE
 # Read in MLEs:
 mle_hk <- read_rds('results/MLEs_flu_h1_plus_b.rds')
 mle_can <- read_rds('results/round2_fit/sens/canada/MLEs_flu.rds')
-mle_us <- read_rds('results/round2_fit/sens/us/region_8/MLEs_flu.rds')
 
 # Get synthetic data (HK):
 fit_canada <- FALSE
-fit_us <- FALSE
 vir1 <- 'flu_h1_plus_b'
 true_estpars <- true_estpars_hk
 
 source('src/functions/setup_global_likelilhood.R')
 
-traj_list1 = traj_list2 = traj_list3 = vector('list', length = length(seasons))
+traj_list1 = traj_list2 = vector('list', length = length(seasons))
 for (i in 1:length(seasons)) {
   
   traj_list1[[i]] <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
   traj_list2[[i]] <- run_sim(po_list[[i]], seasons[i], list(mle_hk, mle_can), shared_estpars_hk, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
-  traj_list3[[i]] <- run_sim(po_list[[i]], seasons[i], list(mle_hk, mle_us), shared_estpars_hk, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
-  
+
 }
 
 res_hk1 <- bind_rows(traj_list1) %>%
   mutate(loc = 'hk') %>%
   as_tibble()
 res_hk2 <- bind_rows(traj_list2) %>%
-  mutate(loc = 'hk') %>%
-  as_tibble()
-res_hk3 <- bind_rows(traj_list3) %>%
   mutate(loc = 'hk') %>%
   as_tibble()
 
@@ -70,13 +60,12 @@ true_estpars <- true_estpars_can
 
 source('src/functions/setup_global_likelilhood.R')
 
-traj_list1 = traj_list2 = traj_list3 = vector('list', length = length(seasons))
+traj_list1 = traj_list2 = vector('list', length = length(seasons))
 for (i in 1:length(seasons)) {
   
   traj_list1[[i]] <- run_sim(po_list[[i]], seasons[i], list(mle_can, mle_hk), shared_estpars_can, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
   traj_list2[[i]] <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
-  traj_list3[[i]] <- run_sim(po_list[[i]], seasons[i], list(mle_can, mle_us), shared_estpars_can, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
-  
+
 }
 
 res_can1 <- bind_rows(traj_list1) %>%
@@ -85,41 +74,10 @@ res_can1 <- bind_rows(traj_list1) %>%
 res_can2 <- bind_rows(traj_list2) %>%
   mutate(loc = 'canada') %>%
   as_tibble()
-res_can3 <- bind_rows(traj_list3) %>%
-  mutate(loc = 'canada') %>%
-  as_tibble()
-
-# Get synthetic data (US):
-fit_canada <- FALSE
-fit_us <- TRUE
-true_estpars <- true_estpars_us
-region <- 'Region 8'
-
-source('src/functions/setup_global_likelilhood.R')
-
-traj_list1 = traj_list2 = traj_list3 = vector('list', length = length(seasons))
-for (i in 1:length(seasons)) {
-  
-  traj_list1[[i]] <- run_sim(po_list[[i]], seasons[i], list(mle_us, mle_hk), shared_estpars_us, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
-  traj_list2[[i]] <- run_sim(po_list[[i]], seasons[i], list(mle_us, mle_can), shared_estpars_us, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
-  traj_list3[[i]] <- run_sim(po_list[[i]], seasons[i], mle_us, shared_estpars_us, unit_estpars, model_type = 'deterministic', return_obs = FALSE, analysis = 'paf')
-  
-}
-
-res_us1 <- bind_rows(traj_list1) %>%
-  mutate(loc = 'us') %>%
-  as_tibble()
-res_us2 <- bind_rows(traj_list2) %>%
-  mutate(loc = 'us') %>%
-  as_tibble()
-res_us3 <- bind_rows(traj_list3) %>%
-  mutate(loc = 'us') %>%
-  as_tibble()
 
 # Combine results from both locations:
-res <- list(bind_rows(res_hk1, res_can1, res_us1),
-            bind_rows(res_hk2, res_can2, res_us2),
-            bind_rows(res_hk3, res_can3, res_us3))
+res <- list(bind_rows(res_hk1, res_can1),
+            bind_rows(res_hk2, res_can2))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -133,7 +91,7 @@ res_ars <- lapply(res, function(ix) {
               attack_rate_H2 = sum(H2))
 })
 
-for (loc_val in c('hk', 'canada', 'us')) {
+for (loc_val in c('hk', 'canada')) {
   print(loc_val)
   
   for (i in 1:length(res_ars)) {

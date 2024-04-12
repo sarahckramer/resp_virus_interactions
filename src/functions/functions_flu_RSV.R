@@ -10,7 +10,7 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
   # param d2_max: upper bound of multiplicative difference between delta1 and delta2 (double, passed as global argument in the C script) 
   # param debug_bool: should debugging info be printed? (boolean)
   # param sens: main analysis or the name of a specific sensitivity analysis
-  # param loc: where are the data from? ('hk', 'canada', or 'us')
+  # param loc: where are the data from? ('hk' or 'canada')
   
   # Same number of tests for flu and RSV?
   if (loc == 'hk') {

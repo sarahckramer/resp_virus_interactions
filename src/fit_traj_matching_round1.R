@@ -18,7 +18,6 @@ sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
-fit_us <- as.logical(Sys.getenv("FITUS")); print(fit_us)
 
 # # Set parameters for local runs (temp):
 # jobid <- 1
@@ -27,16 +26,11 @@ fit_us <- as.logical(Sys.getenv("FITUS")); print(fit_us)
 # search_type <- 'broad'
 # sens <- 'main'
 # fit_canada <- FALSE
-# fit_us <- FALSE
 
 # Set parameters for run:
 if (fit_canada) {
   yr <- c('s10-11', 's11-12', 's12-13', 's13-14')[(ceiling(jobid / no_jobs) - 1) %% 4 + 1]; print(yr)
   vir1 <- 'flu'
-} else if (fit_us) {
-  yr <- c('s10-11', 's11-12', 's12-13', 's13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')[(ceiling(jobid / no_jobs) - 1) %% 9 +1]; print(yr)
-  vir1 <- 'flu'
-  region <- c('Region 7', 'Region 8')[(ceiling(jobid / 90) - 1) %% (9 * no_jobs) + 1]; print(region)
 } else {
   yr <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')[(ceiling(jobid / no_jobs) - 1) %% 6 + 1]; print(yr)
   vir1 <- 'flu_h1_plus_b'
@@ -161,27 +155,12 @@ if (exists('resp_mod')) {
                   etime = as.numeric(etime))
       
       # Write to file:
-      if (fit_us) {
-        
-        region_num <- str_remove(region, 'Region ')
-        saveRDS(out,
-                file = sprintf('results/res_%s_%s_%s_%s_%d.rds',
-                               vir1, vir2,
-                               region_num,
-                               as.character(yr),
-                               sub_start[i])
-        )
-        
-      } else {
-        
-        saveRDS(out,
-                file = sprintf('results/res_%s_%s_%s_%d.rds',
-                               vir1, vir2,
-                               as.character(yr),
-                               sub_start[i])
-        )
-        
-      }
+      saveRDS(out,
+              file = sprintf('results/res_%s_%s_%s_%d.rds',
+                             vir1, vir2,
+                             as.character(yr),
+                             sub_start[i])
+      )
       
       # Print results:
       print(out$ll)

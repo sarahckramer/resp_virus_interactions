@@ -33,19 +33,12 @@ if (str_detect(res_dir, 'sinusoidal')) {
   sens <- 'main'
 }
 
-# Check whether Canada, US, or Hong Kong:
+# Check whether Canada or Hong Kong:
 if (str_detect(res_dir, 'canada')) {
   fit_canada <- TRUE
-  fit_us <- FALSE
   sens <- 'sinusoidal_forcing'
-} else if (str_detect(res_dir, '/us/')) {
+} else {
   fit_canada <- FALSE
-  fit_us <- TRUE
-  sens <- 'sinusoidal_forcing'
-  region <- paste('Region', str_split(unlist(str_split(res_dir, '/'))[str_detect(unlist(str_split(res_dir, '/')), 'region')], '_')[[1]][2])
-}else {
-  fit_canada <- FALSE
-  fit_us <- FALSE
 }
 
 # Check that directory for storing results exists, and create if not:
@@ -99,16 +92,6 @@ if (sens == 'main') {
     }
     
     new_dir <- paste0('results/round2_CIs/sens/canada/from_2_', which_round, '/')
-    if (!dir.exists(new_dir)) {
-      dir.create(new_dir)
-    }
-  } else if (fit_us) {
-    new_dir <- 'results/round2_CIs/sens/us/'
-    if (!dir.exists(new_dir)) {
-      dir.create(new_dir)
-    }
-    
-    new_dir <- paste0('results/round2_CIs/sens/us/from_2_', which_round, '/')
     if (!dir.exists(new_dir)) {
       dir.create(new_dir)
     }
@@ -251,7 +234,7 @@ res <- load_and_format_mega_results(res_dir)
 # Check that best-fit parameter values do not lead trajectories to drop below 0:
 res_orig <- res[[2]]
 
-if (fit_canada | fit_us) {
+if (fit_canada) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
