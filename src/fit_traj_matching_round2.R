@@ -26,14 +26,7 @@ prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
-fit_us <- as.logical(Sys.getenv("FITUS")); print(fit_us)
 run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
-
-# If US, get region number:
-if (fit_us) {
-  region_num <- as.integer(Sys.getenv("REGION")); print(region_num)
-  region <- paste0('Region ', region_num); print(region)
-}
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -46,19 +39,13 @@ if (fit_us) {
 # prof_lik <- FALSE
 # sens <- 'main' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
 # fit_canada <- FALSE
-# fit_us <- FALSE
 # run_parallel <- FALSE
-# 
-# if (fit_us) {
-#   region_num <- 7
-#   region <- paste0('Region ', region_num); print(region)
-# }
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
 
-if (fit_canada | fit_us) {
+if (fit_canada) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -70,9 +57,6 @@ if (sens == 'less_circ_h3') {
 }
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
-}
-if (fit_us) {
-  seasons <- c('s10-11', 's11-12', 's12-13', 's13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 }
 
 if (sens == 'sinusoidal_forcing') {
@@ -282,11 +266,6 @@ if (int_eff == 'susc') {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                           'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
       
-      if (fit_us) {
-        shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                            'b1', 'b2', 'phi1', 'phi2')
-      }
-      
     } else {
       
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
@@ -300,11 +279,6 @@ if (int_eff == 'susc') {
     if (sens == 'sinusoidal_forcing') {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                           'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
-      
-      if (fit_us) {
-        shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
-                            'b1', 'b2', 'phi1', 'phi2')
-      }
       
     } else if (sens == 'h3_covar') {
       shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
@@ -381,11 +355,6 @@ if (sens == 'no_rsv_immune') {
 
 # Get 95% CI from round 1 for unit params:
 tj_res_list <- read_rds('results/round1_fitsharedFALSE/traj_match_round1_byvirseas_TOP.rds')
-
-if (fit_us) {
-  tj_res_list <- tj_res_list[str_detect(names(tj_res_list), paste0('_', region_num))]
-}
-
 ci_list <- vector('list', length(seasons))
 
 for (i in 1:length(ci_list)) {
@@ -483,10 +452,8 @@ start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), name
 
 if (search_type == 'round2_CIs') {
   
-  if (!fit_us) {
-    start_values <- start_values %>%
-      mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
-  }
+  start_values <- start_values %>%
+    mutate(phi = if_else(phi > 52.25, phi - 52.25, phi))
   
   if ('phi1' %in% names(start_values)) {
     start_values <- start_values %>%
@@ -535,10 +502,6 @@ if (run_parallel) {
   } else {
     nmins_exec <- time_max * 60 / 4
   }
-  
-  if (fit_us) {
-    nmins_exec <- time_max * 60
-  } 
   
 } else {
   nmins_exec <- time_max * 60 / (sobol_size / no_jobs)

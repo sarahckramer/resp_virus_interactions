@@ -11,7 +11,6 @@ library(testthat)
 # Get cluster environmental variables:
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
-fit_us <- as.logical(Sys.getenv("FITUS")); print(fit_us)
 
 # Set estimated parameter names:
 if (sens == 'no_rsv_immune') {
@@ -21,7 +20,7 @@ if (sens == 'no_rsv_immune') {
 }
 
 # Set parameter values:
-if (fit_canada | fit_us) {
+if (fit_canada) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -48,25 +47,10 @@ if (fit_canada) {
   yrs <- str_split(res_files, pattern = '_') %>%
     map(~ .x[4]) %>%
     unlist()
-} else if (fit_us) {
-  yrs <- str_split(res_files, pattern = '_') %>%
-    map(~ .x[5]) %>%
-    unlist()
 } else {
   yrs <- str_split(res_files, pattern = '_') %>%
     map(~ .x[7]) %>%
     unlist()
-}
-
-# If US, get region of each result:
-if (fit_us) {
-  
-  regions <- str_split(res_files, pattern = '_') %>%
-    map(~ .x[4]) %>%
-    unlist()
-  
-} else {
-  regions <- c()
 }
 
 # Read in all results:
@@ -88,22 +72,10 @@ pars_df <- lapply(res_full, getElement, 'estpars') %>%
          year = yrs) %>%
   select(virus1:year, Ri1:message)
 
-if (fit_us) {
-  
-  pars_df <- pars_df %>%
-    mutate(region = regions) %>%
-    select(virus1:year, region, Ri1:message)
-  
-}
-
 expect_true(nrow(pars_df) == length(res_files))
 expect_true(all(is.finite(pars_df$loglik)))
 
-if (fit_us) {
-  expect_true(ncol(pars_df) == (length(estpars) + 5))
-} else {
-  expect_true(ncol(pars_df) == (length(estpars) + 4))
-}
+expect_true(ncol(pars_df) == (length(estpars) + 4))
 
 # Write results to file:
 write_rds(res_full, 'traj_match_round1_COMPILED.rds')
@@ -115,10 +87,6 @@ write_csv(pars_df, 'res_traj_match_round1.csv')
 
 # Get total number of virus/season pairs:
 virus_seasons <- unique(paste(vir1, yrs, sep = '_'))
-
-if (fit_us) {
-  virus_seasons <- unique(paste(vir1, yrs, regions, sep = '_'))
-}
 
 # Order unique years correctly:
 yrs_unique <- unique(yrs)[order(str_sub(unique(yrs), 2, 3))]
@@ -132,30 +100,16 @@ counter <- 1
 for (seas in virus_seasons) {
   print(seas)
   
-  # Get year and region (if US):
+  # Get year:
   yr <- str_split(seas, '_')[[1]][str_detect(str_split(seas, '_')[[1]], 's1')]
-  
-  if (fit_us) {
-    reg <- str_split(seas, '_')[[1]][3]
-    region <- paste0('Region ', reg)
-  }
   
   # Get results for just that flu/season:
   pars_temp <- pars_df %>%
     filter(virus1 == vir1,
            year == yr)
   
-  if (fit_us) {
-    pars_temp <- pars_temp %>%
-      filter(region == reg)
-  }
-  
   print(table(pars_temp$virus1))
   print(table(pars_temp$year))
-  
-  if (fit_us) {
-    print(table(pars_temp$region))
-  }
   
   # Remove fits that didn't converge:
   pars_temp <- pars_temp %>%

@@ -9,7 +9,6 @@ library(testthat)
 # Read in data:
 hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')$h1_plus_b_rsv
 can_dat <- read_csv('data/formatted/dat_canada.csv')
-us_dat <- read_rds('data/formatted/dat_us_byRegion.rds')$'Region 8'
 
 # Format and join:
 hk_dat <- hk_dat %>%
@@ -23,12 +22,8 @@ can_dat <- can_dat %>%
   select(time, season, pop, n_T1:n_T2, n_P1, n_P2) %>%
   mutate(loc = 'can')
 
-us_dat <- us_dat %>%
-  select(time, season, pop, n_T1:n_P1, n_P2) %>%
-  mutate(loc = 'us')
-
-dat <- rbind(hk_dat, can_dat, us_dat)
-rm(hk_dat, can_dat, us_dat)
+dat <- rbind(hk_dat, can_dat)
+rm(hk_dat, can_dat)
 
 # Calculate peak timing:
 metrics_pt <- dat %>%
@@ -38,8 +33,7 @@ metrics_pt <- dat %>%
   group_by(vir, loc, season) %>%
   summarise(pt = which.max(prop_pos)) %>%
   mutate(pt = if_else(loc == 'hk', pt + 45, pt),
-         pt = if_else(loc == 'can', pt + 34, pt),
-         pt = if_else(loc == 'us', pt + 39, pt)) %>%
+         pt = if_else(loc == 'can', pt + 34, pt)) %>%
   mutate(vir = if_else(vir == 'prop1', 'influenza', 'rsv'))
 
 # Calculate attack rates:

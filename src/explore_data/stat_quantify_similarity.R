@@ -29,14 +29,6 @@ dat_can <- dat_can %>%
   select(-c(n_T1, n_T2, n_test_rhino)) %>%
   select(time:n_P2, prop_P1:prop_rhino, i_ILI)
 
-dat_us <- read_rds('data/formatted/dat_us_byRegion.rds')$'Region 8'
-dat_us <- dat_us %>%
-  select(time, year:week, n_T1:i_ILI) %>%
-  mutate(prop_P1 = n_P1 / n_T1 * 100,
-         prop_P2 = n_P2 / n_T2 * 100) %>%
-  select(-c(n_T1, n_T2)) %>%
-  select(time:n_P2, prop_P1:prop_P2, i_ILI)
-
 # Calculate correlations between pathogens:
 cor.test(dat_hk$prop_h1_plus_b, dat_hk$prop_rsv, method = 'kendall')
 kendall.ci(dat_hk$prop_h1_plus_b, dat_hk$prop_rsv)
@@ -49,8 +41,6 @@ kendall.ci(dat_can$prop_P1, dat_can$prop_P2)
 
 cor.test(dat_can$prop_P1, dat_can$prop_rhino, method = 'kendall')
 cor.test(dat_can$prop_P2, dat_can$prop_rhino, method = 'kendall')
-
-cor.test(dat_us$prop_P1, dat_us$prop_P2, method = 'kendall')
 
 # Calculate peak timing difference between flu and RSV:
 # This is done in "calculate_outbreak_metrics.R"

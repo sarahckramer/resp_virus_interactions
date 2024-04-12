@@ -65,7 +65,6 @@ if (sens_sim == 'fit_can') {
 vir1 <- 'flu_h1_plus_b'
 sens <- 'main'
 fit_canada <- FALSE
-fit_us <- FALSE
 
 # Get year:
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')

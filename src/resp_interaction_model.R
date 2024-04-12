@@ -33,11 +33,6 @@ if (fit_canada) {
   dat_pomp <- can_dat %>%
     filter(season == yr)
   
-} else if (fit_us) {
-  
-  dat_pomp <- us_dat[[region]] %>%
-    filter(season == yr)
-  
 } else {
   
   dat_pomp <- hk_dat[[paste(str_sub(vir1, 5, str_length(vir1)), vir2, sep = '_')]] %>%
@@ -58,7 +53,7 @@ if (age_structured) {
   
 } else {
   
-  if (!fit_canada & !fit_us) {
+  if (!fit_canada) {
     dat_pomp <- dat_pomp %>%
       rename('i_ILI' = 'GOPC') %>%
       mutate(i_ILI = i_ILI / 1000)
@@ -69,7 +64,7 @@ if (age_structured) {
 }
 
 # Get climate data:
-if (!fit_canada & !fit_us) {
+if (!fit_canada) {
   
   dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
   
@@ -91,7 +86,7 @@ if (!fit_canada & !fit_us) {
 }
 
 # Get H3 incidence data (as covariate):
-if (!fit_canada & !fit_us) {
+if (!fit_canada) {
   
   dat_h3 <- hk_dat$h3_rsv %>%
     rename('i_ILI' = 'GOPC') %>%
@@ -138,7 +133,7 @@ if (!fit_canada & !fit_us) {
 }
 
 # Get rhinovirus incidence data (as covariate):
-if (!fit_canada & !fit_us) {
+if (!fit_canada) {
   
   dat_rhino <- hk_dat$h1_plus_b_rhino %>%
     rename('i_ILI' = 'GOPC') %>%
@@ -175,7 +170,7 @@ if (nrow(dat_pomp) > 0) {
       theme_classic()
     print(p1)
     
-    if (!fit_canada & !fit_us) {
+    if (!fit_canada) {
       
       p2 <- ggplot(data = dat_pomp %>%
                      pivot_longer(n_P1:n_P2, names_to = 'virus', values_to = 'n_pos'),
@@ -210,16 +205,6 @@ if (nrow(dat_pomp) > 0) {
                                      debug_bool = debug_bool,
                                      sens = sens,
                                      loc = 'canada')
-    
-  } else if (fit_us) {
-    
-    resp_mod <- create_SITRxSITR_mod(dat = dat_pomp,
-                                     Ri1_max = Ri_max1,
-                                     Ri2_max = Ri_max2,
-                                     d2_max = d2_max,
-                                     debug_bool = debug_bool,
-                                     sens = sens,
-                                     loc = 'us')
     
   } else {
     
@@ -256,7 +241,7 @@ if (nrow(dat_pomp) > 0) {
   if (debug_bool) print(p3)
   
   # Run stochastic simulation and check that obs never more than n_samp:
-  p4 <- check_obs_lessthan_samples(resp_mod, test_diff = (fit_canada | fit_us))
+  p4 <- check_obs_lessthan_samples(resp_mod, test_diff = fit_canada)
   if (debug_bool) print(p4)
   
   # Check that measurement density model works:
