@@ -41,7 +41,11 @@ if (str_detect(res_dir, 'sinusoidal')) {
 if (str_detect(res_dir, 'canada')) {
   fit_canada <- TRUE
   fit_us <- FALSE
-  sens <- 'sinusoidal_forcing'
+  
+  if (!str_detect(res_dir, 'check_algorithms')) {
+    sens <- 'sinusoidal_forcing'
+  }
+  
 } else if (str_detect(res_dir, '/us/')) {
   fit_canada <- FALSE
   fit_us <- TRUE
@@ -102,7 +106,14 @@ if (sens == 'main') {
       dir.create(new_dir)
     }
     
-    new_dir <- paste0('results/round2_CIs/sens/canada/from_2_', which_round, '/')
+    if (str_detect(res_dir, 'check_algorithms')) {
+      new_dir <- 'results/round2_CIs/sens/canada/alg_praxis/'
+      if (!dir.exists(new_dir)) {
+        dir.create(new_dir)
+      }
+    }
+    
+    new_dir <- paste0(new_dir, 'from_2_', which_round, '/')
     if (!dir.exists(new_dir)) {
       dir.create(new_dir)
     }
@@ -126,7 +137,7 @@ load_and_format_mega_results <- function(filepath) {
   # Get list of results files:
   res_files <- list.files(path = filepath, full.names = TRUE)
   
-  if (sens == 'alg_praxis') {
+  if (sens == 'alg_praxis' & !fit_canada) {
     res_files <- list.files(path = filepath, pattern = 'praxis', full.names = TRUE)
   }
   
@@ -274,7 +285,13 @@ if (sens == 'no_rsv_immune') {
 shared_estpars <- res_orig %>% select(!contains(unit_estpars) & !'loglik') %>% names()
 true_estpars <- c(shared_estpars, unit_estpars)
 
-source('src/functions/setup_global_likelilhood.R')
+if (fit_canada & sens == 'alg_praxis') {
+  sens <- 'sinusoidal_forcing'
+  source('src/functions/setup_global_likelilhood.R')
+  sens <- 'alg_praxis'
+} else {
+  source('src/functions/setup_global_likelilhood.R')
+}
 
 traj_list <- lapply(1:length(seasons), function(ix) {
   pars_temp <- res_orig %>%
@@ -327,7 +344,13 @@ if (is_mle & is_mle_prev) {
   if (str_detect(res_dir, 'sens')) {
     
     if (str_detect(res_dir, 'canada')) {
-      write_rds(res_orig, file = 'results/round2_fit/sens/canada/MLEs_flu.rds')
+      
+      if (sens == 'alg_praxis') {
+        write_rds(res_orig, file = 'results/round2_fit/sens/canada/check_algorithms/MLEs_flu.rds')
+      } else {
+        write_rds(res_orig, file = 'results/round2_fit/sens/canada/MLEs_flu.rds')
+      }
+      
     } else if (str_detect(res_dir, '/us/')) {
       write_rds(res_orig, file = 'results/round2_fit/sens/us/MLEs_flu.rds')
     } else {
