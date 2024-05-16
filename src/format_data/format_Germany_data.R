@@ -110,6 +110,10 @@ de_dat <- de_dat %>%
          'i_ARI' = ari_rate) %>%
   mutate(i_ARI = i_ARI / 100000)
 
+# Replace dips in ARI around New Year's with NA:
+de_dat <- de_dat %>%
+  mutate(i_ARI = if_else(week %in% 52:53 | (week == 1 & year %in% c(2015, 2019)), NA, i_ARI))
+
 # Write data to file:
 write_csv(de_dat, 'data/formatted/dat_germany.csv')
 
@@ -174,9 +178,8 @@ p5 <- ggplot(de_dat_long %>%
 # Save plots to file:
 pdf('results/plots/data_Germany.pdf', width = 10, height = 7)
 grid.arrange(p1, p2, ncol = 1)
-print(p3)
+grid.arrange(p5, p3, ncol = 1)
 print(p4)
-print(p5)
 dev.off()
 
 # Clean up:
