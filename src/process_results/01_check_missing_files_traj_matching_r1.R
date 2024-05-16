@@ -8,6 +8,7 @@ library(testthat)
 
 # Get cluster environmental variables:
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+fit_germany <- as.logical(Sys.getenv("FITGERMANY")); print(fit_germany)
 
 # Set size of parameter start space:
 sobol_size <- 500
@@ -15,14 +16,14 @@ sobol_size <- 500
 # Get list of completed runs for each virus:
 res_files <- list.files(path = 'results', pattern = 'res_', full.names = TRUE)
 
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   check_list <- list.files(path = 'results/', pattern = 'flu_r')
 } else {
   check_list <- list.files(path = 'results/', pattern = 'flu_h1_plus_b_r')
 }
 
 # Get vector of seasons for which fitting was done:
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   all_yrs <- unique(str_sub(check_list, 13, 18))
 } else {
   all_yrs <- unique(str_sub(check_list, 23, 28))
@@ -39,7 +40,7 @@ if (length(check_list) != sobol_size * length(all_yrs) & length(check_list) > 0)
     
     if (length(temp_list) != sobol_size) {
       
-      if (fit_canada) {
+      if (fit_canada | fit_germany) {
         
         completed_runs <- str_split(temp_list, '_') %>%
           lapply(., function(ix) {ix[5]}) %>%

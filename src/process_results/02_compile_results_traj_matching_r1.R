@@ -11,6 +11,7 @@ library(testthat)
 # Get cluster environmental variables:
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+fit_germany <- as.logical(Sys.getenv("FITGERMANY")); print(fit_germany)
 
 # Set estimated parameter names:
 if (sens == 'no_rsv_immune') {
@@ -20,7 +21,7 @@ if (sens == 'no_rsv_immune') {
 }
 
 # Set parameter values:
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -43,7 +44,7 @@ d2_max <- 10.0
 res_files <- list.files(path = 'results', pattern = 'res_', full.names = TRUE)
 
 # Get season for each result:
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   yrs <- str_split(res_files, pattern = '_') %>%
     map(~ .x[4]) %>%
     unlist()

@@ -13,10 +13,10 @@ create_SITRxSITR_mod <- function(dat, Ri1_max = 3.0, Ri2_max = 3.0, d2_max = 10.
   # param loc: where are the data from? ('hk' or 'canada')
   
   # Same number of tests for flu and RSV?
-  if (loc == 'hk') {
-    test_diff <- FALSE
-  } else {
+  if (loc == 'canada') {
     test_diff <- TRUE
+  } else {
+    test_diff <- FALSE
   }
   
   # Read model C code:

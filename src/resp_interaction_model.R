@@ -25,12 +25,17 @@ if (!exists('age_structured')) {
 # Read in data:
 hk_dat <- read_rds('data/formatted/dat_hk_byOutbreak.rds')
 can_dat <- read_csv('data/formatted/dat_canada.csv')
-us_dat <- read_rds('data/formatted/dat_us_byRegion.rds')
+de_dat <- read_csv('data/formatted/dat_germany.csv')
 
 # Get data of interest:
 if (fit_canada) {
   
   dat_pomp <- can_dat %>%
+    filter(season == yr)
+  
+} else if (fit_germany) {
+  
+  dat_pomp <- de_dat %>%
     filter(season == yr)
   
 } else {
@@ -53,7 +58,7 @@ if (age_structured) {
   
 } else {
   
-  if (!fit_canada) {
+  if (!fit_canada & !fit_germany) {
     dat_pomp <- dat_pomp %>%
       rename('i_ILI' = 'GOPC') %>%
       mutate(i_ILI = i_ILI / 1000)
@@ -61,10 +66,15 @@ if (age_structured) {
     # https://www.censtatd.gov.hk/en/web_table.html?id=1A#
   }
   
+  if (fit_germany) {
+    dat_pomp <- dat_pomp %>%
+      rename('i_ILI' = 'i_ARI')
+  }
+  
 }
 
 # Get climate data:
-if (!fit_canada) {
+if (!fit_canada & !fit_germany) {
   
   dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
   
@@ -86,7 +96,7 @@ if (!fit_canada) {
 }
 
 # Get H3 incidence data (as covariate):
-if (!fit_canada) {
+if (!fit_canada & !fit_germany) {
   
   dat_h3 <- hk_dat$h3_rsv %>%
     rename('i_ILI' = 'GOPC') %>%
@@ -133,7 +143,7 @@ if (!fit_canada) {
 }
 
 # Get rhinovirus incidence data (as covariate):
-if (!fit_canada) {
+if (!fit_canada & !fit_germany) {
   
   dat_rhino <- hk_dat$h1_plus_b_rhino %>%
     rename('i_ILI' = 'GOPC') %>%
@@ -173,7 +183,7 @@ if (nrow(dat_pomp) > 0) {
     if (!fit_canada) {
       
       p2 <- ggplot(data = dat_pomp %>%
-                     pivot_longer(n_P1:n_P2, names_to = 'virus', values_to = 'n_pos'),
+                     pivot_longer(c(n_P1, n_P2), names_to = 'virus', values_to = 'n_pos'),
                    aes(x = time, y = n_pos / n_T, color = virus)) +
         geom_line() + labs(x = 'Time (Weeks)', y = 'Positivity Fraction') +
         theme_classic()
@@ -205,6 +215,16 @@ if (nrow(dat_pomp) > 0) {
                                      debug_bool = debug_bool,
                                      sens = sens,
                                      loc = 'canada')
+    
+  } else if (fit_germany) {
+    
+    resp_mod <- create_SITRxSITR_mod(dat = dat_pomp,
+                                     Ri1_max = Ri_max1,
+                                     Ri2_max = Ri_max2,
+                                     d2_max = d2_max,
+                                     debug_bool = debug_bool,
+                                     sens = sens,
+                                     loc = 'germany')
     
   } else {
     

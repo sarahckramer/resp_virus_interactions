@@ -18,6 +18,7 @@ sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+fit_germany <- as.logical(Sys.getenv("FITGERMANY")); print(fit_germany)
 
 # # Set parameters for local runs (temp):
 # jobid <- 1
@@ -26,10 +27,14 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # search_type <- 'broad'
 # sens <- 'main'
 # fit_canada <- FALSE
+# fit_germany <- FALSE
 
 # Set parameters for run:
 if (fit_canada) {
   yr <- c('s10-11', 's11-12', 's12-13', 's13-14')[(ceiling(jobid / no_jobs) - 1) %% 4 + 1]; print(yr)
+  vir1 <- 'flu'
+} else if (fit_germany) {
+  yr <- c('s14-15', 's15-16', 's16-17', 's17-18', 's18-19')[(ceiling(jobid / no_jobs) - 1) %% 5 + 1]; print(yr)
   vir1 <- 'flu'
 } else {
   yr <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')[(ceiling(jobid / no_jobs) - 1) %% 6 + 1]; print(yr)
