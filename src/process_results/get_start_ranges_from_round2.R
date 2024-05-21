@@ -36,9 +36,15 @@ if (str_detect(res_dir, 'sinusoidal')) {
 # Check whether Canada or Hong Kong:
 if (str_detect(res_dir, 'canada')) {
   fit_canada <- TRUE
+  fit_germany <- FALSE
+  sens <- 'sinusoidal_forcing'
+} else if (str_detect(res_dir, 'germany')) {
+  fit_canada <- FALSE
+  fit_germany <- TRUE
   sens <- 'sinusoidal_forcing'
 } else {
   fit_canada <- FALSE
+  fit_germany <- FALSE
 }
 
 # Check that directory for storing results exists, and create if not:
@@ -92,6 +98,16 @@ if (sens == 'main') {
     }
     
     new_dir <- paste0('results/round2_CIs/sens/canada/from_2_', which_round, '/')
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
+  } else if (fit_germany) {
+    new_dir <- 'results/round2_CIs/sens/germany/'
+    if (!dir.exists(new_dir)) {
+      dir.create(new_dir)
+    }
+    
+    new_dir <- paste0('results/round2_CIs/sens/germany/from_2_', which_round, '/')
     if (!dir.exists(new_dir)) {
       dir.create(new_dir)
     }
@@ -234,7 +250,7 @@ res <- load_and_format_mega_results(res_dir)
 # Check that best-fit parameter values do not lead trajectories to drop below 0:
 res_orig <- res[[2]]
 
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -303,8 +319,8 @@ if (is_mle & is_mle_prev) {
     
     if (str_detect(res_dir, 'canada')) {
       write_rds(res_orig, file = 'results/round2_fit/sens/canada/MLEs_flu.rds')
-    } else if (str_detect(res_dir, '/us/')) {
-      write_rds(res_orig, file = 'results/round2_fit/sens/us/MLEs_flu.rds')
+    } else if (str_detect(res_dir, 'germany')) {
+      write_rds(res_orig, file = 'results/round2_fit/sens/germany/MLEs_flu.rds')
     } else {
       write_rds(res_orig, file = paste0(paste(str_split(res_dir, '/')[[1]][1:(length(str_split(res_dir, '/')[[1]]) - 2)], collapse = '/'), '/MLEs_flu_h1_plus_b.rds'))
     }

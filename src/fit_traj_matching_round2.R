@@ -26,6 +26,7 @@ prof_lik <- as.logical(Sys.getenv("PROFLIK")); print(prof_lik)
 # prof_val <- as.numeric(as.character(Sys.getenv("PROFVAL"))); print(prof_val)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+fit_germany <- as.logical(Sys.getenv("FITGERMANY")); print(fit_germany)
 run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
 
 # # Set parameters for local run:
@@ -39,13 +40,14 @@ run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
 # prof_lik <- FALSE
 # sens <- 'main' # 'main', 'less_circ_h3', 'sinusoidal_forcing', 'no_ah', 'no_int', 'no_rsv_immune', 'h3_covar', 'rhino_covar'
 # fit_canada <- FALSE
+# fit_germany <- FALSE
 # run_parallel <- FALSE
 
 # Set parameters for run:
 debug_bool <- FALSE
 vir2 <- 'rsv'
 
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -57,6 +59,8 @@ if (sens == 'less_circ_h3') {
 }
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
+} else if (fit_germany) {
+  seasons <- c('s14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 }
 
 if (sens == 'sinusoidal_forcing') {

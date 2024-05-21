@@ -27,6 +27,9 @@ if (sens == 'less_circ_h3') {
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
   sens <- 'sinusoidal_forcing'
+} else if (fit_germany) {
+  seasons <- c('s14-15', 's15-16', 's16-17', 's17-18', 's18-19')
+  sens <- 'sinusoidal_forcing'
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

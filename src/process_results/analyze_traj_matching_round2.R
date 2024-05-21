@@ -12,7 +12,11 @@ library(gridExtra)
 # Data from Canada?:
 fit_canada <- FALSE
 
-if (fit_canada) {
+# Data from Germany?:
+fit_germany <- FALSE
+
+# Sensitivity analysis?:
+if (fit_canada | fit_germany) {
   sens <- 'sinusoidal_forcing'
 }
 
@@ -20,6 +24,9 @@ if (fit_canada) {
 if (fit_canada) {
   res_dir <- 'results/round2_fit/sens/canada/round2_3_flu/'
   res_dir_round1 <- 'results/round2_fit/sens/canada/round1_fitsharedFALSE/'
+} else if (fit_germany) {
+  res_dir <- 'results/round2_fit/sens/germany/round2_2_flu/'
+  res_dir_round1 <- 'results/round2_fit/sens/germany/round1_fitsharedFALSE/'
 } else {
   res_dir <- 'results/round2_fit/round2_3_fluH1_plus_B/'
   res_dir_round1 <- 'results/round1_fitsharedFALSE/'
@@ -130,7 +137,7 @@ load_and_format_mega_results <- function(filepath, shared_estpars, unit_estpars,
 # Read in and format results for all runs
 
 # Set shared and unit parameters:
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   shared_estpars <- c('rho1', 'rho2', 'theta_lambda1', 'theta_lambda2', 'delta1', 'd2',
                       'alpha', 'phi', 'b1', 'b2', 'phi1', 'phi2')
 } else {
@@ -185,6 +192,9 @@ res_r1 <- res_r1 %>%
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_CANADA.pdf'),
       width = 22, height = 12)
+} else if (fit_germany) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_GERMANY.pdf'),
+      width = 22, height = 12)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2.pdf'),
       width = 22, height = 12)
@@ -212,6 +222,9 @@ dev.off()
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr_CANADA.pdf'),
       width = 18, height = 10)
+} else if (fit_germany) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr_GERMANY.pdf'),
+      width = 18, height = 10)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_corr.pdf'),
       width = 18, height = 10)
@@ -226,7 +239,7 @@ for (param in unit_estpars) {
 }
 
 # And calculate correlation between estimates of eta_temp and eta_ah:
-if (!fit_canada) {
+if (!fit_canada & !fit_germany) {
   par(mfrow = c(2, 1), mar = c(4, 4, 1, 0.5))
   pars_temp <- res_r2[[1]] %>% select(eta_temp1:eta_ah2)
   plot(pars_temp$eta_temp1, pars_temp$eta_ah1, pch = 20)
@@ -241,6 +254,9 @@ dev.off()
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices_CANADA.pdf'),
       width = 20, height = 20)
+} else if (fit_germany) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices_GERMANY.pdf'),
+      width = 20, height = 20)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_slices.pdf'),
       width = 20, height = 20) 
@@ -253,7 +269,7 @@ prof_lik <- FALSE
 estpars <- names(res_r2[[1]])[1:(length(names(res_r2[[1]])) - 1)]
 
 # Set vir1:
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -269,7 +285,7 @@ for (j in 1:5) {
   mle <- setNames(object = as.numeric(res_r2[[1]][j, 1:(length(names(res_r2[[1]])) - 1)]),
                   nm = estpars)
   
-  if (fit_canada) {
+  if (fit_canada | fit_germany) {
     
     slices <- slice_design(center = mle,
                            rho1 = seq(from = 0.9 * mle['rho1'], to = 1.1 * mle['rho1'], length.out = 20),
@@ -365,6 +381,9 @@ dev.off()
 # Plot simulations:
 if (fit_canada) {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations_CANADA.pdf'),
+      width = 18, height = 10)
+} else if (fit_germany) {
+  pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations_GERMANY.pdf'),
       width = 18, height = 10)
 } else {
   pdf(paste0('results/plots/', date, '_trajectory_matching_round2_simulations.pdf'),
