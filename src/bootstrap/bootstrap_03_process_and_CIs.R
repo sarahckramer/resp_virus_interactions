@@ -9,7 +9,7 @@ library(rethinking)
 library(gt)
 
 # Get names of all results files:
-file_list <- list.files(path = 'results/bootstrapping/flu_H1_plus_B/', full.names = TRUE)
+file_list <- list.files(path = 'results/round2_fit/sens/germany/bootstrapping/', full.names = TRUE)
 
 # Are results from a sensitivity analysis?:
 if (str_detect(file_list[[1]], 'sinusoidal')) {
@@ -35,9 +35,15 @@ if (str_detect(file_list[[1]], 'sinusoidal')) {
 # Results from Canada?:
 if (str_detect(file_list[[1]], 'canada')) {
   fit_canada <- TRUE
+  fit_germany <- FALSE
+  sens <- 'sinusoidal_forcing'
+} else if (str_detect(file_list[[1]], 'germany')) {
+  fit_canada <- FALSE
+  fit_germany <- TRUE
   sens <- 'sinusoidal_forcing'
 } else {
   fit_canada <- FALSE
+  fit_germany <- FALSE
 }
 
 # Ensure no results missing:
@@ -128,10 +134,10 @@ unit_estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120')
 shared_estpars <- res_df %>% select(!contains(unit_estpars) & !'loglik' & !'dataset') %>% names()
 true_estpars <- c(shared_estpars, unit_estpars)
 
-# # Check that no states go below zero for any of the top-fit parameter sets:
+# Check that no states go below zero for any of the top-fit parameter sets:
 # prof_lik <- FALSE
 # 
-# if (fit_canada) {
+# if (fit_canada | fit_germany) {
 #   vir1 <- 'flu'
 # } else {
 #   vir1 <- 'flu_h1_plus_b'
@@ -163,7 +169,7 @@ true_estpars <- c(shared_estpars, unit_estpars)
 #   unlist()))
 
 # Calculate composite parameters:
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   
   res_df_unit <- res_df %>%
     select(contains('I') | contains('R') | dataset) %>%
@@ -249,6 +255,8 @@ ci_res <- res_df %>%
 # Write results to file:
 if (fit_canada) {
   write_csv(ci_res, file = 'results/round2_fit/sens/canada/95CI_from_bootstrapping_HPDI.csv')
+} else if (fit_germany) {
+  write_csv(ci_res, file = 'results/round2_fit/sens/germany/95CI_from_bootstrapping_HPDI.csv')
 } else {
   
   if (sens != 'main') {
@@ -263,6 +271,14 @@ if (fit_canada) {
 if (fit_canada) {
   
   mle <- read_rds('results/round2_fit/sens/canada/MLEs_flu.rds')[1, ]
+  
+  mle_unit <- mle %>%
+    select(contains('I') | contains('R')) %>%
+    select(-c(phi, rho1, rho2, phi1, phi2))
+  
+} else if (fit_germany) {
+  
+  mle <- read_rds('results/round2_fit/sens/germany/MLEs_flu.rds')[1, ]
   
   mle_unit <- mle %>%
     select(contains('I') | contains('R')) %>%
@@ -337,6 +353,8 @@ ci_res <- ci_res %>%
 # Write results to file:
 if (fit_canada) {
   write_csv(ci_res, file = 'results/round2_fit/sens/canada/MLE_plus_95CI_from_bootstrapping_HPDI.csv')
+} else if (fit_germany) {
+  write_csv(ci_res, file = 'results/round2_fit/sens/germany/MLE_plus_95CI_from_bootstrapping_HPDI.csv')
 } else {
   
   if (sens != 'main') {
@@ -356,6 +374,8 @@ print(res_table)
 
 if (fit_canada) {
   gtsave(res_table, filename = 'results/round2_fit/sens/canada/table_CIs.html')
+} else if (fit_germany) {
+  gtsave(res_table, filename = 'results/round2_fit/sens/germany/table_CIs.html')
 } else {
   
   if (sens != 'main') {
@@ -390,6 +410,8 @@ print(p2)
 
 if (fit_canada) {
   pdf('results/plots/plot_params_plus_ci_CANADA.pdf', width = 15, height = 8)
+} else if (fit_germany) {
+  pdf('results/plots/plot_params_plus_ci_GERMANY.pdf', width = 15, height = 8)
 } else {
   
   if (sens != 'main') {

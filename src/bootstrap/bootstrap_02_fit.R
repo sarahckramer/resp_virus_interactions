@@ -22,6 +22,7 @@ final_round <- as.integer(Sys.getenv("FINALROUND")); print(final_round)
 int_eff <- as.character(Sys.getenv("INTERACTIONEFFECT")); print(int_eff)
 sens <- as.character(Sys.getenv("SENS")); print(sens)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
+fit_germany <- as.logical(Sys.getenv("FITGERMANY")); print(fit_germany)
 run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
 
 # # Set parameters for local run:
@@ -32,6 +33,7 @@ run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
 # int_eff <- 'susc' # 'susc' or 'sev' - fit impact of interaction on susceptibility or severity?
 # sens <- 'main'
 # fit_canada <- FALSE
+# fit_germany <- FALSE
 # run_parallel <- FALSE
 
 # Determine which synthetic dataset and start values to use:
@@ -44,7 +46,7 @@ print(jobid)
 debug_bool <- FALSE
 vir2 <- 'rsv'
 
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -56,6 +58,8 @@ if (sens == 'less_circ_h3') {
 }
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
+} else if (fit_germany) {
+  seasons <- c('s14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 }
 
 time_max <- 23.75 # Maximal execution time (in hours)

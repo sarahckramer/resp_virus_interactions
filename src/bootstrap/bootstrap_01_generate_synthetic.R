@@ -14,8 +14,9 @@ library(tidyverse)
 n <- 500 # How many synthetic datasets to create?
 sens <- 'main'
 fit_canada <- FALSE
+fit_germany <- FALSE
 
-if (fit_canada) {
+if (fit_canada | fit_germany) {
   vir1 <- 'flu'
 } else {
   vir1 <- 'flu_h1_plus_b'
@@ -29,7 +30,9 @@ if (fit_canada) {
 if (sens != 'main') {
   
   if (fit_canada) {
-    mle <- read_rds(paste0('results/round2_fit/sens/canada/MLEs_flu_h1_plus_b.rds'))[1, ]
+    mle <- read_rds('results/round2_fit/sens/canada/MLEs_flu_h1_plus_b.rds')[1, ]
+  } else if (fit_germany) {
+    mle <- read_rds('results/round2_fit/sens/germany/MLEs_flu.rds')[1, ]
   } else {
     mle <- read_rds(paste0('results/round2_fit/sens/', sens, '/MLEs_flu_h1_plus_b.rds'))[1, ]
   }
@@ -70,6 +73,8 @@ if (sens == 'less_circ_h3') {
 }
 if (fit_canada) {
   seasons <- c('s10-11', 's11-12', 's12-13', 's13-14')
+} else if (fit_germany) {
+  seasons <- c('s14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 }
 
 Ri_max1 <- 2.0
@@ -196,6 +201,10 @@ if (sens != 'main') {
   if (fit_canada) {
     
     write_rds(synth_LIST, 'results/round2_fit/sens/canada/synth_data_for_bootstrapping_flu.rds')
+    
+  }  else if (fit_germany) {
+    
+    write_rds(synth_LIST, 'results/round2_fit/sens/germany/synth_data_for_bootstrapping_flu.rds')
     
   } else {
     
