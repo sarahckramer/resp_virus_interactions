@@ -5,6 +5,7 @@ Code to infer the strength and duration of interactions between flu and RSV
 Directory Structure
 -------------------
 * src
+    * demo
     * format_data
     * explore_data
     * functions
@@ -13,6 +14,28 @@ Directory Structure
     * bootstrap
     * age_structured_SA
     * vaccination_simulation_study
+
+Demo
+----
+
+A short demo showing how the model of influenza and RSV cocirculation is fit to data is available as "src/demo/demo_run.R". Synthetic data used for the demo can be found in the same folder as "demo_data.csv". The demo should take about 40 minutes to run, and outputs the fitted parameter values for a limited number of runs, both when the model is fit to data one season at a time, and when the model is fit to all seasons simulataneously.
+
+The demo has been tested on the following operating systems:
+
+* Windows 10
+
+R, the programming language used for this work, can be downloaded at: https://www.r-project.org/
+
+For this work, I used R version 4.4.0. Code was written and run using the RStudio IDE, version 2024.4.1.748, which can be obtained [here](https://posit.co/downloads/).
+
+For the demo, the following R packages must be installed:
+
+* tidyverse (version 2.0.0)
+* testthat (version 3.2.1.1)
+* pomp (version 5.8)
+* nloptr (version 2.0.3)
+
+The "pomp" package has additional dependencies, which vary by operating system. Detailed installation instructions can be found [here](https://kingaa.github.io/pomp/install.html).
 
 Formatting data (Hong Kong)
 ---------------------------
