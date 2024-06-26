@@ -28,40 +28,6 @@ sobol_size <- 500 # how many starting parameter sets to use for fitting?
 # List seasons for which data are available:
 seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
 
-# # Get synthetic data set:
-# synth_LIST <- read_rds('results/data_for_synthetic_testing.rds')
-# 
-# seasons <- c('s13-14', 's14-15', 's15-16', 's16-17', 's17-18', 's18-19')
-# 
-# dat_list <- vector('list', length = 6)
-# 
-# for (i in 1:length(seasons)) {
-#   
-#   yr <- seasons[i]
-#   hk_dat_temp <- hk_dat %>% filter(season == yr)
-#   synth_dat_temp <- synth_LIST[[1]][[i]][[1]] %>% t()
-#   
-#   hk_dat_temp[, c('n_P1', 'n_P2')] <- synth_dat_temp
-#   dat_list[[i]] <- hk_dat_temp
-#   
-# }
-# 
-# synth_dat <- bind_rows(dat_list)
-# 
-# dat_clim <- read_csv('data/formatted/clim_dat_hk_NORM.csv')
-# 
-# synth_dat <- synth_dat %>%
-#   rename('i_ILI' = 'GOPC') %>%
-#   mutate(i_ILI = i_ILI / 1000) %>%
-#   inner_join(dat_clim,
-#              by = c('Year' = 'year',
-#                     'Week' = 'week')) %>%
-#   select(time:pop, temp, ah, rh) %>%
-#   mutate(h3_inc = 0,
-#          rhino_inc = 0)
-# 
-# write_csv(synth_dat, file = 'src/demo/demo_data.csv')
-
 # Read in data:
 df <- read_csv('src/demo/demo_data.csv')
 # Note: these are synthetic data, generated at the MLEs obtained from the Hong Kong data
@@ -80,7 +46,6 @@ df <- read_csv('src/demo/demo_data.csv')
 
 # Load required functions:
 source('src/functions/functions_flu_RSV.R')
-# source('src/functions/test_code.R')
 
 # Create models for each season:
 po_list <- vector('list', length(seasons))
@@ -280,16 +245,6 @@ estpars <- c(shared_estpars, unit_sp_estpars)
 # that we know yield good results. Run time is about 20-30 minutes.
 
 x0 <- read_rds('src/demo/starting_params.rds')
-
-# set.seed(749501349)
-# start_range <- read_rds('results/synthetic_testing/set_1/round2_CIs/from_2_4/round2CI_startvals.rds')
-# start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
-#                              upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
-#                              nseq = sobol_size)
-# 
-# x0 <- as.numeric(start_values[485, ])
-# # x0 <- as.numeric(out$estpars)
-# write_rds(x0, file = 'src/demo/starting_params.rds')
 
 # Get list of season-specific objective functions:
 obj_fun_list <- lapply(po_list, function(ix) {
