@@ -2,8 +2,8 @@
 # Demo of model fitting procedure
 
 # Tested on Windows 10, in R version 4.4.0
-# Run time: ~___
-# Required packages: tidyverse, testthat, pomp, nloptr, 
+# Run time: ~40 minutes
+# Required packages: tidyverse, testthat, pomp, nloptr
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Setup
@@ -82,9 +82,6 @@ expect_true(all(!lapply(po_list, length) == 0))
 # For the purposes of the demo, we will fit to only one season:
 resp_mod <- po_list[[3]] # model and data from 2015-16 season
 
-# Set seed:
-set.seed(749501349)
-
 # Get starting values of all parameters:
 estpars <- c('Ri1', 'Ri2', 'I10', 'I20', 'R10', 'R20', 'R120', 'rho1', 'rho2')
 
@@ -111,6 +108,7 @@ start_range <- data.frame(Ri1 = c(1.0, 2.0),
                           eta_ah2 = c(-0.5, 0.5))
 start_range <- start_range[, estpars]
 
+set.seed(749501349)
 start_values <- sobol_design(lower = setNames(as.numeric(start_range[1, ]), names(start_range[1, ])),
                              upper = setNames(as.numeric(start_range[2, ]), names(start_range[2, ])),
                              nseq = sobol_size)
@@ -140,7 +138,7 @@ for (i in seq_along(sub_start)) {
     nloptr(x0 = unname(x0_trans),
            eval_f = obj_fun,
            opts = list(algorithm = 'NLOPT_LN_SBPLX',
-                       maxtime = 120.0,
+                       maxtime = 120.0, # Max run time: 2 minutes
                        maxeval = -1, # disabled
                        xtol_rel = -1, # disabled; default: 1e-4
                        print_level = 0))
@@ -190,7 +188,7 @@ res_r1 <- res_r1 %>%
   select(-message)
 
 # Check that fit parameters do not produce simulations where state variables go negative:
-p_mat <- parmat(coef(resp_mod), nrep = 10)
+p_mat <- parmat(coef(resp_mod), nrep = nrow(res_r1))
 
 for (param in estpars) {
   p_mat[param, ] <- res_r1 %>% pull(param)
@@ -242,7 +240,7 @@ estpars <- c(shared_estpars, unit_sp_estpars)
 # above, or from a previous attempt to fit all seasons simultaneously. We would then draw 500
 # starting parameter sets using the "sobol_design" function, as we did for round 1 above.
 # Here, since we do not have time to run the full fitting procedure, we will use starting values
-# that we know yield good results. Run time is about 20-30 minutes.
+# that we know yield good results in a reasonable amount of time (about 30 minutes).
 
 x0 <- read_rds('src/demo/starting_params.rds')
 
@@ -259,6 +257,7 @@ x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, share
 expect_equal(x0, unname(x0_orig))
 rm(x0_orig)
 
+tic_temp <- Sys.time()
 m <- try(
   nloptr(x0 = x0_trans, 
          eval_f = calculate_global_loglik,
@@ -268,6 +267,10 @@ m <- try(
                      xtol_rel = -1, # Default value: 1e-4
                      print_level = 0))
 )
+toc_temp <- Sys.time()
+etime <- toc_temp - tic_temp
+units(etime) <- 'mins'
+print(etime)
 
 if (!inherits(m, 'try-error')) {
   x0_fit <- m$solution
