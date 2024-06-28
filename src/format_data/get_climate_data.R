@@ -157,14 +157,14 @@ print(p_fr)
 dat_hk_norm <- dat_hk %>%
   mutate(across(temp:prcp, ~ (.x - mean(.x)) / sd(.x)))
 dat_hk_norm_CHECK <- dat_hk %>%
-  mutate(across(temp:prcp, ~ scale(.x)[,1 ]))
+  mutate(across(temp:prcp, ~ scale(.x)[, 1]))
 expect_true(all.equal(dat_hk_norm, dat_hk_norm_CHECK))
 rm(dat_hk_norm_CHECK)
 
 dat_fr_norm <- dat_fr %>%
   mutate(across(temp:prcp, ~ (.x - mean(.x)) / sd(.x)))
 dat_fr_norm_CHECK <- dat_fr %>%
-  mutate(across(temp:prcp, ~ scale(.x)[,1 ]))
+  mutate(across(temp:prcp, ~ scale(.x)[, 1]))
 expect_true(all.equal(dat_fr_norm, dat_fr_norm_CHECK))
 rm(dat_fr_norm_CHECK)
 
