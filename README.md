@@ -35,6 +35,30 @@ For the demo, the following R packages must be installed:
 
 The "pomp" package has additional dependencies, which vary by operating system. Detailed installation instructions can be found [here](https://kingaa.github.io/pomp/install.html).
 
+Required Packages
+-----------------
+
+In addition to those listed under "Demo" above, the following packages are also used by this repository:
+
+* gridExtra (version 2.3)
+* ISOweek (version 0.6.2)
+* GSODR (version 3.1.9)
+* rstudioapi (version 0.15.0)
+* parallel (version 4.2.3)
+* doMC (version 1.3.8)
+* viridis (version 0.6.4)
+* rethinking (version 2.40)
+* gt (version 0.10.0)
+* socialmixr (version 0.3.1)
+* rootSolve (version 1.8.2.4)
+* lemon (version 0.4.6)
+* RColorBrewer (version 1.1.3)
+* grid (version 4.2.3)
+* patchwork (version 1.1.3)
+* cowplot (version 1.1.1)
+* GGally (version 2.1.2)
+* purrr (version 1.0.2)
+
 Formatting data (Hong Kong)
 ---------------------------
 
