@@ -11,8 +11,6 @@ set.seed(749501349)
 # Load libraries:
 library(nloptr)
 library(parallel)
-library(doParallel)
-library(doSNOW)
 library(doMC)
 
 # Get cluster environmental variables:

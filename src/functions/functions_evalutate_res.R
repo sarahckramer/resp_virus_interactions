@@ -199,7 +199,7 @@ run_sim <- function(pomp_object, seas, mle, shared_estpars, unit_estpars, model_
 calculate_metrics <- function(dat) {
   # Function to calculate various outbreak metrics
   # params dat: tibble of the number of cases of both viruses over time
-  # returns: 
+  # returns: Tibble containing the peak timing, peak intensity, and attack rates for both viruses
   
   if ('.id' %in% names(dat)) {
     
@@ -225,6 +225,50 @@ calculate_metrics <- function(dat) {
   }
   
   return(out_metrics)
+  
+}
+
+
+calculate_duration_and_concentration <- function(dat) {
+  # Function to calculate outbreak duration (defined as number of weeks containing 75% of reported cases), and to
+  # check whether these weeks are consecutive
+  # params dat: tibble of the number of cases of both viruses over time for a single season
+  # returns: Tibble containing duration and consecutive-ness of both viruses
+  
+  # List of results:
+  res_list <- vector('list', length = 2)
+  
+  # Loop through viruses:
+  for (i in 1:2) {
+    
+    vir <- c('n_P1', 'n_P2')[i]
+    
+    case_counts_temp <- dat %>% pull(vir)
+    case_counts_temp[is.na(case_counts_temp)] <- 0
+    
+    target_sum <- sum(case_counts_temp)
+    sum_cases <- 0
+    which_weeks <- c()
+    
+    while(sum_cases < 0.75 * target_sum) {
+      
+      which_max <- which.max(case_counts_temp)
+      max_val <- case_counts_temp[which_max]
+      
+      sum_cases <- sum_cases + max_val
+      which_weeks <- c(which_weeks, which_max)
+      
+      case_counts_temp[which_max] <- 0
+      
+    }
+    
+    res_list[[i]] <- c(vir, length(which_weeks), min(which_weeks) + length(which_weeks) - 1 == max(which_weeks))
+    
+  }
+  
+  out <- as_tibble(t(c(dur1 = as.numeric(res_list[[1]][2]), dur2 = as.numeric(res_list[[2]][2]),
+                       cons1 = as.numeric(as.logical(res_list[[1]][3])), cons2 = as.numeric(as.logical(res_list[[2]][3])))))
+  return(out)
   
 }
 

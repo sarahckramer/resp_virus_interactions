@@ -253,12 +253,89 @@ rm(fig4s, p4a, p4b, res, res_hk, res_can, mle_hk, mle_can)
 
 # Supplementary Figure 5: Relationship between proportion immune and previous season's attack rate
 
-ar_df <- read_rds('results/simulated_ar.rds') %>%
-  filter(loc != 'us') %>%
-  mutate(loc = case_match(
-    loc,
-    'hk' ~ 'Hong Kong',
-    'canada' ~ 'Canada'))
+mle_hk <- read_rds('results/MLEs_flu_h1_plus_b.rds')
+mle_can <- read_rds('results/round2_fit/sens/canada/MLEs_flu.rds')
+
+source('src/functions/functions_evalutate_res.R')
+
+true_estpars <- c(shared_estpars_hk, unit_estpars)
+prof_lik <- FALSE
+fit_canada <- FALSE
+fit_us <- FALSE
+vir1 <- 'flu_h1_plus_b'
+sens <- 'main'
+
+source('src/functions/setup_global_likelilhood.R')
+
+set.seed(12075)
+traj_list = traj_no_int_list = sim_list = ar_list = vector('list', length = length(seasons))
+for (i in 1:length(seasons)) {
+  
+  traj_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'basic')
+  traj_no_int_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', analysis = 'paf')
+  sim_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'stochastic', return_data = TRUE, n_sim = 10, analysis = 'basic')
+  ar_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'basic')
+  
+  traj_list[[i]] <- traj_temp
+  traj_no_int_list[[i]] <- traj_no_int_temp
+  sim_list[[i]] <- sim_temp
+  ar_list[[i]] <- ar_temp
+  
+}
+
+traj_hk <- bind_rows(traj_list)
+traj_no_int_hk <- bind_rows(traj_no_int_list)
+sims_hk <- bind_rows(sim_list)
+ar_hk <- bind_rows(ar_list) %>%
+  mutate(loc = 'Hong Kong')
+
+true_estpars <- c(shared_estpars_can, unit_estpars)
+fit_canada <- TRUE
+vir1 <- 'flu'
+sens <- 'sinusoidal_forcing'
+
+source('src/functions/setup_global_likelilhood.R')
+
+set.seed(12075)
+traj_list = traj_no_int_list = sim_list = ar_list = vector('list', length = length(seasons))
+for (i in 1:length(seasons)) {
+  
+  traj_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'basic')
+  traj_no_int_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', analysis = 'paf')
+  sim_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'stochastic', return_data = TRUE, n_sim = 10, analysis = 'basic')
+  ar_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'basic')
+  
+  traj_list[[i]] <- traj_temp
+  traj_no_int_list[[i]] <- traj_no_int_temp
+  sim_list[[i]] <- sim_temp
+  ar_list[[i]] <- ar_temp
+  
+}
+
+traj_can <- bind_rows(traj_list)
+traj_no_int_can <- bind_rows(traj_no_int_list)
+sims_can <- bind_rows(sim_list)
+ar_can <- bind_rows(ar_list) %>%
+  mutate(loc = 'Canada')
+
+rm(traj_list, traj_no_int_list, sim_list, ar_list, po_list, vir1, yr, i, dat_pomp,
+   traj_temp, traj_no_int_temp, sim_temp, ar_temp, hk_dat, can_dat,
+   nrow_check, yr_index, fit_canada, sens)
+
+traj <- list(traj_hk, traj_can)
+traj_no_int <- list(traj_no_int_hk, traj_no_int_can)
+sims <- list(sims_hk, sims_can)
+rm(traj_hk, traj_can, traj_no_int_hk, traj_no_int_can, sims_hk, sims_can)
+
+ar_df <- bind_rows(ar_hk, ar_can) %>%
+  group_by(loc, season) %>%
+  summarise(H1 = sum(H1),
+            H2 = sum(H2),
+            obs1 = sum(obs1, na.rm = TRUE),
+            obs2 = sum(obs2, na.rm = TRUE)) %>%
+  select(loc, season:H2) %>%
+  pivot_longer(H1:H2, names_to = 'virus', values_to = 'attack_rate') %>%
+  mutate(virus = if_else(virus == 'H1', 'Influenza', 'RSV'))
 
 mle_hk <- read_rds('results/MLEs_flu_h1_plus_b.rds')[1, ] %>%
   select(contains('R1') | contains('R2')) %>%
@@ -566,8 +643,8 @@ fig7s_a <- arrangeGrob(grobs = plot_list[1:6], ncol = 2)
 fig7s_b <- arrangeGrob(grobs = plot_list[7:10], ncol = 2)
 
 # ggsave('results/plots/figures_for_manuscript/supp/FigureS7.svg', fig7s, width = 18, height = 26)
-ggsave('results/plots/figures_for_manuscript/supp/FigureS7a.svg', fig7s_a, width = 18, height = 15.6)
-ggsave('results/plots/figures_for_manuscript/supp/FigureS7b.svg', fig7s_b, width = 18, height = 10.4)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS7a.svg', fig7s_a, width = 18, height = 15.6)
+# ggsave('results/plots/figures_for_manuscript/supp/FigureS7b.svg', fig7s_b, width = 18, height = 10.4)
 
 rm(fig7s_a, fig7s_b, pars_top_unit_hk, pars_top_unit_can, plot_list)
 
@@ -692,72 +769,6 @@ rm(mle, mle_can, force_t, force_can, p8a, p8b, p_legend, fig8s, min_val, max_val
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Supplementary Figure 9: Simulations at the MLE
-
-mle_hk <- read_rds('results/MLEs_flu_h1_plus_b.rds')
-mle_can <- read_rds('results/round2_fit/sens/canada/MLEs_flu.rds')
-
-source('src/functions/functions_evalutate_res.R')
-
-true_estpars <- c(shared_estpars_hk, unit_estpars)
-prof_lik <- FALSE
-fit_canada <- FALSE
-fit_us <- FALSE
-vir1 <- 'flu_h1_plus_b'
-sens <- 'main'
-
-source('src/functions/setup_global_likelilhood.R')
-
-set.seed(12075)
-traj_list = traj_no_int_list = sim_list = vector('list', length = length(seasons))
-for (i in 1:length(seasons)) {
-  
-  traj_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'basic')
-  traj_no_int_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'deterministic', analysis = 'paf')
-  sim_temp <- run_sim(po_list[[i]], seasons[i], mle_hk, shared_estpars_hk, unit_estpars, model_type = 'stochastic', return_data = TRUE, n_sim = 10, analysis = 'basic')
-  
-  traj_list[[i]] <- traj_temp
-  traj_no_int_list[[i]] <- traj_no_int_temp
-  sim_list[[i]] <- sim_temp
-  
-}
-
-traj_hk <- bind_rows(traj_list)
-traj_no_int_hk <- bind_rows(traj_no_int_list)
-sims_hk <- bind_rows(sim_list)
-
-true_estpars <- c(shared_estpars_can, unit_estpars)
-fit_canada <- TRUE
-vir1 <- 'flu'
-sens <- 'sinusoidal_forcing'
-
-source('src/functions/setup_global_likelilhood.R')
-
-set.seed(12075)
-traj_list = traj_no_int_list = sim_list = vector('list', length = length(seasons))
-for (i in 1:length(seasons)) {
-  
-  traj_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', return_obs = TRUE, analysis = 'basic')
-  traj_no_int_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'deterministic', analysis = 'paf')
-  sim_temp <- run_sim(po_list[[i]], seasons[i], mle_can, shared_estpars_can, unit_estpars, model_type = 'stochastic', return_data = TRUE, n_sim = 10, analysis = 'basic')
-  
-  traj_list[[i]] <- traj_temp
-  traj_no_int_list[[i]] <- traj_no_int_temp
-  sim_list[[i]] <- sim_temp
-  
-}
-
-traj_can <- bind_rows(traj_list)
-traj_no_int_can <- bind_rows(traj_no_int_list)
-sims_can <- bind_rows(sim_list)
-
-rm(traj_list, traj_no_int_list, sim_list, po_list, vir1, yr, i, dat_pomp,
-   traj_temp, traj_no_int_temp, sim_temp, hk_dat, can_dat,
-   nrow_check, yr_index, fit_canada, sens)
-
-traj <- list(traj_hk, traj_can)
-traj_no_int <- list(traj_no_int_hk, traj_no_int_can)
-sims <- list(sims_hk, sims_can)
-rm(traj_hk, traj_can, traj_no_int_hk, traj_no_int_can, sims_hk, sims_can)
 
 for (i in 1:length(sims)) {
   
@@ -1113,8 +1124,51 @@ p12d <- ggplot() +
 fig12s <- arrangeGrob(p12a, p12b, p12c, p12d, ncol = 1)
 # ggsave('results/plots/figures_for_manuscript/supp/FigureS12.svg', width = 18, height = 14, fig12s)
 
+
+
+
+
+
+
+
+
+
+
+# Calculate PAF (or negative of PAF, i.e., % increase in AR expected if interaction were not present):
+res_ars <- lapply(traj_no_int, function(ix) {
+  ix %>%
+    group_by(season, .id) %>%
+    summarise(attack_rate_H1 = sum(H1),
+              attack_rate_H2 = sum(H2))
+})
+
+for (i in 1:2) {
+  
+  paf_fluOnRSV = paf_RSVonFlu = c()
+  
+  for (yr in unique(res_ars[[i]]$season)) {
+    
+    # Impact of flu on RSV:
+    ar_pop <- res_ars[[i]] %>% filter(season == yr, .id == 1) %>% pull(attack_rate_H2)
+    ar_unexposed <- res_ars[[i]] %>% filter(season == yr, .id == 3) %>% pull(attack_rate_H2)
+    paf_fluOnRSV <- c(paf_fluOnRSV, (ar_unexposed - ar_pop) / ar_pop)
+    
+    # Impact of RSV on flu:
+    ar_pop <- res_ars[[i]] %>% filter(season == yr, .id == 1) %>% pull(attack_rate_H1)
+    ar_unexposed <- res_ars[[i]] %>% filter(season == yr, .id == 5) %>% pull(attack_rate_H1)
+    paf_RSVonFlu <- c(paf_RSVonFlu, (ar_unexposed - ar_pop) / ar_pop)
+    
+  }
+  
+  print(summary(paf_fluOnRSV))
+  print(summary(paf_RSVonFlu))
+  print('----')
+  
+}
+
 rm(p12a, p12b, p12c, p12d, fig12s, traj_no_int, seasons, vir2,
-   age_structured, d2_max, debug_bool, prof_lik, Ri_max1, Ri_max2)
+   age_structured, d2_max, debug_bool, prof_lik, Ri_max1, Ri_max2,
+   res_ars, i, paf_RSVonFlu, paf_fluOnRSV, ar_pop, ar_unexposed)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -2131,6 +2185,41 @@ fig20s <- ggplot(data = res, aes(x = condition, y = mle, ymin = lower, ymax = up
   scale_x_discrete(labels = xlabels) +
   labs(x = 'Analysis', y = 'Parameter value')
 # ggsave('results/plots/figures_for_manuscript/supp/FigureS20.svg', width = 7, height = 12, fig20s)
+
+# And calculate loglik/AIC for key sensitivity analyses:
+res_dir_main <- 'results/round2_fit/round2_3_fluH1_plus_B/'
+res_dir_noAH <- 'results/round2_fit/sens/no_ah/round2_3_fluH1_plus_B/'
+res_dir_sinusoidal <- 'results/round2_fit/sens/sinusoidal_forcing/round2_3_fluH1_plus_B/'
+res_dir_noint <- 'results/round2_fit/sens/no_int/round2_2_fluH1_plus_B/'
+res_dir_noRSVimmune <- 'results/round2_fit/sens/no_rsv_immune/round2_5_fluH1_plus_B/'
+
+res_main <- load_and_format_mega_results(res_dir_main, run_name = 'Main')
+res_noah <- load_and_format_mega_results(res_dir_noAH, run_name = 'No AH')
+res_sinusoidal <- load_and_format_mega_results(res_dir_sinusoidal, run_name = 'Sinusoidal Forcing')
+res_noint <- load_and_format_mega_results(res_dir_noint, run_name = 'No Interaction')
+res_noRSVimmune <- load_and_format_mega_results(res_dir_noRSVimmune, run_name = 'No Immunity to RSV')
+
+bind_rows(res_main,
+          res_noah,
+          res_sinusoidal,
+          res_noint,
+          res_noRSVimmune) %>%
+  group_by(condition) %>%
+  summarise(loglik = max(loglik)) %>%
+  print()
+
+# full is significantly better than noAH if 2 * (loglik_full - loglik_noAH) > qchisq(p = 0.95, df = 2)
+print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No AH'])) > qchisq(p = 0.95, df = 2))
+# print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'Sinusoidal Forcing'])) > qchisq(p = 0.95, df = 0))
+print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No Interaction'])) > qchisq(p = 0.95, df = 4))
+print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No Immunity to RSV'])) > qchisq(p = 0.95, df = 12))
+
+aic_main <- 2 * length(names(res_main %>% select(-c(loglik, condition)))) - 2 * max(res_main$loglik)
+aic_noah <- 2 * length(names(res_noah %>% select(-c(loglik, condition)))) - 2 * max(res_noah$loglik)
+aic_sinusoidal <- 2 * length(names(res_sinusoidal %>% select(-c(loglik, condition)))) - 2 * max(res_sinusoidal$loglik)
+aic_noint <- 2 * length(names(res_noint %>% select(-c(loglik, condition)))) - 2 * max(res_noint$loglik)
+aic_noRSVimmune <- 2 * length(names(res_noRSVimmune %>% select(-c(loglik, condition)))) - 2 * max(res_noRSVimmune$loglik)
+print(c(aic_main, aic_noah, aic_sinusoidal, aic_noRSVimmune, aic_noint))
 
 # ---------------------------------------------------------------------------------------------------------------------
 
