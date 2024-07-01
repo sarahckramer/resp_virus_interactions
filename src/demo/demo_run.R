@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------------------------------------------------
 # Demo of model fitting procedure
 
-# Tested on Windows 10, in R version 4.4.0
+# Tested on Windows 10, in R versions 4.4.0 and 4.2.3
 # Run time: ~40 minutes
 # Required packages: tidyverse, testthat, pomp, nloptr
 # ---------------------------------------------------------------------------------------------------------------------

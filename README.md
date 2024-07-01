@@ -24,13 +24,13 @@ The demo has been tested on the following operating systems:
 
 R, the programming language used for this work, can be downloaded at: https://www.r-project.org/
 
-For this work, I used R version 4.4.0. Code was written and run using the RStudio IDE, version 2024.4.1.748, which can be obtained [here](https://posit.co/downloads/).
+For this work, I used R version 4.2.3. Code was written and run using the RStudio IDE, version 2024.4.1.748, which can be obtained [here](https://posit.co/downloads/).
 
 For the demo, the following R packages must be installed:
 
 * tidyverse (version 2.0.0)
-* testthat (version 3.2.1.1)
-* pomp (version 5.8)
+* testthat (version 3.2.0)
+* pomp (version 5.4)
 * nloptr (version 2.0.3)
 
 The "pomp" package has additional dependencies, which vary by operating system. Detailed installation instructions can be found [here](https://kingaa.github.io/pomp/install.html).
