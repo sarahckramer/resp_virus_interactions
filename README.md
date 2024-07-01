@@ -108,7 +108,7 @@ Code to explore data/model fit
 * "process_results/calculate_obs_and_sim_metrics.R:"
   * Code to calculate several outbreak metrics for influenza and RSV, including attack rates, week of peak activity, and duration of outbreaks, and to compare metrics calculated from the data to those calculated baed on simulations performed at the MLEs.
 * "functions/functions_evaluate_res.R":
-  * Contains functions to obtain deterministic or stochastic simulations from the model at the MLE, and to calculate relevant outbreak metrics
+  * Contains functions to obtain deterministic or stochastic simulations from the model at the MLE, and to calculate relevant outbreak metrics.
 
 Age-Structured Sensitivity Analysis
 -----------------------------------
