@@ -83,28 +83,25 @@ Code to explore data/model fit
 
 * "process_results/calculate_obs_and_sim_metrics.R:"
   * Code to calculate several outbreak metrics for influenza and RSV, including attack rates, week of peak activity, and duration of outbreaks, and to compare metrics calculated from the data to those calculated baed on simulations performed at the MLEs.
-* "process_results/get_start_ranges_sinusoidal.R":
-  * Code to obtain reasonable starting parameter ranges for the amplitude of sinusoidal seasonal forcing, based on fits of sine waves through the extent of climate forcing in Hong Kong at the MLE.
 * "functions/functions_evaluate_res.R":
-  * Contains a function to obtain deterministic or stochastic simulations from the model at the MLE
+  * Contains functions to obtain deterministic or stochastic simulations from the model at the MLE, and to calculate relevant outbreak metrics
 
 Age-Structured Sensitivity Analysis
 -----------------------------------
 
 1. Run "age_structured_SA/m-generate_covariate.R" to generate synthetic, age-structured covariate data (ILI rates and number of tests performed).
 2. Run "age_structured_SA/m-run_model.R" to generate synthetic, age-structured case data at the MLE of the model fits.
-3. To fit the model to the age-structured synthetic data, uncomment line 56 in "fit_traj_matching_round1.R," line 37 in "02_compile_results_traj_matching_r1.R," and line 110 in "fit_traj_matching_round2.R," so that "age_structured" is equal to TRUE. Then, simply follow the same fitting procedure as outlined in numbers 1-4 under "Fitting the interaction model to data" above.
+3. To fit the model to the age-structured synthetic data, uncomment line 50 in "fit_traj_matching_round1.R," line 36 in "02_compile_results_traj_matching_r1.R," and line 94 in "fit_traj_matching_round2.R," so that "age_structured" is equal to TRUE. Then, simply follow the same fitting procedure as outlined in numbers 1-4 under "Fitting the interaction model to data" above.
 
 Additional Sensitivity Analyses
 -------------------------------
 
 Various sensitivity analyses can be conducted by running steps 2-5 above with "sens" set to:
 
-* "sinusoidal_forcing": Fits a model using a sine wave to capture seasonal changes in the force of infection of influenza and RSV, rather than explicitly including climate data. Rough start ranges for the parameters $b_1$ and $b_2$, describing the extent to which the strength of forcing varies over the year, can be obtained by running "process_results/get_start_ranges_sinusoidal.R", which fits sine waves to the force of infection for both viruses at the MLE from the main analysis. The resulting values are then used in lines 310-311 in "fit_traj_matching_round2.R".
+* "sinusoidal_forcing": Fits a model using a sine wave to capture seasonal changes in the force of infection of influenza and RSV, rather than explicitly including climate data. Rough start ranges for the parameters $b_1$ and $b_2$, describing the extent to which the strength of forcing varies over the year, can be obtained by running "process_results/get_start_ranges_sinusoidal.R", which fits sine waves to the force of infection for both viruses at the MLE from the main analysis in Hong Kong. The resulting values are then used in lines 333-334 in "fit_traj_matching_round2.R".
 * "no_ah": Fits the model exluding an effect of absolute humidity on the force of infection of influenza and RSV, such that both are modulated by temperature only.
 * "no_rsv_immune": Fits a model assuming, as in Waterlow et al. (2022), that the entire model population is susceptible to RSV at the beginning of each season. Before running steps 2-5 above, step 1 should also be repeated, this time with "sens" also set to "no_rsv_immune".
 * "no_int": Fits a model in which no interaction occurs between influenza and RSV.
-* "h3_covar": Fits a model allowing H3N2 incidence to modulate susceptibility to RSV. In order to explore different lags on H3N2 incidence, lines 115-125 in "resp_interaction_model.R" can be updated.
 * "less_circ_h3": Fits the model only for those seasons with little H3N2 circulation (2017-18 and 2018-19).
 * "rhino_covar": Fits a model allowing rhinovirus incidence to modulate susceptibility to influenza.
 
