@@ -25,7 +25,7 @@ dat_pos_hk <- dat_hk %>%
                names_to = 'virus',
                values_to = 'perc_pos') %>%
   mutate(virus = factor(virus, levels = c('n_h1_b', 'n_rsv'))) %>%
-  mutate(virus = recode(virus, n_h1_b = 'Influenza A(H1N1) + B    ', n_rsv = 'RSV'))
+  mutate(virus = recode(virus, n_h1_b = 'Influenza A(H1N1) + B  ', n_rsv = 'RSV'))
 
 dat_can <- read_csv('data/formatted/dat_canada.csv')
 
@@ -42,60 +42,71 @@ dat_pos_can <- dat_can %>%
                names_to = 'virus',
                values_to = 'perc_pos') %>%
   mutate(virus = factor(virus, levels = c('n_P1', 'n_P2'))) %>%
-  mutate(virus = recode(virus, n_P1 = 'Influenza    ', n_P2 = 'RSV'))
+  mutate(virus = recode(virus, n_P1 = 'Influenza  ', n_P2 = 'RSV'))
 
 x_lab_breaks_hk <- dat_hk %>% filter(Week == 1) %>% pull(Time)
 x_lab_breaks_can <- dat_can %>% filter(week == 1) %>% pull(time)
 
 p1a <- ggplot(data = dat_pos_hk, aes(x = Time, y = perc_pos, col = virus)) +
-  geom_line() + theme_classic() +
-  theme(legend.position = 'bottom',
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        plot.tag = element_text(size = 16),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        plot.tag.position = c(0.005, 0.98)) +
+  geom_line(lwd = 0.4) + theme_classic() +
+  theme(legend.position = 'right',
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        plot.tag = element_text(size = 7),
+        legend.title = element_text(size = 6),
+        legend.title.position = 'left',
+        legend.text = element_text(size = 5),
+        legend.key.width = unit(4, 'mm'),
+        legend.key.height = unit(0.5, 'line'),
+        # legend.key = element_rect(size = 100,color=alpha("transparent",0)),
+        legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        legend.key = element_blank(),
+        plot.tag.position = c(0.005, 0.97)) +
   scale_x_continuous(breaks = x_lab_breaks_hk, labels = 2014:2019) +
   scale_y_continuous(limits = c(0, 30)) +
   scale_color_brewer(palette = 'Dark2') +
-  labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'a')
-p1a <- reposition_legend(p1a, position = 'top left', plot = FALSE)
+  labs(x = 'Year', y = '\n% Positive', col = 'Virus:', tag = 'a')
+p1a <- reposition_legend(p1a, position = 'top left', y = 1.05, plot = FALSE)
 
 p1b <- ggplot(data = dat_pos_can, aes(x = time, y = perc_pos, col = virus)) +
-  geom_line() + theme_classic() +
-  theme(legend.position = 'bottom',
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        plot.tag = element_text(size = 16),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        plot.tag.position = c(0.005, 0.98)) +
+  geom_line(lwd = 0.4) + theme_classic() +
+  theme(legend.position = 'left',
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        plot.tag = element_text(size = 7),
+        legend.title = element_text(size = 6),
+        legend.title.position = 'left',
+        legend.text = element_text(size = 5),
+        legend.key.width = unit(4, 'mm'),
+        legend.key.height = unit(0.5, 'line'),
+        plot.tag.position = c(0.005, 0.97)) +
   scale_x_continuous(breaks = x_lab_breaks_can, labels = 2011:2014) +
   scale_y_continuous(limits = c(0, 35)) +
   scale_color_brewer(palette = 'Dark2') +
-  labs(x = 'Year', y = '\n% Positive', col = 'Virus', tag = 'b')
-p1b <- reposition_legend(p1b, position = 'top left', plot = FALSE)
+  labs(x = 'Year', y = '\n% Positive', col = 'Virus:', tag = 'b')
+p1b <- reposition_legend(p1b, position = 'top left', y = 1.05, plot = FALSE)
 
-p1c <- ggplot(data = dat_hk, aes(x = Time, y = GOPC)) + geom_line() +
-  theme_classic() + theme(axis.title = element_text(size = 14),
-                          axis.text = element_text(size = 12),
-                          plot.tag = element_text(size = 16),
-                          plot.tag.position = c(0.005, 0.98)) +
+p1c <- ggplot(data = dat_hk, aes(x = Time, y = GOPC)) + geom_line(lwd = 0.4) +
+  theme_classic() + theme(axis.title = element_text(size = 6),
+                          axis.text = element_text(size = 5),
+                          plot.tag = element_text(size = 7),
+                          plot.tag.position = c(0.005, 0.97)) +
   scale_x_continuous(breaks = x_lab_breaks_hk, labels = 2014:2019) +
   labs(x = 'Year', y = 'ILI cases per 1,000\nconsultations', tag = 'c')
-p1d <- ggplot(data = dat_can, aes(x = time, y = i_ILI)) + geom_line() +
-  theme_classic() + theme(axis.title = element_text(size = 14),
-                          axis.text = element_text(size = 12),
-                          plot.tag = element_text(size = 16),
-                          plot.tag.position = c(0.005, 0.98)) +
+p1d <- ggplot(data = dat_can, aes(x = time, y = i_ILI)) + geom_line(lwd = 0.4) +
+  theme_classic() + theme(axis.title = element_text(size = 6),
+                          axis.text = element_text(size = 5),
+                          plot.tag = element_text(size = 7),
+                          plot.tag.position = c(0.005, 0.97)) +
   scale_x_continuous(breaks = x_lab_breaks_can, labels = 2011:2014) +
   labs(x = 'Year', y = 'ILI cases per 1,000\nconsultations', tag = 'd')
 
 fig1 <- arrangeGrob(p1a, p1b, p1c, p1d, ncol = 2, widths = c(1, 0.666))
 plot(fig1)
 
-ggsave('results/plots/figures_for_manuscript/Figure1.svg', width = 15, height = 7, fig1)
+# ggsave('results/plots/figures_for_manuscript/Figure1.svg', width = 15, height = 7, fig1)
+ggsave('results/plots/figures_for_manuscript/Figure1_NEW.svg', width = 180, height = 84, units = 'mm', fig1)
 rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -203,7 +214,7 @@ p2c <- reposition_legend(p2c, x = 0.58, y = 0.6, just = 0, plot = FALSE)
 fig2 <- arrangeGrob(p2b, p2c, ncol = 1)
 plot(fig2)
 
-ggsave('results/plots/figures_for_manuscript/Figure2_bc.svg', width = 5.0, height = 6.0, fig2)
+# ggsave('results/plots/figures_for_manuscript/Figure2_bc.svg', width = 5.0, height = 6.0, fig2)
 rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -463,12 +474,14 @@ print(r2bs)
 # Plot means and 95% CIs from binomial distribution:
 p_legend1 <- ggplot(data = res %>% filter(loc == 'hk'),
                     aes(x = mean, y = obs, color = season)) +
-  geom_point() +
+  geom_point(size = 1.0) +
   facet_wrap(~ virus) +
   theme_classic() +
-  theme(legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'bottom') +
+  theme(legend.title = element_text(size = 6, margin = margin(t = 0, r = 5, b = 0, l = 0, unit = 'mm')),
+        legend.text = element_text(size = 5),
+        legend.position = 'bottom',
+        legend.key.width = unit(1.5, 'mm'),
+        legend.key.spacing.x = unit(4, 'mm')) +
   guides(color = guide_legend(nrow = 1)) +
   scale_color_viridis(discrete = TRUE) +
   labs(color = 'Season')
@@ -476,12 +489,14 @@ p_legend1 <- ggplotGrob(p_legend1)$grobs[[which(sapply(ggplotGrob(p_legend1)$gro
 
 p_legend2 <- ggplot(data = res %>% filter(loc == 'canada'),
                     aes(x = mean, y = obs, color = season)) +
-  geom_point() +
+  geom_point(size = 1.0) +
   facet_wrap(~ virus) +
   theme_classic() +
-  theme(legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'bottom') +
+  theme(legend.title = element_text(size = 6, margin = margin(t = 0, r = 5, b = 0, l = 0, unit = 'mm')),
+        legend.text = element_text(size = 5),
+        legend.position = 'bottom',
+        legend.key.width = unit(1.5, 'mm'),
+        legend.key.spacing.x = unit(4, 'mm')) +
   guides(color = guide_legend(nrow = 1)) +
   scale_color_viridis(discrete = TRUE) +
   labs(color = 'Season')
@@ -495,21 +510,21 @@ label_d <- paste0(' = ', format(round(r2bs[[2]], 2), nsmall = 2), ' (', round(mi
 p3a <- ggplot(data = res %>% filter(loc == 'hk' & virus == 'Influenza'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
   geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
+  geom_pointrange(size = 0.1, alpha = 0.6) +
   # geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
   #             inherit.aes = FALSE, color = 'black', se = FALSE) +
   annotate (
-    geom = 'text', x = 500, y = 100, hjust = 0, vjust = 1, size = 5.5,
+    geom = 'text', x = 500, y = 100, hjust = 0, vjust = 1, size = 2,
     label = as.expression(bquote(paste(R^2, .(label_a))))
   ) +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
         # legend.title = element_text(size = 14),
         # legend.text = element_text(size = 12),
         legend.position = 'none',
-        plot.tag = element_text(size = 16),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000), labels = scales::comma) +
   scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000), labels = scales::comma) +
@@ -520,17 +535,17 @@ p3a <- ggplot(data = res %>% filter(loc == 'hk' & virus == 'Influenza'),
 p3b <- ggplot(data = res %>% filter(loc == 'hk' & virus == 'RSV'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
   geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
+  geom_pointrange(size = 0.1, alpha = 0.6) +
   annotate (
-    geom = 'text', x = 190, y = 18, hjust = 0, vjust = 1, size = 5.5,
+    geom = 'text', x = 190, y = 18, hjust = 0, vjust = 1, size = 2,
     label = as.expression(bquote(paste(R^2, .(label_b))))
   ) +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
         legend.position = 'none',
-        plot.tag = element_text(size = 16),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_x_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500), labels = scales::comma) +
   scale_y_sqrt(breaks = c(10, 50, 100, 200, 300, 400, 500), labels = scales::comma) +
@@ -541,21 +556,21 @@ p3b <- ggplot(data = res %>% filter(loc == 'hk' & virus == 'RSV'),
 p3c <- ggplot(data = res %>% filter(loc == 'canada' & virus == 'Influenza'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
   geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
+  geom_pointrange(size = 0.1, alpha = 0.6) +
   # geom_smooth(aes(x = mean, y = obs), method = 'lm', formula = y ~ x,
   #             inherit.aes = FALSE, color = 'black', se = FALSE) +
   annotate (
-    geom = 'text', x = 900, y = 150, hjust = 0, vjust = 1, size = 5.5,
+    geom = 'text', x = 900, y = 150, hjust = 0, vjust = 1, size = 2,
     label = as.expression(bquote(paste(R^2, .(label_c))))
   ) +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        # legend.title = element_text(size = 14),
-        # legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        # legend.title = element_text(size = 6),
+        # legend.text = element_text(size = 5),
         legend.position = 'none',
-        plot.tag = element_text(size = 16),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000, 3000, 4000), labels = scales::comma) +
   scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000, 1500, 2000, 3000, 4000), labels = scales::comma) +
@@ -566,17 +581,17 @@ p3c <- ggplot(data = res %>% filter(loc == 'canada' & virus == 'Influenza'),
 p3d <- ggplot(data = res %>% filter(loc == 'canada' & virus == 'RSV'),
               aes(x = mean, y = obs, xmin = lower, xmax = upper, color = season)) +
   geom_abline(slope = 1, intercept = 0, col = 'gray80') +
-  geom_pointrange(size = 0.2, alpha = 0.6) +
+  geom_pointrange(size = 0.1, alpha = 0.6) +
   annotate (
-    geom = 'text', x = 350, y = 50, hjust = 0, vjust = 1, size = 5.5,
+    geom = 'text', x = 350, y = 50, hjust = 0, vjust = 1, size = 2,
     label = as.expression(bquote(paste(R^2, .(label_d))))
   ) +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
         legend.position = 'none',
-        plot.tag = element_text(size = 16),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_x_sqrt(breaks = c(10, 50, 100, 250, 500, 1000), labels = scales::comma) +
   scale_y_sqrt(breaks = c(10, 50, 100, 250, 500, 1000), labels = scales::comma) +
@@ -589,7 +604,8 @@ fig3 <- arrangeGrob(arrangeGrob(arrangeGrob(p3a, p3b, ncol = 2), p_legend1, nrow
                     nrow = 2)
 plot(fig3)
 
-ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 10)
+# ggsave('results/plots/figures_for_manuscript/Figure3.svg', fig3, width = 14, height = 10)
+ggsave('results/plots/figures_for_manuscript/Figure3_NEW.svg', fig3, width = 180, height = 128.6, units = 'mm')
 rm(list = ls())
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -671,15 +687,15 @@ p_legend1 <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario =
                     aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.key.width = unit(1.5, 'cm'),
-        legend.key.height = unit(0.7, 'cm'),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
+        legend.key.width = unit(0.75, 'cm'),
+        legend.key.height = unit(0.3, 'cm'),
         legend.position = 'bottom',
-        plot.tag = element_text(size = 22),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_fill_distiller(palette = 'RdBu',
                        values = c(0, 1 / upper_bound_ar, 1),
@@ -705,12 +721,13 @@ res_simA <- res %>%
 p_legend2 <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
   geom_line() +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        legend.position = 'bottom') +
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
+        legend.position = 'bottom',
+        legend.key.width = unit(4, 'mm')) +
   scale_color_brewer(palette = 'Dark2') +
   scale_linetype(guide = 'none') +
   labs(title = '', x = 'Time (Weeks)', y = 'Incidence (%)')
@@ -719,18 +736,18 @@ p_legend2 <- ggplotGrob(p_legend2)$grobs[[which(sapply(ggplotGrob(p_legend2)$gro
 p4a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hk'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 19, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 25, shape = 17, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 19, y = 70, shape = 16, size = 0.75, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 25, shape = 17, size = 0.75, color = 'black', fill = 'black') +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
         legend.key.width = unit(1.2, 'cm'),
         legend.key.height = unit(0.7, 'cm'),
         legend.position = 'none',
-        plot.tag = element_text(size = 16),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_fill_distiller(palette = 'RdBu',
                        values = c(0, 1 / upper_bound_ar, 1),
@@ -741,16 +758,16 @@ p4a <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'hk'
        x = 'Week of vaccination', y = 'Vaccine coverage (%)', fill = 'RR', tag = 'a')
 
 p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id)) +
-  geom_line() +
-  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 6.0, aes(shape = vacc_time), size = 3, col = 'black') +
+  geom_line(lwd = 0.4) +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2, lwd = 0.4) +
+  geom_point(x = 52, y = 5.95, aes(shape = vacc_time), size = 0.75, col = 'black') +
   facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
         legend.position = 'none',
         strip.text = element_blank()) +
   scale_color_brewer(palette = 'Dark2') +
@@ -766,16 +783,16 @@ p4a_sim <- ggplot(data = res_simA, aes(x = time, y = val, col = Virus, lty = .id
 p4b <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'hk'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 14, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 70, shape = 17, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 14, y = 70, shape = 16, size = 0.75, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 70, shape = 17, size = 0.75, color = 'black', fill = 'black') +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
         legend.position = 'none',
-        plot.tag = element_text(size = 16),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_fill_distiller(palette = 'RdBu',
                        values = c(0, 1 / upper_bound_ar, 1),
@@ -796,16 +813,16 @@ res_simB <- res %>%
   mutate(vacc_time = factor(vacc_time, levels = c('14', '0')))
 
 p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id)) +
-  geom_line() +
-  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 2.8, aes(shape = vacc_time), size = 3, col = 'black', fill = 'black') +
+  geom_line(lwd = 0.4) +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2, lwd = 0.4) +
+  geom_point(x = 52, y = 2.8, aes(shape = vacc_time), size = 0.75, col = 'black', fill = 'black') +
   facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
         legend.position = 'none',
         strip.text = element_blank()) +
   scale_color_brewer(palette = 'Dark2') +
@@ -821,16 +838,16 @@ p4b_sim <- ggplot(data = res_simB, aes(x = time, y = val, col = Virus, lty = .id
 p4c <- ggplot(data = res_metrics %>% filter(climate == 'temp' & scenario == 'canada'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 20, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 30, shape = 17, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 20, y = 70, shape = 16, size = 0.75, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 30, shape = 17, size = 0.75, color = 'black', fill = 'black') +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
         legend.position = 'none',
-        plot.tag = element_text(size = 16),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_fill_distiller(palette = 'RdBu',
                        values = c(0, 1 / upper_bound_ar, 1),
@@ -851,16 +868,16 @@ res_simC <- res %>%
   mutate(vacc_time = factor(vacc_time, levels = c('20', '0')))
 
 p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id)) +
-  geom_line() +
-  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 6.0, aes(shape = vacc_time), size = 3, col = 'black') +
+  geom_line(lwd = 0.4) +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2, lwd = 0.4) +
+  geom_point(x = 52, y = 6.0, aes(shape = vacc_time), size = 0.75, col = 'black') +
   facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
         legend.position = 'none',
         strip.text = element_blank()) +
   scale_color_brewer(palette = 'Dark2') +
@@ -876,16 +893,16 @@ p4c_sim <- ggplot(data = res_simC, aes(x = time, y = val, col = Virus, lty = .id
 p4d <- ggplot(data = res_metrics %>% filter(climate == 'subtrop' & scenario == 'canada'),
               aes(x = vacc_time, y = vacc_cov, fill = ar2_impact)) +
   geom_tile() +
-  geom_point(x = 20, y = 70, shape = 16, size = 3, color = 'black', fill = 'black') +
-  geom_point(x = 0, y = 70, shape = 17, size = 3, color = 'black', fill = 'black') +
+  geom_point(x = 20, y = 70, shape = 16, size = 0.75, color = 'black', fill = 'black') +
+  geom_point(x = 0, y = 70, shape = 17, size = 0.75, color = 'black', fill = 'black') +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
         legend.position = 'none',
-        plot.tag = element_text(size = 16),
+        plot.tag = element_text(size = 7),
         plot.tag.position = c(0.01, 0.98)) +
   scale_fill_distiller(palette = 'RdBu',
                        values = c(0, 1 / upper_bound_ar, 1),
@@ -907,16 +924,16 @@ res_simD <- res %>%
   mutate(vacc_time = factor(vacc_time, levels = c('20', '0')))
 
 p4d_sim <- ggplot(data = res_simD, aes(x = time, y = val, col = Virus, lty = .id)) +
-  geom_line() +
-  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2) +
-  geom_point(x = 52, y = 1.8, aes(shape = vacc_time), size = 3, col = 'black') +
+  geom_line(lwd = 0.4) +
+  geom_vline(aes(xintercept = as.numeric(as.character(vacc_time))), lty = 2, lwd = 0.4) +
+  geom_point(x = 51.85, y = 1.8, aes(shape = vacc_time), size = 0.75, col = 'black') +
   facet_wrap(~ vacc_time, ncol = 1) +
   theme_classic() +
-  theme(title = element_text(size = 12),
-        axis.title = element_text(size = 14),
-        axis.text = element_text(size = 12),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
+  theme(title = element_text(size = 5),
+        axis.title = element_text(size = 6),
+        axis.text = element_text(size = 5),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 5),
         legend.position = 'none',
         strip.text = element_blank()) +
   scale_color_brewer(palette = 'Dark2') +
@@ -928,9 +945,11 @@ fig4 <- arrangeGrob(arrangeGrob(arrangeGrob(p4a, p4a_sim, nrow = 1, widths = c(5
                                 arrangeGrob(p4b, p4b_sim, nrow = 1, widths = c(5.5, 4.5)), nrow = 1),
                     arrangeGrob(arrangeGrob(p4c, p4c_sim, nrow = 1, widths = c(5.5, 4.5)),
                                 arrangeGrob(p4d, p4d_sim, nrow = 1, widths = c(5.5, 4.5)), nrow = 1),
-                    arrangeGrob(p_legend1, p_legend2, layout_matrix = rbind(c(NA, 1, 2, NA)), widths = c(3, 2, 2, 3)),
+                    arrangeGrob(p_legend1, p_legend2, layout_matrix = rbind(c(NA, 1, 2, NA)), widths = c(2, 2, 2, 2)),
                     nrow = 3, heights = c(12, 12, 2.25))
 plot(fig4)
 
-ggsave('results/plots/figures_for_manuscript/Figure4.svg', fig4, width = 20, height = 10)
+# ggsave('results/plots/figures_for_manuscript/Figure4.svg', fig4, width = 20, height = 10)
+ggsave('results/plots/figures_for_manuscript/Figure4_NEW.svg', fig4, width = 180, height = 90, units = 'mm')
+
 rm(list = ls())
