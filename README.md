@@ -44,6 +44,7 @@ In addition to those listed under "Demo" above, the following packages are also 
 * ISOweek (version 0.6.2)
 * GSODR (version 3.1.9)
 * rstudioapi (version 0.15.0)
+* NSM3 (version 1.18)
 * parallel (version 4.2.3)
 * doMC (version 1.3.8)
 * viridis (version 0.6.4)
@@ -109,6 +110,8 @@ Code to explore data/model fit
   * Code to calculate several outbreak metrics for influenza and RSV, including attack rates, week of peak activity, and duration of outbreaks, and to compare metrics calculated from the data to those calculated baed on simulations performed at the MLEs.
 * "functions/functions_evaluate_res.R":
   * Contains functions to obtain deterministic or stochastic simulations from the model at the MLE, and to calculate relevant outbreak metrics.
+* "format_data/stat_quantify_similarity.R":
+  * Code to calculate the correlation coefficient between time series of the positivity rates of different pathogens.
 
 Age-Structured Sensitivity Analysis
 -----------------------------------

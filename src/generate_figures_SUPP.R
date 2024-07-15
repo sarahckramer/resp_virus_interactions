@@ -2208,6 +2208,13 @@ bind_rows(res_main,
   summarise(loglik = max(loglik)) %>%
   print()
 
+res <- bind_rows(res_main,
+                 res_noah,
+                 res_sinusoidal,
+                 res_noint,
+                 res_noRSVimmune) %>%
+  select(condition, loglik)
+
 # full is significantly better than noAH if 2 * (loglik_full - loglik_noAH) > qchisq(p = 0.95, df = 2)
 print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'No AH'])) > qchisq(p = 0.95, df = 2))
 # print(2 * (min(res$loglik[res$condition == 'Main']) - max(res$loglik[res$condition == 'Sinusoidal Forcing'])) > qchisq(p = 0.95, df = 0))
