@@ -20,7 +20,6 @@ sobol_size <- as.integer(Sys.getenv("SOBOLSIZE")); print(sobol_size)
 which_round <- as.integer(Sys.getenv("WHICHROUND")); print(which_round)
 search_type <- as.character(Sys.getenv("SEARCHTYPE")); print(search_type)
 fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
-run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
 
 # # Set parameters for local run:
 # jobid <- 1
@@ -30,7 +29,6 @@ run_parallel <- as.logical(Sys.getenv("RUNPARALLEL")); print(run_parallel)
 # which_round <- 1
 # search_type <- 'round1_CIs'
 # fit_canada <- FALSE
-# run_parallel <- FALSE
 
 # Set MCMC parameters:
 n_chains <- 4
@@ -456,134 +454,70 @@ sub_start <- (1 + (jobid - 1) * sobol_size / no_jobs) : (jobid * sobol_size / no
 print(sub_start)
 
 # Fit:
-if (run_parallel) {
+for (i in seq_along(sub_start)) {
   
-  # Set up parallelization:
-  print(detectCores())
-  n_cores <- length(sub_start)
+  print(paste0('Estimation: ', sub_start[i]))
   
-  registerDoMC(n_cores)
-  print(getDoParRegistered())
-  print(getDoParWorkers())
   
-  # Transform start values:
-  start_values_tran <- t(
-    apply(start_values, 1, function(ix) {
-      transform_params(ix, po_list[[1]], seasons, estpars, shared_estpars)
-    }, simplify = TRUE)
+  x0 <- as.numeric(start_values[sub_start[i], ])
+  x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
+  x0_trans_names <- names(x0_trans)
+  
+  # Check that parameter transformations correct:
+  x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
+  expect_equal(x0, unname(x0_orig))
+  rm(x0_orig)
+  
+  # Calculate initial log-likelihood:
+  print(calculate_global_loglik(x0_trans))
+  
+  # Get initial chain values:
+  start_chains <- replicate(n = n_chains, expr = x0_trans) %>% t()
+  
+  # Get prior:
+  pr <- set_prior(pars_nm = estpars)
+  
+  # Set up models:
+  bayesianSetup <- createBayesianSetup(
+    likelihood = calculate_global_loglik,
+    prior = pr,
+    names = estpars
   )
-  x0_trans_names <- colnames(start_values_tran)
-  print(x0_trans_names)
   
   # Fit:
   tic <- Sys.time()
-  m <- foreach(i = sub_start, .packages = c('tidyverse', 'testthat', 'pomp', 'BayesianTools')) %dopar% {
-    
-    x0_trans <- start_values_tran[i, ]
-    
-    # Get initial chain values:
-    start_chains <- replicate(n = n_chains, expr = x0_trans) %>% t()
-    
-    # Get prior:
-    pr <- set_prior(pars_nm = estpars)
-    
-    # Set up models:
-    bayesianSetup <- createBayesianSetup(
-      likelihood = calculate_global_loglik,
-      prior = pr,
-      names = estpars
-    )
-    
-    # Fit:
-    return(
-      runMCMC(bayesianSetup = bayesianSetup,
-              sampler = 'DEzs',
-              settings = list(
-                iterations = n_chains * n_iter,
-                startValue = start_chains
-              ))
-    )
-    
-  }
+  m <- runMCMC(bayesianSetup = bayesianSetup,
+               sampler = 'DEzs',
+               settings = list(
+                 iterations = n_chains * n_iter,
+                 startValue = start_chains
+               ))
   toc <- Sys.time()
   etime <- toc - tic
   units(etime) <- 'hours'
   print(etime)
   
-  # Write to file:
-  saveRDS(m, file = sprintf('results/res_%s_%d_%d_PARALLEL.rds',
+  # Extract results:
+  est_mcmc_det <- getSample(sampler = m, coda = TRUE, start = n_iter / 2)
+  
+  dic <- DIC(sampler = m, start = n_iter / 2)
+  mle <- MAP(m)
+  
+  print(mle)
+  print(MCMCvis::MCMCsummary(object = est_mcmc_det, round = 4))
+  
+  # MCMCvis::MCMCtrace(object = est_mcmc_det, pdf = FALSE, ind = TRUE, Rhat = TRUE, n.eff = TRUE)
+  # samples_df <- as.data.frame(getSample(m, start = n_iter / 2, coda = FALSE))
+  
+  # For now, save whole fit object:
+  saveRDS(m, file = sprintf('results/mod_%s_%d_%d.rds',
                             vir1,
                             jobid,
-                            sub_start[1]))
+                            sub_start[i])
+  )
   
-} else {
-  
-  for (i in seq_along(sub_start)) {
-    
-    print(paste0('Estimation: ', sub_start[i]))
-    
-    # Get start values:
-    x0 <- as.numeric(start_values[sub_start[i], ])
-    x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
-    x0_trans_names <- names(x0_trans)
-    
-    # Check that parameter transformations correct:
-    x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
-    expect_equal(x0, unname(x0_orig))
-    rm(x0_orig)
-    
-    # Calculate initial log-likelihood:
-    print(calculate_global_loglik(x0_trans))
-    
-    # Get initial chain values:
-    start_chains <- replicate(n = n_chains, expr = x0_trans) %>% t()
-    
-    # Get prior:
-    pr <- set_prior(pars_nm = estpars)
-    
-    # Set up models:
-    bayesianSetup <- createBayesianSetup(
-      likelihood = calculate_global_loglik,
-      prior = pr,
-      names = estpars
-    )
-    
-    # Fit:
-    tic <- Sys.time()
-    m <- runMCMC(bayesianSetup = bayesianSetup,
-                 sampler = 'DEzs',
-                 settings = list(
-                   iterations = n_chains * n_iter,
-                   startValue = start_chains
-                 ))
-    toc <- Sys.time()
-    etime <- toc - tic
-    units(etime) <- 'hours'
-    print(etime)
-    
-    # Extract results:
-    est_mcmc_det <- getSample(sampler = m, coda = TRUE, start = n_iter / 2)
-    
-    dic <- DIC(sampler = m, start = n_iter / 2)
-    mle <- MAP(m)
-    
-    print(mle)
-    print(MCMCvis::MCMCsummary(object = est_mcmc_det, round = 4))
-    
-    # MCMCvis::MCMCtrace(object = est_mcmc_det, pdf = FALSE, ind = TRUE, Rhat = TRUE, n.eff = TRUE)
-    # samples_df <- as.data.frame(getSample(m, start = n_iter / 2, coda = FALSE))
-    
-    # For now, save whole fit object:
-    saveRDS(m, file = sprintf('results/mod_%s_%d_%d.rds',
-                              vir1,
-                              jobid,
-                              sub_start[i])
-    )
-    
-  }
-  
-  rm(i)
 }
+rm(i)
 
 # Clean up:
 rm(list = ls())
