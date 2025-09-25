@@ -508,22 +508,21 @@ for (i in seq_along(sub_start)) {
   print(etime)
   
   # Extract results:
-  est_mcmc_det <- getSample(sampler = m, coda = TRUE, start = n_iter / 2)
+  # est_mcmc_det <- getSample(sampler = m, coda = TRUE, start = n_iter / 2)
   
   dic <- DIC(sampler = m, start = n_iter / 2)
   mle <- MAP(m)
   
   print(mle)
-  print(MCMCvis::MCMCsummary(object = est_mcmc_det, round = 4))
+  # print(MCMCvis::MCMCsummary(object = est_mcmc_det, round = 4))
   
   # MCMCvis::MCMCtrace(object = est_mcmc_det, pdf = FALSE, ind = TRUE, Rhat = TRUE, n.eff = TRUE)
   # samples_df <- as.data.frame(getSample(m, start = n_iter / 2, coda = FALSE))
   
   # For now, save whole fit object:
-  saveRDS(m, file = sprintf('results/mod_%s_%d_%d.rds',
+  saveRDS(m, file = sprintf('results/mod_%s_%d.rds',
                             vir1,
-                            jobid,
-                            sub_start[i])
+                            jobid)
   )
   
 }
