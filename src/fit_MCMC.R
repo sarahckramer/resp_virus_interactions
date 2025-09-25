@@ -26,13 +26,13 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # no_jobs <- 10
 # 
 # sobol_size <- 500
-# which_round <- 1
-# search_type <- 'round1_CIs'
+# which_round <- 6
+# search_type <- 'round2_CIs'
 # fit_canada <- FALSE
 
 # Set MCMC parameters:
-n_chains <- 4
-n_iter <- 5e4
+n_chains <- 5
+n_iter <- 1e6
 
 # Set parameters for run:
 debug_bool <- FALSE
@@ -274,7 +274,7 @@ set_prior <- function(pars_nm) {
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Fit using trajectory matching
+# Fit using MCMC
 
 # Loop through years and construct pomp models:
 po_list <- vector('list', length(seasons))
@@ -450,7 +450,7 @@ obj_fun_list <- lapply(po_list, function(ix) {
 }) # equivalent to Libbie's GlobalOfun fxn
 
 # Get unique identifiers:
-sub_start <- (1 + (jobid - 1) * sobol_size / no_jobs) : (jobid * sobol_size / no_jobs)
+sub_start <- (1 + (jobid - 1) * sobol_size / n_chains / no_jobs) : (jobid * sobol_size / n_chains / no_jobs)
 print(sub_start)
 
 # Fit:
@@ -458,21 +458,31 @@ for (i in seq_along(sub_start)) {
   
   print(paste0('Estimation: ', sub_start[i]))
   
-  
-  x0 <- as.numeric(start_values[sub_start[i], ])
-  x0_trans <- transform_params(x0, po_list[[1]], seasons, estpars, shared_estpars)
-  x0_trans_names <- names(x0_trans)
+  # Get start values:
+  x0_mat <- start_values[((sub_start[i] * n_chains) - (n_chains - 1)):(sub_start[i] * n_chains), ]
+  x0_trans_mat <- t(
+    apply(x0_mat, 1, function(ix) {
+      transform_params(ix, po_list[[1]], seasons, estpars, shared_estpars)
+    }, simplify = TRUE)
+  )
+  x0_trans_names <- colnames(x0_trans_mat)
   
   # Check that parameter transformations correct:
-  x0_orig <- back_transform_params(x0_trans, po_list[[1]], seasons, estpars, shared_estpars)
-  expect_equal(x0, unname(x0_orig))
-  rm(x0_orig)
+  for (j in 1:n_chains) {
+    x0_orig <- back_transform_params(x0_trans_mat[j, ], po_list[[1]], seasons, estpars, shared_estpars)
+    expect_equal(as.numeric(x0_mat[j, ]), as.numeric(x0_orig))
+    rm(x0_orig)
+  }
   
-  # Calculate initial log-likelihood:
-  print(calculate_global_loglik(x0_trans))
+  # Calculate initial log-likelihoods:
+  print(
+    apply(x0_trans_mat, 1, function(ix) {
+      calculate_global_loglik(ix)
+    })
+  )
   
   # Get initial chain values:
-  start_chains <- replicate(n = n_chains, expr = x0_trans) %>% t()
+  start_chains <- x0_trans_mat
   
   # Get prior:
   pr <- set_prior(pars_nm = estpars)
