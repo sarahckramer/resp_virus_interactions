@@ -25,7 +25,7 @@ fit_canada <- as.logical(Sys.getenv("FITCANADA")); print(fit_canada)
 # jobid <- 1
 # no_jobs <- 10
 # 
-# sobol_size <- 500
+# sobol_size <- 50
 # which_round <- 6
 # search_type <- 'round2_CIs'
 # fit_canada <- FALSE
