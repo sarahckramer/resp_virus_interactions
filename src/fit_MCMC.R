@@ -212,7 +212,7 @@ set_prior <- function(pars_nm) {
     
     for (seas in get_seas) {
       d[paste0(seas, '_Ri1')] <- dnorm(par[paste0(seas, '_Ri1')], mean = 0, sd = 10, log = TRUE)
-      d[paste0(seas, '_Ri2')] <- dnorm(par[paste0(seas, '_Ri1')], mean = 0, sd = 10, log = TRUE)
+      d[paste0(seas, '_Ri2')] <- dnorm(par[paste0(seas, '_Ri2')], mean = 0, sd = 10, log = TRUE)
       d[paste0(seas, '_I10')] <- dlnorm(-1 * par[paste0(seas, '_I10')], meanlog = 1.95, sdlog = 0.18, log = TRUE)
       d[paste0(seas, '_I20')] <- dlnorm(-1 * par[paste0(seas, '_I10')], meanlog = 1.95, sdlog = 0.18, log = TRUE)
       d[paste0(seas, '_R10')] <- dnorm(par[paste0(seas, '_R10')], mean = 0, sd = 10, log = TRUE)
