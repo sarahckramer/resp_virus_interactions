@@ -1,4 +1,6 @@
 # Respiratory Virus Interactions
+Copyright &copy; 2024 Sarah Corinne Kramer
+
 [![DOI](https://zenodo.org/badge/381618740.svg)](https://zenodo.org/doi/10.5281/zenodo.12743755)
 
 Code to infer the strength and duration of interactions between flu and RSV
